@@ -1,0 +1,3 @@
+# rust-lp-modeler
+
+Lp modeler writen in Rust. This api helps to write LP model and use solver such as CBC, Gurobi, lp\_solve, ...
