@@ -1,0 +1,6 @@
+[package]
+name = "lp-modeler"
+version = "0.1.0"
+authors = ["godsend <jcavat@gmail.com>"]
+
+[dependencies]
