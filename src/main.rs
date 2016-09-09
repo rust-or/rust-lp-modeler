@@ -13,7 +13,7 @@ fn main() {
 
 
 //    let l1 = LpVariable::new("l1".to_string(), Category::Binary);
-    println!("{:?}", b);
+    println!("{:?}", b + b);
 
     //println!("{:?}", b + c);
 }
