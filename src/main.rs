@@ -6,6 +6,7 @@ use lp_modeler::problem::*;
 fn main() {
 
     let b = LpVariable::new("toto", LpType::Binary);
+    let c = LpVariable::new("toto", LpType::Binary);
     //let c = ContinuousVariable::new("t");
     //let c1 = ContinuousVariable::new("t");
 
@@ -13,7 +14,9 @@ fn main() {
 
 
 //    let l1 = LpVariable::new("l1".to_string(), Category::Binary);
-    println!("{:?}", b + b);
+    let d = b + c;
+    println!("{:?}", d);
+    println!("{:?}", b);
 
     //println!("{:?}", b + c);
 }

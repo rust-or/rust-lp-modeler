@@ -6,29 +6,29 @@ pub enum LpType {
     Continuous
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum LpVariable {
     BinaryVariable {
-        name: String,
+        name: &'static str,
     },
     IntegerVariable {
-        name: String,
+        name: &'static str,
         lower_bound: Option<i32>,
         upper_bound: Option<i32>,
     },
     ContinuousVariable {
-        name: String,
+        name: &'static str,
         lower_bound: Option<i32>,
         upper_bound: Option<i32>,
     }
 }
 
 impl LpVariable {
-    pub fn new(name: &str, var_type: LpType) -> LpVariable {
+    pub fn new(name: &'static str, var_type: LpType) -> LpVariable {
         match var_type {
-            LpType::Binary => LpVariable::BinaryVariable { name: name.to_string() },
-            LpType::Integer => LpVariable::IntegerVariable { name: name.to_string(), lower_bound: None, upper_bound: None },
-            LpType::Continuous => LpVariable::ContinuousVariable { name: name.to_string(), lower_bound: None, upper_bound: None }
+            LpType::Binary => LpVariable::BinaryVariable { name: name },
+            LpType::Integer => LpVariable::IntegerVariable { name: name, lower_bound: None, upper_bound: None },
+            LpType::Continuous => LpVariable::ContinuousVariable { name: name, lower_bound: None, upper_bound: None }
 
         }
     }
@@ -83,6 +83,6 @@ impl Add for LpVariable {
     type Output = LpVariable;
     fn add(self, _rhs: LpVariable) -> LpVariable {
         println!("Adding!");
-        self
+        LpVariable::BinaryVariable { name: "coucou" }
     }
 }
