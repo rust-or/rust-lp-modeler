@@ -1,4 +1,5 @@
-use std::ops::Add;
+use std::ops::{Add, Mul};
+use num::Num;
 
 pub enum LpType {
     Binary,
@@ -74,8 +75,10 @@ impl LpVariable {
     }
 }
 
-enum LpExpression {
+#[derive(Debug)]
+pub enum LpExpression {
     LpElement,
+    MulExpr(i32, LpVariable),
     Expr(Box<LpExpression>)
 }
 
@@ -84,5 +87,12 @@ impl Add for LpVariable {
     fn add(self, _rhs: LpVariable) -> LpVariable {
         println!("Adding!");
         LpVariable::BinaryVariable { name: "coucou" }
+    }
+}
+
+impl Mul<LpVariable> for i32 {
+    type Output = LpExpression;
+    fn mul(self, _rhs: LpVariable) -> LpExpression {
+        LpExpression::MulExpr(self, _rhs)
     }
 }

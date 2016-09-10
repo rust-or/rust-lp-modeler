@@ -17,6 +17,8 @@ fn main() {
     let d = b + c;
     println!("{:?}", d);
     println!("{:?}", b);
+    println!("{:?}", 2 * b);
+    //println!("{:?}", b * 3);
 
     //println!("{:?}", b + c);
 }
