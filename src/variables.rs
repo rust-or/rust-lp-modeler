@@ -36,17 +36,17 @@ impl LpVariable {
         match self {
             &LpVariable::BinaryVariable { name: ref n } =>
                 LpVariable::BinaryVariable {
-                    name: n.clone()
+                    name: n
                 },
             &LpVariable::IntegerVariable { name: ref n, lower_bound: _, upper_bound: u } =>
                 LpVariable::IntegerVariable {
-                    name: n.clone(),
+                    name: n,
                     lower_bound: Some(lw),
                     upper_bound: u
                 },
             &LpVariable::ContinuousVariable { name: ref n, lower_bound: _, upper_bound: u } =>
                 LpVariable::ContinuousVariable {
-                    name: n.clone(),
+                    name: n,
                     lower_bound: Some(lw),
                     upper_bound: u
                 }
