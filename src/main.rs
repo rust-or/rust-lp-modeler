@@ -26,6 +26,8 @@ fn main() {
     p += (b + c).gt(b);
     println!("{:?}", p);
 
+    p += b ;
+    println!("{:?}", p);
 
     //TODO: With solver: check names of variables (unique)
 }

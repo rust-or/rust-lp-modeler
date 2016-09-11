@@ -1,4 +1,6 @@
 use variables::*;
+
+use variables::LpExpression::{AddExpr, MulExpr};
 use std::ops::{AddAssign};
 
 use std::collections::HashMap;
@@ -27,5 +29,17 @@ impl LpProblem {
 impl AddAssign<LpConstraint> for LpProblem {
     fn add_assign(&mut self, _rhs: LpConstraint) {
         self.constraints.push(_rhs);
+    }
+}
+
+impl AddAssign<LpExpression> for LpProblem {
+    fn add_assign(&mut self, _rhs: LpExpression) {
+        self.obj_expr = Some(_rhs);
+    }
+}
+
+impl AddAssign<LpVariable> for LpProblem {
+    fn add_assign(&mut self, _rhs: LpVariable) {
+        self.obj_expr = Some(MulExpr(1, _rhs));
     }
 }
