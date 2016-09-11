@@ -17,8 +17,15 @@ fn main() {
     println!("{:?}", b + c);
     println!("{:?}", 2 * b + c + c);
     println!("{:?}", 2 * b + 2 * c);
-    println!("{:?}", 2 * b + 2 * c + 3 * b);
-    //println!("{:?}", b * 3);
+    println!("{:?}", (2 * b + 2 * c + 3 * b).gt(b + c));
+    println!("{:?}", (2 * b).gt(b));
+    println!("{:?}", c.gt(b));
+    println!("{:?}", c.eq(2 * b));
 
-    //println!("{:?}", b + c);
+    let mut p = LpProblem::new("Coucou", Objective::Maximize);
+    p += (b + c).gt(b);
+    println!("{:?}", p);
+
+
+    //TODO: With solver: check names of variables (unique)
 }
