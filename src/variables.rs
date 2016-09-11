@@ -1,5 +1,6 @@
 use std::ops::{Add, Mul};
-use num::Num;
+use std::collections::HashMap;
+use self::LpExpression::{AddExpr, MulExpr};
 
 pub enum LpType {
     Binary,
@@ -77,22 +78,66 @@ impl LpVariable {
 
 #[derive(Debug)]
 pub enum LpExpression {
-    LpElement,
     MulExpr(i32, LpVariable),
-    Expr(Box<LpExpression>)
+    AddExpr(Vec<LpExpression>)
 }
 
-impl Add for LpVariable {
-    type Output = LpVariable;
-    fn add(self, _rhs: LpVariable) -> LpVariable {
-        println!("Adding!");
-        LpVariable::BinaryVariable { name: "coucou" }
-    }
-}
-
+// i32 * LpVar
 impl Mul<LpVariable> for i32 {
     type Output = LpExpression;
     fn mul(self, _rhs: LpVariable) -> LpExpression {
         LpExpression::MulExpr(self, _rhs)
+    }
+}
+
+// LpVar + LpVar
+impl Add for LpVariable {
+    type Output = LpExpression;
+    fn add(self, _rhs: LpVariable) -> LpExpression {
+        let mut v = Vec::new();
+        v.push(MulExpr(1, self));
+        v.push(MulExpr(1, _rhs));
+        AddExpr(v)
+    }
+}
+
+// LpExpr + LpVar
+impl Add<LpVariable> for LpExpression {
+    type Output = LpExpression;
+    fn add(self, _rhs: LpVariable) -> LpExpression {
+        match self {
+            AddExpr(mut v) =>
+                {
+                    v.push(MulExpr(1, _rhs));
+                    AddExpr(v)
+                },
+            MulExpr(_, _) =>
+                {
+                    let mut v = Vec::new();
+                    v.push(self);
+                    v.push(MulExpr(1, _rhs));
+                    AddExpr(v)
+                }
+        }
+    }
+}
+
+impl Add for LpExpression {
+    type Output = LpExpression;
+    fn add(self, _rhs: LpExpression) -> LpExpression {
+        match self {
+            AddExpr(mut v) =>
+                {
+                    v.push(_rhs);
+                    AddExpr(v)
+                },
+            MulExpr(_, _) =>
+                {
+                    let mut v = Vec::new();
+                    v.push(self);
+                    v.push(_rhs);
+                    AddExpr(v)
+                }
+        }
     }
 }

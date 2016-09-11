@@ -14,10 +14,10 @@ fn main() {
 
 
 //    let l1 = LpVariable::new("l1".to_string(), Category::Binary);
-    let d = b + c;
-    println!("{:?}", d);
-    println!("{:?}", b);
-    println!("{:?}", 2 * b);
+    println!("{:?}", b + c);
+    println!("{:?}", 2 * b + c + c);
+    println!("{:?}", 2 * b + 2 * c);
+    println!("{:?}", 2 * b + 2 * c + 3 * b);
     //println!("{:?}", b * 3);
 
     //println!("{:?}", b + c);
