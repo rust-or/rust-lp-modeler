@@ -1,5 +1,6 @@
 use std::ops::{Add, Mul};
 use self::LpExpression::*;
+use std::convert::Into;
 
 pub enum LpType {
     Binary,
@@ -7,14 +8,6 @@ pub enum LpType {
     Continuous
 }
 
-/*
- enum Expr {
-    LpVar,
-    Mul(i32, Box<LpVar>),
-    Vec<LpVar>
-
- }
-*/
 #[derive(Debug, Clone, Copy)]
 pub enum LpVariable {
     BinaryVariable {
@@ -91,10 +84,12 @@ impl LpVariable {
 pub enum LpExpression {
     MulExpr(i32, LpVariable),
     AddExpr(Box<LpExpression>, Box<LpExpression>),
+    LitVar(LpVariable),
+    LitVal(i32),
     EmptyExpr
 }
 
-pub trait LpOperations<T> {
+pub trait LpOperations<T> where T: Into<LpExpression> {
     fn lt(&self, lhs_expr: T) -> LpConstraint;
     fn le(&self, lhs_expr: T) -> LpConstraint;
     fn gt(&self, lhs_expr: T) -> LpConstraint;
@@ -102,81 +97,36 @@ pub trait LpOperations<T> {
     fn eq(&self, lhs_expr: T) -> LpConstraint;
 }
 
-// <LpExr> op <LpExpr>
-impl LpOperations<LpExpression> for LpExpression {
-    fn lt(&self, lhs_expr: LpExpression) -> LpConstraint {
-        LpConstraint(self.clone(), Constraint::Less, lhs_expr)
+impl Into<LpExpression> for i32 {
+    fn into(self) -> LpExpression {
+        LitVal(self)
     }
-    fn le(&self, lhs_expr: LpExpression) -> LpConstraint {
-        LpConstraint(self.clone(), Constraint::LessOrEqual, lhs_expr)
-    }
-    fn gt(&self, lhs_expr: LpExpression) -> LpConstraint {
-        LpConstraint(self.clone(), Constraint::Greater, lhs_expr)
-    }
-    fn ge(&self, lhs_expr: LpExpression) -> LpConstraint {
-        LpConstraint(self.clone(), Constraint::GreaterOrEqual, lhs_expr)
-    }
-    fn eq( &self, lhs_expr: LpExpression) -> LpConstraint {
-        LpConstraint(self.clone(), Constraint::Equal, lhs_expr)
+}
+impl Into<LpExpression> for LpVariable {
+    fn into(self) -> LpExpression {
+        MulExpr(1, self)
     }
 }
 
-// <LpExr> op <LpVar>
-impl LpOperations<LpVariable> for LpExpression {
-    fn lt(&self, lhs_expr: LpVariable) -> LpConstraint {
-        LpConstraint(self.clone(), Constraint::Less, MulExpr(1, lhs_expr))
+// <LpExr> op <LpExpr> where LpExpr is implicit
+impl<T: Into<LpExpression>, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
+    fn lt(&self, lhs_expr: T) -> LpConstraint {
+        LpConstraint(self.clone().into(), Constraint::Less, lhs_expr.into())
     }
-    fn le(&self, lhs_expr: LpVariable) -> LpConstraint {
-        LpConstraint(self.clone(), Constraint::LessOrEqual, MulExpr(1, lhs_expr))
+    fn le(&self, lhs_expr: T) -> LpConstraint {
+        LpConstraint(self.clone().into(), Constraint::LessOrEqual, lhs_expr.into())
     }
-    fn gt(&self, lhs_expr: LpVariable) -> LpConstraint {
-        LpConstraint(self.clone(), Constraint::Greater, MulExpr(1, lhs_expr))
+    fn gt(&self, lhs_expr: T) -> LpConstraint {
+        LpConstraint(self.clone().into(), Constraint::Greater, lhs_expr.into())
     }
-    fn ge(&self, lhs_expr: LpVariable) -> LpConstraint {
-        LpConstraint(self.clone(), Constraint::GreaterOrEqual, MulExpr(1, lhs_expr))
+    fn ge(&self, lhs_expr: T) -> LpConstraint {
+        LpConstraint(self.clone().into(), Constraint::GreaterOrEqual, lhs_expr.into())
     }
-    fn eq( &self, lhs_expr: LpVariable) -> LpConstraint {
-        LpConstraint(self.clone(), Constraint::Equal, MulExpr(1, lhs_expr))
-    }
-}
-
-// <LpVar> op <LpVar>
-impl LpOperations<LpVariable> for LpVariable {
-    fn lt(&self, lhs_expr: LpVariable) -> LpConstraint {
-        LpConstraint(MulExpr(1, self.clone()), Constraint::Less, MulExpr(1, lhs_expr))
-    }
-    fn le(&self, lhs_expr: LpVariable) -> LpConstraint {
-        LpConstraint(MulExpr(1, self.clone()), Constraint::LessOrEqual, MulExpr(1, lhs_expr))
-    }
-    fn gt(&self, lhs_expr: LpVariable) -> LpConstraint {
-        LpConstraint(MulExpr(1, self.clone()), Constraint::Greater, MulExpr(1, lhs_expr))
-    }
-    fn ge(&self, lhs_expr: LpVariable) -> LpConstraint {
-        LpConstraint(MulExpr(1, self.clone()), Constraint::GreaterOrEqual, MulExpr(1, lhs_expr))
-    }
-    fn eq( &self, lhs_expr: LpVariable) -> LpConstraint {
-        LpConstraint(MulExpr(1, self.clone()), Constraint::Equal, MulExpr(1, lhs_expr))
+    fn eq( &self, lhs_expr: T) -> LpConstraint {
+        LpConstraint(self.clone().into(), Constraint::Equal, lhs_expr.into())
     }
 }
 
-// <LpVar> op <LpExpr>
-impl LpOperations<LpExpression> for LpVariable {
-    fn lt(&self, lhs_expr: LpExpression) -> LpConstraint {
-        LpConstraint(MulExpr(1, self.clone()), Constraint::Less, lhs_expr)
-    }
-    fn le(&self, lhs_expr: LpExpression) -> LpConstraint {
-        LpConstraint(MulExpr(1, self.clone()), Constraint::LessOrEqual, lhs_expr)
-    }
-    fn gt(&self, lhs_expr: LpExpression) -> LpConstraint {
-        LpConstraint(MulExpr(1, self.clone()), Constraint::Greater, lhs_expr)
-    }
-    fn ge(&self, lhs_expr: LpExpression) -> LpConstraint {
-        LpConstraint(MulExpr(1, self.clone()), Constraint::GreaterOrEqual, lhs_expr)
-    }
-    fn eq( &self, lhs_expr: LpExpression) -> LpConstraint {
-        LpConstraint(MulExpr(1, self.clone()), Constraint::Equal, lhs_expr)
-    }
-}
 
 // i32 * LpVar
 impl Mul<LpVariable> for i32 {
