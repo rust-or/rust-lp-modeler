@@ -128,11 +128,12 @@ impl<T: Into<LpExpression>, U> LpOperations<T> for U where U: Into<LpExpression>
 }
 
 
-// i32 * LpVar
-impl Mul<LpVariable> for i32 {
+// LpExpr + LpExpr
+// LpExpr + LpVar
+impl<T> Add<T> for LpExpression where T: Into<LpExpression> {
     type Output = LpExpression;
-    fn mul(self, _rhs: LpVariable) -> LpExpression {
-        LpExpression::MulExpr(self, _rhs)
+    fn add(self, _rhs: T) -> LpExpression {
+        AddExpr(Box::new(self), Box::new(_rhs.into()))
     }
 }
 
@@ -144,21 +145,15 @@ impl Add for LpVariable {
     }
 }
 
-// LpExpr + LpVar
-impl Add<LpVariable> for LpExpression {
+// i32 * LpVar
+impl Mul<LpVariable> for i32 {
     type Output = LpExpression;
-    fn add(self, _rhs: LpVariable) -> LpExpression {
-             AddExpr(Box::new(self), Box::new(MulExpr(1, _rhs)))
+    fn mul(self, _rhs: LpVariable) -> LpExpression {
+        LpExpression::MulExpr(self, _rhs)
     }
 }
 
-// LpExpr + LpExpr
-impl Add for LpExpression {
-    type Output = LpExpression;
-    fn add(self, _rhs: LpExpression) -> LpExpression {
-        AddExpr(Box::new(self), Box::new(_rhs))
-    }
-}
+
 pub fn lpSum(expr: &Vec<LpVariable>) -> LpExpression {
 
     let mut expr = expr.clone();

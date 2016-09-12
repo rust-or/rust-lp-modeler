@@ -17,6 +17,7 @@ fn main() {
     println!("{:?}", b + c);
     println!("{:?}", 2 * b + c + c);
     println!("{:?}", 2 * b + 2 * c);
+    println!("*{:?}", 2 * b + 2);
     println!("{:?}", (2 * b + 2 * c + 3 * b).gt(b + c));
 
     println!("{:?}", (2 * b).gt(b));
