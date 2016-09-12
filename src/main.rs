@@ -29,5 +29,11 @@ fn main() {
     p += b ;
     println!("{:?}", p);
 
+    // in python with pulp : lpSum([x for x in collections]) > 12
+    let c = vec!([b, c]);
+    p += lpSum(c) > 1;
+    p += 2 * lpSum(c) > 1;
+    p += lpSum(2 * c) > 1;
+
     //TODO: With solver: check names of variables (unique)
 }

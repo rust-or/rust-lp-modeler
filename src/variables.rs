@@ -7,6 +7,14 @@ pub enum LpType {
     Continuous
 }
 
+/*
+ enum Expr {
+    LpVar,
+    Mul(i32, Box<LpVar>),
+    Vec<LpVar>
+
+ }
+*/
 #[derive(Debug, Clone, Copy)]
 pub enum LpVariable {
     BinaryVariable {
@@ -229,7 +237,7 @@ impl Add for LpExpression {
     }
 }
 
-
+pub fn lpSum(expr: Vec<)
 
 
 
