@@ -1,5 +1,5 @@
 use std::ops::{Add, Mul};
-use self::LpExpression::{AddExpr, MulExpr};
+use self::LpExpression::*;
 
 pub enum LpType {
     Binary,
@@ -90,7 +90,8 @@ impl LpVariable {
 #[derive(Debug, Clone)]
 pub enum LpExpression {
     MulExpr(i32, LpVariable),
-    AddExpr(Vec<LpExpression>)
+    AddExpr(Box<LpExpression>, Box<LpExpression>),
+    EmptyExpr
 }
 
 pub trait LpOperations<T> {
@@ -189,10 +190,7 @@ impl Mul<LpVariable> for i32 {
 impl Add for LpVariable {
     type Output = LpExpression;
     fn add(self, _rhs: LpVariable) -> LpExpression {
-        let mut v = Vec::new();
-        v.push(MulExpr(1, self));
-        v.push(MulExpr(1, _rhs));
-        AddExpr(v)
+        AddExpr(Box::new(MulExpr(1, self)), Box::new(MulExpr(1, _rhs)))
     }
 }
 
@@ -200,44 +198,31 @@ impl Add for LpVariable {
 impl Add<LpVariable> for LpExpression {
     type Output = LpExpression;
     fn add(self, _rhs: LpVariable) -> LpExpression {
-        match self {
-            AddExpr(mut v) =>
-                {
-                    v.push(MulExpr(1, _rhs));
-                    AddExpr(v)
-                },
-            MulExpr(_, _) =>
-                {
-                    let mut v = Vec::new();
-                    v.push(self);
-                    v.push(MulExpr(1, _rhs));
-                    AddExpr(v)
-                }
-        }
+             AddExpr(Box::new(self), Box::new(MulExpr(1, _rhs)))
     }
 }
 
+// LpExpr + LpExpr
 impl Add for LpExpression {
     type Output = LpExpression;
     fn add(self, _rhs: LpExpression) -> LpExpression {
-        match self {
-            AddExpr(mut v) =>
-                {
-                    v.push(_rhs);
-                    AddExpr(v)
-                },
-            MulExpr(_, _) =>
-                {
-                    let mut v = Vec::new();
-                    v.push(self);
-                    v.push(_rhs);
-                    AddExpr(v)
-                }
-        }
+        AddExpr(Box::new(self), Box::new(_rhs))
     }
 }
+pub fn lpSum(expr: &Vec<LpVariable>) -> LpExpression {
 
-pub fn lpSum(expr: Vec<)
+    let mut expr = expr.clone();
+
+    if let Some(e1) = expr.pop() {
+        if let Some(e2) = expr.pop() {
+            AddExpr(Box::new(AddExpr(Box::new(MulExpr(1, e1)), Box::new(MulExpr(1, e2)))), Box::new(lpSum(&expr)))
+        } else {
+            MulExpr(1, e1)
+        }
+    }else {
+        EmptyExpr
+    }
+}
 
 
 
