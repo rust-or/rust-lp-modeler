@@ -5,53 +5,61 @@ use lp_modeler::problem::*;
 
 fn main() {
 
-    let ref b = LpVariable::new("toto", LpType::Binary);
-    let ref c = LpVariable::new("toto", LpType::Binary);
+    let ref a = LpVariable::new("a", LpType::Integer)
+        .lower_bound(10)
+        .upper_bound(20);
+    let ref b = LpVariable::new("b", LpType::Integer);
+    let ref c = LpVariable::new("c", LpType::Integer);
+    let ref d = LpVariable::new("d", LpType::Integer);
 
-    println!("{:?}", b + c);
+    println!("{:?}", a + b);
     println!("{:?}", 2 * c);
-    println!("{:?}", 2 * b + c);
-    println!("{:?}", 2 * b + 2 * c);
-    println!("*{:?}", 2 * b + 2);
-    println!("*{:?}", 2 + b);
-    println!("*{:?}", b + 2);
-    println!("*{:?}", 2 * (b + c));
+    println!("{:?}", 2 * a + b);
+    println!("{:?}", 2 * d + 2 * b);
+    println!("*{:?}", 2 * a + 2);
+    println!("*{:?}", 2 + d);
+    println!("*{:?}", a + 2);
+    println!("*{:?}", 2 * (a + b));
 
-    println!("{:?}", (2 * b).gt(b));
-    println!("{:?}", (2 * b + 2 * c + 3 * b).gt(b + c));
+    println!("{:?}", (2 * a).gt(d));
+    println!("{:?}",  a.gt(d));
+    println!("{:?}", (2 * a + 2 * d + 3 * a).gt(a + b));
 
-    println!("{:?}", c.gt(b));
-    println!("-{:?}", c.gt(3));
-    println!("{:?}", c.eq(2 * b));
-    println!("{:?}", (b + c).eq(b));
+    println!("{:?}", b.gt(a));
+    println!("-{:?}", b.gt(3));
+    println!("{:?}", b.eq(2 * a));
+    println!("{:?}", (a + b).eq(a));
 
-    let ref expr = c + b;
+    let ref expr = b + a;
     let ref e2 = expr + expr;
     let e3 = e2 + expr;
     println!("** {:?}", expr);
     println!("** {:?}", e3);
-    let mut p = LpProblem::new("Coucou", Objective::Maximize);
-    p += (b + c).gt(b);
-    println!("{:?}", p);
+    let mut problem = LpProblem::new("Coucou", Objective::Maximize);
+    problem += (a + b).gt(a);
+    println!("{:?}", problem);
 
-    p += b + 2 ;
-    p += b ;
-    println!("{:?}", p);
+    problem += a + 2 ;
+    problem += a;
+    println!("{:?}", problem);
 
     // in python with pulp : lp_sum([x for x in collections]) > 12
     let ref c = vec!(b, c);
-    p += lp_sum(c).gt(b);
+    problem += lp_sum(c).gt(a);
     let ref c = vec!(b + 2);
-    p += lp_sum(c).gt(b);
-    /*
-    p += lp_sum(b).gt(b);
-    //p += 2 * lp_sum(c) > 1;
-    //p += lp_sum(2 * c) > 1;
+    problem += lp_sum(c).gt(a);
     println!("\n\n\n");
-    println!("{:?}", lp_sum(&c).gt(b));
+    println!("{:?}", lp_sum(c).gt(a));
     println!("\n\n\n");
-    println!("{:?}", p);
-    */
+    println!("{:?}", problem);
+
+    problem.solve();
+    problem.variables();
+
+    problem.write_lp();
+
+    //let z = a.clone();
+    //println!("{}", z == a);
 
 
     //TODO: With solver: check names of variables (unique)

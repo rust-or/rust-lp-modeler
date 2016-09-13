@@ -1,10 +1,25 @@
+/// # Module variables
+
 use std::ops::{Add, Mul};
 use self::LpExpression::*;
 use std::convert::Into;
 
+/// Type of variables. Using to initialize a linear programming variable
+///
+/// # Exemples
+///
+/// ```
+/// let ref a1 = LpVariable::new("a1", LpType::Integer)
+///     .lower_bound(10)
+///     .upper_bound(20);
+///
+/// ```
 pub enum LpType {
+    /// Binary variable
     Binary,
+    /// Integer variable
     Integer,
+    /// Reel variable
     Continuous
 }
 
@@ -31,6 +46,18 @@ pub enum LpExpression {
 
 pub struct LpVariable;
 
+#[derive(Debug)]
+pub enum Constraint {
+    Greater,
+    Less,
+    GreaterOrEqual,
+    LessOrEqual,
+    Equal
+}
+
+#[derive(Debug)]
+pub struct LpConstraint(pub LpExpression, pub Constraint, pub LpExpression);
+
 impl LpVariable {
     pub fn new(name: &'static str, var_type: LpType) -> LpExpression {
         match var_type {
@@ -43,7 +70,7 @@ impl LpVariable {
 
 #[allow(dead_code)]
 impl LpExpression {
-    fn lower_bound(&self, lw: i32) -> LpExpression {
+    pub fn lower_bound(&self, lw: i32) -> LpExpression {
         match self {
             &BinaryVariable { name: ref n } =>
                 BinaryVariable {
@@ -61,10 +88,10 @@ impl LpExpression {
                     lower_bound: Some(lw),
                     upper_bound: u
                 },
-            _ => EmptyExpr
+            _ => self.clone()
         }
     }
-    fn upper_bound(&self, up: i32) -> LpExpression {
+    pub fn upper_bound(&self, up: i32) -> LpExpression {
         match self {
             &BinaryVariable { name: ref n } =>
                 BinaryVariable {
@@ -82,7 +109,7 @@ impl LpExpression {
                     lower_bound: l,
                     upper_bound: Some(up)
                 },
-            _ => EmptyExpr
+            _ => self.clone()
         }
     }
 }
@@ -169,6 +196,20 @@ impl<'a> Mul<&'a LpExpression> for i32 {
     }
 }
 
+/// make a complet expression or a constraint with a vector of expressions
+///
+/// # Exemples
+///
+/// ```
+/// let mut problem = LpProblem::new("My Problem", Objective::Maximize);
+///
+/// let ref a = LpVariable::new("a", LpType::Binary);
+/// let ref b = LpVariable::new("b", LpType::Binary);
+///
+/// let ref c = vec!(2 * a, b, c);
+/// problem += lp_sum(c).eq(1);
+///
+/// ```
 pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression where T : Into<LpExpression> + Clone {
     let mut expr = expr.clone();
 
@@ -185,20 +226,6 @@ pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression where T : Into<LpExpression> + C
 
 
 
-#[derive(Debug)]
-pub enum Constraint {
-    Greater,
-    Less,
-    GreaterOrEqual,
-    LessOrEqual,
-    Equal
-}
-
-#[derive(Debug)]
-pub struct LpConstraint(LpExpression, Constraint, LpExpression);
-
-impl LpConstraint{
-}
 
 
 
