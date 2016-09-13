@@ -85,21 +85,6 @@ impl LpExpression {
     }
 }
 
-
-
-
-
-/*
-#[derive(Debug, Clone)]
-pub enum LpExpression {
-    MulExpr(i32, LpVariable),
-    AddExpr(Box<LpExpression>, Box<LpExpression>),
-    LitVar(LpVariable),
-    LitVal(i32),
-    EmptyExpr
-}
-*/
-
 pub trait LpOperations<T> where T: Into<LpExpression> {
     fn lt(&self, lhs_expr: T) -> LpConstraint;
     fn le(&self, lhs_expr: T) -> LpConstraint;
@@ -113,13 +98,12 @@ impl Into<LpExpression> for i32 {
         LitVal(self)
     }
 }
-/*
-impl Into<LpExpression> for LpVariable {
+
+impl<'a> Into<LpExpression> for &'a LpExpression {
     fn into(self) -> LpExpression {
-        MulExpr(1, self)
+        self.clone()
     }
 }
-*/
 
 // <LpExr> op <LpExpr> where LpExpr is implicit
 impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
@@ -206,15 +190,14 @@ impl<'a> Mul<&'a LpExpression> for i32 {
     }
 }
 
-pub fn lp_sum(expr: &Vec<LpExpression>) -> LpExpression {
-
+pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression where T : Into<LpExpression> + Clone {
     let mut expr = expr.clone();
 
     if let Some(e1) = expr.pop() {
         if let Some(e2) = expr.pop() {
-            AddExpr(Box::new(AddExpr(Box::new(MulExpr(1, Box::new(e1))), Box::new(MulExpr(1, Box::new(e2))))), Box::new(lp_sum(&expr)))
+            AddExpr(Box::new(AddExpr(Box::new(MulExpr(1, Box::new(e1.into()))), Box::new(MulExpr(1, Box::new(e2.into()))))), Box::new(lp_sum(&expr)))
         } else {
-            MulExpr(1, Box::new(e1))
+            MulExpr(1, Box::new(e1.into()))
         }
     }else {
         EmptyExpr

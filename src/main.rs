@@ -7,13 +7,7 @@ fn main() {
 
     let ref b = LpVariable::new("toto", LpType::Binary);
     let ref c = LpVariable::new("toto", LpType::Binary);
-    //let c = ContinuousVariable::new("t");
-    //let c1 = ContinuousVariable::new("t");
 
-    //let prob = LpProblem::new("p1", Objective::Maximize);
-
-
-//    let l1 = LpVariable::new("l1".to_string(), Category::Binary);
     println!("{:?}", b + c);
     println!("{:?}", 2 * c);
     println!("{:?}", 2 * b + c);
@@ -22,7 +16,7 @@ fn main() {
     println!("*{:?}", 2 + b);
     println!("*{:?}", b + 2);
     println!("*{:?}", 2 * (b + c));
-    /*
+
     println!("{:?}", (2 * b).gt(b));
     println!("{:?}", (2 * b + 2 * c + 3 * b).gt(b + c));
 
@@ -36,18 +30,21 @@ fn main() {
     let e3 = e2 + expr;
     println!("** {:?}", expr);
     println!("** {:?}", e3);
-    */
-    /*
     let mut p = LpProblem::new("Coucou", Objective::Maximize);
     p += (b + c).gt(b);
     println!("{:?}", p);
 
+    p += b + 2 ;
     p += b ;
     println!("{:?}", p);
 
     // in python with pulp : lp_sum([x for x in collections]) > 12
     let ref c = vec!(b, c);
     p += lp_sum(c).gt(b);
+    let ref c = vec!(b + 2);
+    p += lp_sum(c).gt(b);
+    /*
+    p += lp_sum(b).gt(b);
     //p += 2 * lp_sum(c) > 1;
     //p += lp_sum(2 * c) > 1;
     println!("\n\n\n");

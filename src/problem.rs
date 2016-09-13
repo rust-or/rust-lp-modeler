@@ -1,4 +1,3 @@
-/*
 use variables::*;
 
 use variables::LpExpression::{AddExpr, MulExpr};
@@ -39,8 +38,14 @@ impl AddAssign<LpExpression> for LpProblem {
     }
 }
 
-impl AddAssign<LpVariable> for LpProblem {
-    fn add_assign(&mut self, _rhs: LpVariable) {
+impl<'a> AddAssign<&'a LpExpression> for LpProblem {
+    fn add_assign(&mut self, _rhs: &'a LpExpression) {
+        self.obj_expr = Some(_rhs.clone());
+    }
+}
+/*
+impl AddAssign<LpExpression> for LpProblem {
+    fn add_assign(&mut self, _rhs: LpExpression) {
         self.obj_expr = Some(MulExpr(1, _rhs));
     }
 }
