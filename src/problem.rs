@@ -5,6 +5,7 @@ use std::ops::{AddAssign};
 
 use std::collections::HashMap;
 
+/*
 #[derive(Debug)]
 pub enum Objective {
     Minimize,
@@ -43,3 +44,4 @@ impl AddAssign<LpVariable> for LpProblem {
         self.obj_expr = Some(MulExpr(1, _rhs));
     }
 }
+*/

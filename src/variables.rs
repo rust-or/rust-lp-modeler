@@ -8,8 +8,8 @@ pub enum LpType {
     Continuous
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum LpVariable {
+#[derive(Debug, Clone)]
+pub enum LpExpression {
     BinaryVariable {
         name: &'static str,
     },
@@ -22,56 +22,65 @@ pub enum LpVariable {
         name: &'static str,
         lower_bound: Option<i32>,
         upper_bound: Option<i32>,
-    }
+    },
+    MulExpr(i32, Box<LpExpression>),
+    AddExpr(Box<LpExpression>, Box<LpExpression>),
+    LitVal(i32),
+    EmptyExpr
 }
+
+pub struct LpVariable;
 
 impl LpVariable {
-    pub fn new(name: &'static str, var_type: LpType) -> LpVariable {
+    pub fn new(name: &'static str, var_type: LpType) -> LpExpression {
         match var_type {
-            LpType::Binary => LpVariable::BinaryVariable { name: name },
-            LpType::Integer => LpVariable::IntegerVariable { name: name, lower_bound: None, upper_bound: None },
-            LpType::Continuous => LpVariable::ContinuousVariable { name: name, lower_bound: None, upper_bound: None }
-
+            LpType::Binary => BinaryVariable { name: name },
+            LpType::Integer => IntegerVariable { name: name, lower_bound: None, upper_bound: None },
+            LpType::Continuous => ContinuousVariable { name: name, lower_bound: None, upper_bound: None }
         }
     }
-    fn lower_bound(&self, lw: i32) -> LpVariable {
+}
+impl LpExpression {
+    fn lower_bound(&self, lw: i32) -> LpExpression {
         match self {
-            &LpVariable::BinaryVariable { name: ref n } =>
-                LpVariable::BinaryVariable {
+            &BinaryVariable { name: ref n } =>
+                BinaryVariable {
                     name: n
                 },
-            &LpVariable::IntegerVariable { name: ref n, lower_bound: _, upper_bound: u } =>
-                LpVariable::IntegerVariable {
+            &IntegerVariable { name: ref n, lower_bound: _, upper_bound: u } =>
+                IntegerVariable {
                     name: n,
                     lower_bound: Some(lw),
                     upper_bound: u
                 },
-            &LpVariable::ContinuousVariable { name: ref n, lower_bound: _, upper_bound: u } =>
-                LpVariable::ContinuousVariable {
+            &ContinuousVariable { name: ref n, lower_bound: _, upper_bound: u } =>
+                ContinuousVariable {
                     name: n,
                     lower_bound: Some(lw),
                     upper_bound: u
-                }
+                },
+            _ => EmptyExpr
         }
     }
-    fn upper_bound(&self, up: i32) -> LpVariable {
+    fn upper_bound(&self, up: i32) -> LpExpression {
         match self {
-            &LpVariable::BinaryVariable { name: ref n } =>
-                LpVariable::BinaryVariable {
+            &BinaryVariable { name: ref n } =>
+                BinaryVariable {
                     name: n.clone()
                 },
-            &LpVariable::IntegerVariable { name: ref n, lower_bound: l, upper_bound: _ } =>
-                LpVariable::IntegerVariable {
+            &IntegerVariable { name: ref n, lower_bound: l, upper_bound: _ } =>
+                IntegerVariable {
                     name: n.clone(),
                     lower_bound: l,
                     upper_bound: Some(up)
                 },
-            &LpVariable::ContinuousVariable { name: ref n, lower_bound: l, upper_bound: _ } =>
-                LpVariable::ContinuousVariable {
+            &ContinuousVariable { name: ref n, lower_bound: l, upper_bound: _ } =>
+                ContinuousVariable {
                     name: n.clone(),
                     lower_bound: l,
                     upper_bound: Some(up)
-                }
+                },
+            _ => EmptyExpr
         }
     }
 }
@@ -80,6 +89,7 @@ impl LpVariable {
 
 
 
+/*
 #[derive(Debug, Clone)]
 pub enum LpExpression {
     MulExpr(i32, LpVariable),
@@ -88,6 +98,7 @@ pub enum LpExpression {
     LitVal(i32),
     EmptyExpr
 }
+*/
 
 pub trait LpOperations<T> where T: Into<LpExpression> {
     fn lt(&self, lhs_expr: T) -> LpConstraint;
@@ -102,11 +113,13 @@ impl Into<LpExpression> for i32 {
         LitVal(self)
     }
 }
+/*
 impl Into<LpExpression> for LpVariable {
     fn into(self) -> LpExpression {
         MulExpr(1, self)
     }
 }
+*/
 
 // <LpExr> op <LpExpr> where LpExpr is implicit
 impl<T: Into<LpExpression>, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
@@ -130,13 +143,14 @@ impl<T: Into<LpExpression>, U> LpOperations<T> for U where U: Into<LpExpression>
 
 // LpExpr + LpExpr
 // LpExpr + LpVar
-impl<T> Add<T> for LpExpression where T: Into<LpExpression> {
+impl Add for LpExpression {
     type Output = LpExpression;
-    fn add(self, _rhs: T) -> LpExpression {
+    fn add(self, _rhs: LpExpression) -> LpExpression {
         AddExpr(Box::new(self), Box::new(_rhs.into()))
     }
 }
 
+/*
 // LpVar + LpVar
 impl Add for LpVariable {
     type Output = LpExpression;
@@ -144,6 +158,7 @@ impl Add for LpVariable {
         AddExpr(Box::new(MulExpr(1, self)), Box::new(MulExpr(1, _rhs)))
     }
 }
+*/
 
 impl<'a> Add<&'a LpExpression> for &'a LpExpression {
     type Output = LpExpression;
@@ -153,24 +168,41 @@ impl<'a> Add<&'a LpExpression> for &'a LpExpression {
     }
 }
 
-// i32 * LpVar
-impl Mul<LpVariable> for i32 {
+/*
+impl<'a> Add<&'a LpExpression> for LpExpression {
     type Output = LpExpression;
-    fn mul(self, _rhs: LpVariable) -> LpExpression {
-        LpExpression::MulExpr(self, _rhs)
+
+    fn add(self, _rhs: &'a LpExpression) -> LpExpression {
+        AddExpr(Box::new(self.clone()), Box::new(_rhs.clone()))
+    }
+}
+*/
+
+// i32 * LpVar
+impl Mul<LpExpression> for i32 {
+    type Output = LpExpression;
+    fn mul(self, _rhs: LpExpression) -> LpExpression {
+        LpExpression::MulExpr(self, Box::new(_rhs))
     }
 }
 
+impl<'a> Mul<&'a LpExpression> for i32 {
+    type Output = LpExpression;
 
-pub fn lpSum(expr: &Vec<LpVariable>) -> LpExpression {
+    fn mul(self, _rhs: &LpExpression) -> LpExpression {
+        AddExpr(Box::new(LitVal(self)), Box::new(_rhs.clone()))
+    }
+}
+
+pub fn lpSum(expr: &Vec<LpExpression>) -> LpExpression {
 
     let mut expr = expr.clone();
 
     if let Some(e1) = expr.pop() {
         if let Some(e2) = expr.pop() {
-            AddExpr(Box::new(AddExpr(Box::new(MulExpr(1, e1)), Box::new(MulExpr(1, e2)))), Box::new(lpSum(&expr)))
+            AddExpr(Box::new(AddExpr(Box::new(MulExpr(1, Box::new(e1))), Box::new(MulExpr(1, Box::new(e2))))), Box::new(lpSum(&expr)))
         } else {
-            MulExpr(1, e1)
+            MulExpr(1, Box::new(e1))
         }
     }else {
         EmptyExpr

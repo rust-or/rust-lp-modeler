@@ -5,8 +5,8 @@ use lp_modeler::problem::*;
 
 fn main() {
 
-    let b = LpVariable::new("toto", LpType::Binary);
-    let c = LpVariable::new("toto", LpType::Binary);
+    let ref b = LpVariable::new("toto", LpType::Binary);
+    let ref c = LpVariable::new("toto", LpType::Binary);
     //let c = ContinuousVariable::new("t");
     //let c1 = ContinuousVariable::new("t");
 
@@ -15,8 +15,11 @@ fn main() {
 
 //    let l1 = LpVariable::new("l1".to_string(), Category::Binary);
     println!("{:?}", b + c);
-    println!("{:?}", 2 * b + c + c);
+    /*
+    println!("{:?}", 2 * b + c);
     println!("{:?}", 2 * b + 2 * c);
+    */
+    /*
     println!("*{:?}", 2 * b + 2);
     println!("{:?}", (2 * b + 2 * c + 3 * b).gt(b + c));
 
@@ -31,6 +34,8 @@ fn main() {
     let e3 = e2 + expr;
     println!("** {:?}", expr);
     println!("** {:?}", e3);
+    */
+    /*
     let mut p = LpProblem::new("Coucou", Objective::Maximize);
     p += (b + c).gt(b);
     println!("{:?}", p);
@@ -47,6 +52,7 @@ fn main() {
     println!("{:?}", lpSum(&c).gt(b));
     println!("\n\n\n");
     println!("{:?}", p);
+    */
 
 
     //TODO: With solver: check names of variables (unique)
