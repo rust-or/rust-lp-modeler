@@ -145,6 +145,14 @@ impl Add for LpVariable {
     }
 }
 
+impl<'a> Add<&'a LpExpression> for &'a LpExpression {
+    type Output = LpExpression;
+
+    fn add(self, _rhs: &LpExpression) -> LpExpression {
+        AddExpr(Box::new(self.clone()), Box::new(_rhs.clone()))
+    }
+}
+
 // i32 * LpVar
 impl Mul<LpVariable> for i32 {
     type Output = LpExpression;

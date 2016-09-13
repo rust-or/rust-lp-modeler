@@ -26,7 +26,11 @@ fn main() {
     println!("{:?}", c.eq(2 * b));
     println!("{:?}", (b + c).eq(b));
 
-    /*
+    let ref expr = c + b;
+    let ref e2 = expr + expr;
+    let e3 = e2 + expr;
+    println!("** {:?}", expr);
+    println!("** {:?}", e3);
     let mut p = LpProblem::new("Coucou", Objective::Maximize);
     p += (b + c).gt(b);
     println!("{:?}", p);
@@ -35,17 +39,14 @@ fn main() {
     println!("{:?}", p);
 
     // in python with pulp : lpSum([x for x in collections]) > 12
-    let c = vec!(b, c);
-    p += lpSum(&c).gt(b);
-    */
-    /*
-    p += 2 * lpSum(c) > 1;
-    p += lpSum(2 * c) > 1;
+    let ref c = vec!(b, c);
+    p += lpSum(c).gt(b);
+    //p += 2 * lpSum(c) > 1;
+    //p += lpSum(2 * c) > 1;
     println!("\n\n\n");
     println!("{:?}", lpSum(&c).gt(b));
     println!("\n\n\n");
     println!("{:?}", p);
-    */
 
 
     //TODO: With solver: check names of variables (unique)
