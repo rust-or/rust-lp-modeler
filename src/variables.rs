@@ -122,63 +122,74 @@ impl Into<LpExpression> for LpVariable {
 */
 
 // <LpExr> op <LpExpr> where LpExpr is implicit
-impl<T: Into<LpExpression>, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
+impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
     fn lt(&self, lhs_expr: T) -> LpConstraint {
-        LpConstraint(self.clone().into(), Constraint::Less, lhs_expr.into())
+        LpConstraint(self.clone().into(), Constraint::Less, lhs_expr.clone().into())
     }
     fn le(&self, lhs_expr: T) -> LpConstraint {
-        LpConstraint(self.clone().into(), Constraint::LessOrEqual, lhs_expr.into())
+        LpConstraint(self.clone().into(), Constraint::LessOrEqual, lhs_expr.clone().into())
     }
     fn gt(&self, lhs_expr: T) -> LpConstraint {
-        LpConstraint(self.clone().into(), Constraint::Greater, lhs_expr.into())
+        LpConstraint(self.clone().into(), Constraint::Greater, lhs_expr.clone().into())
     }
     fn ge(&self, lhs_expr: T) -> LpConstraint {
-        LpConstraint(self.clone().into(), Constraint::GreaterOrEqual, lhs_expr.into())
+        LpConstraint(self.clone().into(), Constraint::GreaterOrEqual, lhs_expr.clone().into())
     }
     fn eq( &self, lhs_expr: T) -> LpConstraint {
-        LpConstraint(self.clone().into(), Constraint::Equal, lhs_expr.into())
+        LpConstraint(self.clone().into(), Constraint::Equal, lhs_expr.clone().into())
     }
 }
 
 
-// LpExpr + LpExpr
-// LpExpr + LpVar
-impl Add for LpExpression {
-    type Output = LpExpression;
-    fn add(self, _rhs: LpExpression) -> LpExpression {
-        AddExpr(Box::new(self), Box::new(_rhs.into()))
-    }
-}
-
-/*
-// LpVar + LpVar
-impl Add for LpVariable {
-    type Output = LpExpression;
-    fn add(self, _rhs: LpVariable) -> LpExpression {
-        AddExpr(Box::new(MulExpr(1, self)), Box::new(MulExpr(1, _rhs)))
-    }
-}
-*/
-
-impl<'a> Add<&'a LpExpression> for &'a LpExpression {
-    type Output = LpExpression;
-
-    fn add(self, _rhs: &LpExpression) -> LpExpression {
-        AddExpr(Box::new(self.clone()), Box::new(_rhs.clone()))
-    }
-}
-
-/*
+// LpExpr + &LpExpr
 impl<'a> Add<&'a LpExpression> for LpExpression {
     type Output = LpExpression;
+    fn add(self, _rhs: &'a LpExpression) -> LpExpression {
+        AddExpr(Box::new(self), Box::new(_rhs.clone()))
+    }
+}
 
+// &LpExpr + &LpExpr
+impl<'a, 'b> Add<&'a LpExpression> for &'b LpExpression {
+    type Output = LpExpression;
     fn add(self, _rhs: &'a LpExpression) -> LpExpression {
         AddExpr(Box::new(self.clone()), Box::new(_rhs.clone()))
     }
 }
-*/
 
-// i32 * LpVar
+// LpExpr + LpExpr
+impl Add<LpExpression> for LpExpression {
+    type Output = LpExpression;
+    fn add(self, _rhs: LpExpression) -> LpExpression {
+        AddExpr(Box::new(self.clone()), Box::new(_rhs))
+    }
+}
+
+// i32 + LpExpr
+impl Add<i32> for LpExpression {
+    type Output = LpExpression;
+    fn add(self, _rhs: i32) -> LpExpression {
+        AddExpr(Box::new(self.clone()), Box::new(LitVal(_rhs)))
+    }
+}
+
+// i32 + &LpExpr
+impl<'a> Add<i32> for &'a LpExpression {
+    type Output = LpExpression;
+    fn add(self, _rhs: i32) -> LpExpression {
+        AddExpr(Box::new(self.clone()), Box::new(LitVal(_rhs)))
+    }
+}
+
+// &LpExpr + i32
+impl<'a> Add<&'a LpExpression> for i32 {
+    type Output = LpExpression;
+    fn add(self, _rhs: &'a LpExpression) -> LpExpression {
+        AddExpr(Box::new(LitVal(self)), Box::new(_rhs.clone()))
+    }
+}
+
+// i32 * LpExp
 impl Mul<LpExpression> for i32 {
     type Output = LpExpression;
     fn mul(self, _rhs: LpExpression) -> LpExpression {
@@ -186,21 +197,22 @@ impl Mul<LpExpression> for i32 {
     }
 }
 
+// i32 * &LpExp
 impl<'a> Mul<&'a LpExpression> for i32 {
     type Output = LpExpression;
 
-    fn mul(self, _rhs: &LpExpression) -> LpExpression {
+    fn mul(self, _rhs: &'a LpExpression) -> LpExpression {
         AddExpr(Box::new(LitVal(self)), Box::new(_rhs.clone()))
     }
 }
 
-pub fn lpSum(expr: &Vec<LpExpression>) -> LpExpression {
+pub fn lp_sum(expr: &Vec<LpExpression>) -> LpExpression {
 
     let mut expr = expr.clone();
 
     if let Some(e1) = expr.pop() {
         if let Some(e2) = expr.pop() {
-            AddExpr(Box::new(AddExpr(Box::new(MulExpr(1, Box::new(e1))), Box::new(MulExpr(1, Box::new(e2))))), Box::new(lpSum(&expr)))
+            AddExpr(Box::new(AddExpr(Box::new(MulExpr(1, Box::new(e1))), Box::new(MulExpr(1, Box::new(e2))))), Box::new(lp_sum(&expr)))
         } else {
             MulExpr(1, Box::new(e1))
         }

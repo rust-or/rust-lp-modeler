@@ -1,3 +1,4 @@
+/*
 use variables::*;
 
 use variables::LpExpression::{AddExpr, MulExpr};
@@ -5,7 +6,6 @@ use std::ops::{AddAssign};
 
 use std::collections::HashMap;
 
-/*
 #[derive(Debug)]
 pub enum Objective {
     Minimize,

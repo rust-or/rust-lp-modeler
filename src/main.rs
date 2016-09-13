@@ -15,15 +15,17 @@ fn main() {
 
 //    let l1 = LpVariable::new("l1".to_string(), Category::Binary);
     println!("{:?}", b + c);
-    /*
+    println!("{:?}", 2 * c);
     println!("{:?}", 2 * b + c);
     println!("{:?}", 2 * b + 2 * c);
-    */
-    /*
     println!("*{:?}", 2 * b + 2);
+    println!("*{:?}", 2 + b);
+    println!("*{:?}", b + 2);
+    println!("*{:?}", 2 * (b + c));
+    /*
+    println!("{:?}", (2 * b).gt(b));
     println!("{:?}", (2 * b + 2 * c + 3 * b).gt(b + c));
 
-    println!("{:?}", (2 * b).gt(b));
     println!("{:?}", c.gt(b));
     println!("-{:?}", c.gt(3));
     println!("{:?}", c.eq(2 * b));
@@ -43,13 +45,13 @@ fn main() {
     p += b ;
     println!("{:?}", p);
 
-    // in python with pulp : lpSum([x for x in collections]) > 12
+    // in python with pulp : lp_sum([x for x in collections]) > 12
     let ref c = vec!(b, c);
-    p += lpSum(c).gt(b);
-    //p += 2 * lpSum(c) > 1;
-    //p += lpSum(2 * c) > 1;
+    p += lp_sum(c).gt(b);
+    //p += 2 * lp_sum(c) > 1;
+    //p += lp_sum(2 * c) > 1;
     println!("\n\n\n");
-    println!("{:?}", lpSum(&c).gt(b));
+    println!("{:?}", lp_sum(&c).gt(b));
     println!("\n\n\n");
     println!("{:?}", p);
     */
