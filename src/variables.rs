@@ -40,6 +40,8 @@ impl LpVariable {
         }
     }
 }
+
+#[allow(dead_code)]
 impl LpExpression {
     fn lower_bound(&self, lw: i32) -> LpExpression {
         match self {
@@ -125,47 +127,24 @@ impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExp
 }
 
 
-// LpExpr + &LpExpr
-impl<'a> Add<&'a LpExpression> for LpExpression {
+// LpExpr + (LpExpr, &LpExpr, i32)
+impl<T> Add<T> for LpExpression where T: Into<LpExpression> + Clone {
     type Output = LpExpression;
-    fn add(self, _rhs: &'a LpExpression) -> LpExpression {
-        AddExpr(Box::new(self), Box::new(_rhs.clone()))
+    fn add(self, _rhs: T) -> LpExpression {
+        println!("COucOU 2");
+        AddExpr(Box::new(self.clone()), Box::new(_rhs.into()))
     }
 }
 
-// &LpExpr + &LpExpr
-impl<'a, 'b> Add<&'a LpExpression> for &'b LpExpression {
+// &LpExpr + (LpExpr, &LpExpr, i32)
+impl<'a, T> Add<T> for &'a LpExpression where T: Into<LpExpression> + Clone {
     type Output = LpExpression;
-    fn add(self, _rhs: &'a LpExpression) -> LpExpression {
-        AddExpr(Box::new(self.clone()), Box::new(_rhs.clone()))
-    }
-}
-
-// LpExpr + LpExpr
-impl Add<LpExpression> for LpExpression {
-    type Output = LpExpression;
-    fn add(self, _rhs: LpExpression) -> LpExpression {
-        AddExpr(Box::new(self.clone()), Box::new(_rhs))
-    }
-}
-
-// i32 + LpExpr
-impl Add<i32> for LpExpression {
-    type Output = LpExpression;
-    fn add(self, _rhs: i32) -> LpExpression {
-        AddExpr(Box::new(self.clone()), Box::new(LitVal(_rhs)))
+    fn add(self, _rhs: T) -> LpExpression {
+        AddExpr(Box::new(self.clone()), Box::new(_rhs.into()))
     }
 }
 
 // i32 + &LpExpr
-impl<'a> Add<i32> for &'a LpExpression {
-    type Output = LpExpression;
-    fn add(self, _rhs: i32) -> LpExpression {
-        AddExpr(Box::new(self.clone()), Box::new(LitVal(_rhs)))
-    }
-}
-
-// &LpExpr + i32
 impl<'a> Add<&'a LpExpression> for i32 {
     type Output = LpExpression;
     fn add(self, _rhs: &'a LpExpression) -> LpExpression {
@@ -173,7 +152,7 @@ impl<'a> Add<&'a LpExpression> for i32 {
     }
 }
 
-// i32 * LpExp
+// i32 * LpExpr
 impl Mul<LpExpression> for i32 {
     type Output = LpExpression;
     fn mul(self, _rhs: LpExpression) -> LpExpression {
