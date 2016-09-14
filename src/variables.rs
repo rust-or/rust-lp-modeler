@@ -24,7 +24,7 @@ pub enum LpType {
     Continuous
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum LpExpression {
     BinaryVariable {
         name: &'static str,
@@ -67,6 +67,7 @@ impl LpVariable {
             LpType::Continuous => ContinuousVariable { name: name, lower_bound: None, upper_bound: None }
         }
     }
+
 }
 
 #[allow(dead_code)]
@@ -113,6 +114,16 @@ impl LpExpression {
             _ => self.clone()
         }
     }
+    pub fn is_free(&self) -> bool {
+        match self {
+            &IntegerVariable { name: _, lower_bound, upper_bound }
+            | &ContinuousVariable { name: _, lower_bound, upper_bound } => {
+                if lower_bound == None && upper_bound == None { true }
+                else { false }
+            }
+            _ => false
+        }
+    }
 }
 
 pub trait LpOperations<T> where T: Into<LpExpression> {
@@ -120,7 +131,7 @@ pub trait LpOperations<T> where T: Into<LpExpression> {
     fn le(&self, lhs_expr: T) -> LpConstraint;
     fn gt(&self, lhs_expr: T) -> LpConstraint;
     fn ge(&self, lhs_expr: T) -> LpConstraint;
-    fn eq(&self, lhs_expr: T) -> LpConstraint;
+    fn equal(&self, lhs_expr: T) -> LpConstraint;
 }
 
 impl Into<LpExpression> for i32 {
@@ -133,6 +144,12 @@ impl<'a> Into<LpExpression> for &'a LpExpression {
     fn into(self) -> LpExpression {
         self.clone()
     }
+}
+
+fn general_form_constraints(cstr: &LpConstraint) -> &LpConstraint {
+    //TODO: put the rhs into the lhs ; Search the total of the constants ; put them on the right ;
+    //TODO: and remove them on the left
+    cstr.clone()
 }
 
 // <LpExr> op <LpExpr> where LpExpr is implicit
@@ -149,7 +166,7 @@ impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExp
     fn ge(&self, lhs_expr: T) -> LpConstraint {
         LpConstraint(self.clone().into(), Constraint::GreaterOrEqual, lhs_expr.clone().into())
     }
-    fn eq( &self, lhs_expr: T) -> LpConstraint {
+    fn equal( &self, lhs_expr: T) -> LpConstraint {
         LpConstraint(self.clone().into(), Constraint::Equal, lhs_expr.clone().into())
     }
 }
@@ -208,22 +225,128 @@ impl<'a> Mul<&'a LpExpression> for i32 {
 /// let ref b = LpVariable::new("b", LpType::Binary);
 ///
 /// let ref c = vec!(2 * a, b, c);
-/// problem += lp_sum(c).eq(1);
+/// problem += lp_sum(c).equal(1);
 ///
 /// ```
+///
+ /*
+    BinaryVariable {
+        name: &'static str,
+    },
+    IntegerVariable {
+        name: &'static str,
+        lower_bound: Option<i32>,
+        upper_bound: Option<i32>,
+    },
+    ContinuousVariable {
+        name: &'static str,
+        lower_bound: Option<i32>,
+        upper_bound: Option<i32>,
+    },
+    MulExpr(Rc<LpExpression>, Rc<LpExpression>),
+    AddExpr(Rc<LpExpression>, Rc<LpExpression>),
+    LitVal(i32),
+    EmptyExpr
+*/
+
+
 pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression where T : Into<LpExpression> + Clone {
+
+    /*
+    fn dfs(expr: &LpExpression, lst: &mut String) {
+        match expr {
+            &MulExpr(ref e1, ref e2) => {
+                Self::dfs(e1, lst);
+                lst.push_str(" * ");
+                Self::dfs(e2, lst);
+            },
+            &AddExpr(ref e1, ref e2) => {
+                Self::dfs(e1, lst);
+                lst.push_str(" + ");
+                Self::dfs(e2, lst);
+            },
+            &BinaryVariable {name: n, .. } => {
+                lst.push_str(n);
+            },
+            &IntegerVariable {name: n, .. } => {
+                lst.push_str(n);
+            },
+            &ContinuousVariable {name: n, .. } => {
+                lst.push_str(n);
+            },
+            &LitVal(n) => {
+                lst.push_str(&n.to_string());
+            },
+            _ => ()
+        }
+    }
+    */
+
     let mut expr = expr.clone();
+    /*
+    while let Some(e1) = expr.pop() {
+        match expr {
+            &MulExpr(ref e1, ref e2) => {
+
+
+            },
+            &AddExpr(ref e1, ref e2) => {
+
+
+            },
+            &BinaryVariable { name: n, .. } => {
+
+            },
+            &IntegerVariable { name: n, .. } => {
+
+            },
+            &ContinuousVariable { name: n, .. } => {
+
+            },
+            &LitVal(n) => {
+
+            },
+            _ => ()
+        }
+    }
+    */
 
     if let Some(e1) = expr.pop() {
         if let Some(e2) = expr.pop() {
-            AddExpr(Rc::new(AddExpr(Rc::new(MulExpr(Rc::new(LitVal(1)), Rc::new(e1.into()))), Rc::new(MulExpr(Rc::new(LitVal(1)), Rc::new(e2.into()))))), Rc::new(lp_sum(&expr)))
+            println!("**");
+            expr.push(e2);
+            AddExpr(Rc::new(e1.into()), Rc::new(lp_sum(&expr)))
         } else {
-            MulExpr(Rc::new(LitVal(1)), Rc::new(e1.into()))
+            println!("*");
+            e1.into()
+        }
+    }else{
+        EmptyExpr
+    }
+        /*
+        if let Some(e2) = expr.pop() {
+            AddExpr(
+                Rc::new(AddExpr(
+                    Rc::new(MulExpr(
+                        Rc::new(LitVal(1)),
+                        Rc::new(e1.into()))),
+                    Rc::new(MulExpr(
+                        Rc::new(LitVal(1)),
+                        Rc::new(e2.into())
+                    )))),
+                Rc::new(lp_sum(&expr)))
+        } else {
+            e1.into()
         }
     }else {
         EmptyExpr
     }
+        */
 }
+
+    /*
+    */
+
 
 
 

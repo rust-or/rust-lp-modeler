@@ -1,12 +1,14 @@
 use std;
 use variables::*;
 use variables::LpExpression::*;
+use variables::Constraint::*;
 use std::rc::Rc;
+use std::collections::HashSet;
 
 //use variables::LpExpression::{AddExpr, MulExpr};
 use std::ops::{AddAssign};
 
-use std::collections::HashMap;
+//use std::collections::HashMap;
 
 /// Enum helping to specify the objective function of the linear problem.
 ///
@@ -49,12 +51,9 @@ impl LpProblem {
         LpProblem { name: name, objective_type: objective, obj_expr: None, constraints: Vec::new() }
     }
 
-    /// Solve the LP model
-    pub fn solve(&self) {
-        println!("Mhmmmm, solving :-)");
-    }
-
-    pub fn variables(&self) -> Vec<&LpExpression> {
+    // TODO: Call once and pass into parameter
+    // TODO: Check variables on the objective function
+    fn variables(&self) -> HashSet<&LpExpression> {
 
         fn var<'a>(expr: &'a LpExpression, lst: &mut Vec<&'a LpExpression>) {
             match expr {
@@ -72,15 +71,14 @@ impl LpProblem {
         for e in &self.constraints {
             var(&e.0, &mut lst);
         }
-
-        lst
+        lst.iter().map(|&x| x).collect::<HashSet<_>>()
     }
 
     fn dfs(expr: &LpExpression, lst: &mut String) {
         match expr {
             &MulExpr(ref e1, ref e2) => {
                 Self::dfs(e1, lst);
-                lst.push_str(" * ");
+                lst.push_str(" ");
                 Self::dfs(e2, lst);
             },
             &AddExpr(ref e1, ref e2) => {
@@ -106,71 +104,169 @@ impl LpProblem {
 
     fn objective_string(&self) -> String {
 
-
         let mut s = String::new();
         if let Some(ref expr) = self.obj_expr {
-            println!("{:?}", expr);
-            println!("\n\n");
             Self::dfs(expr, &mut s);
         }
-
-
-        println!("{:?}", s);
         s
+
     }
+
+    fn constraints_string(&self) -> String {
+        let mut res = String::new();
+        let mut cstrs = self.constraints.iter();
+        let mut index = 1;
+        while let Some(&LpConstraint(ref e1, ref op, ref e2)) = cstrs.next() {
+            res.push_str("  c");
+            res.push_str(&index.to_string());
+            res.push_str(": ");
+            index += 1;
+            Self::dfs(e1, &mut res);
+            match op {
+                //TODO: Remove > <, not standard
+                &Greater => res.push_str(" > "),
+                &Less => res.push_str(" < "),
+                &GreaterOrEqual => res.push_str(" >= "),
+                &LessOrEqual => res.push_str(" <= "),
+                &Equal => res.push_str(" = "),
+            }
+            Self::dfs(e2, &mut res);
+            res.push_str("\n");
+        }
+        res
+    }
+
+    fn bounds_string(&self) -> String {
+        let mut res = String::new();
+        for v in self.variables() {
+            match v {
+                &IntegerVariable { name, lower_bound, upper_bound }
+                    | &ContinuousVariable { name, lower_bound, upper_bound } => {
+                    if let Some(l) = lower_bound {
+                        res.push_str("  ");
+                        res.push_str(&l.to_string());
+                        res.push_str(" <= ");
+                        res.push_str(name);
+                        if let Some(u) = upper_bound {
+                            res.push_str(" <= ");
+                            res.push_str(&u.to_string());
+                        }
+                        res.push_str("\n");
+                    } else if let Some(u) = upper_bound {
+                        res.push_str("  ");
+                        res.push_str(name);
+                        res.push_str(" <= ");
+                        res.push_str(&u.to_string());
+                        res.push_str("\n");
+                    } else {
+                        res.push_str("  ");
+                        res.push_str(name);
+                        res.push_str(" free\n");
+                    }
+                },
+                _ => (),
+            }
+        }
+        res
+    }
+
+    fn generals_string(&self) -> String {
+        let mut res = String::new();
+        for v in self.variables() {
+            match v {
+                &IntegerVariable { name, .. } => {
+                    res.push_str(name);
+                    res.push_str(" ");
+                },
+                _ => (),
+            }
+        }
+        res.push_str("\n");
+        res
+    }
+
+    fn binaries_string(&self) -> String {
+        let mut res = String::new();
+        for v in self.variables() {
+            match v {
+                &BinaryVariable { name } => {
+                    res.push_str(name);
+                    res.push_str(" ");
+                },
+                _ => (),
+            }
+        }
+        res.push_str("\n");
+        res
+    }
+
     pub fn write_lp(&self) -> std::io::Result<()> {
         use std::fs::File;
         use std::io::prelude::*;
 
-        let mut buffer = try!(File::create("foo.txt"));
+        let mut buffer = try!(File::create("problem.lp"));
 
+        try!(buffer.write("\\ ".as_bytes()));
+        try!(buffer.write(self.name.as_bytes()));
+        try!(buffer.write("\n\n".as_bytes()));
+
+        // Write objectives
         match self.objective_type {
-            Objective::Maximize => { try!(buffer.write(b"Maximize")); },
-            Objective::Minimize => { try!(buffer.write(b"Minimize")); },
+            Objective::Maximize => { try!(buffer.write(b"Maximize\n  ")); },
+            Objective::Minimize => { try!(buffer.write(b"Minimize\n  ")); },
+        }
+        let obj_str = self.objective_string();
+        try!(buffer.write(obj_str.as_bytes()));
+
+        // Write constraints
+        let cstr_str = self.constraints_string();
+        if cstr_str.len() > 0 {
+            try!(buffer.write(b"\n\nSubject To\n"));
+            try!(buffer.write(cstr_str.as_bytes()));
         }
 
-        println!("\n\n\n");
-        self.objective_string();
+        // Write bounds for Integer and Continuous
+        let bound_str = self.bounds_string();
+        if bound_str.len() > 0 {
+            try!(buffer.write(b"\nBounds\n"));
+            try!(buffer.write(bound_str.as_bytes()));
+        }
 
+        // Write Integer vars
+        let generals_str = self.generals_string();
+        if generals_str.len() > 0 {
+            try!(buffer.write(b"\nGenerals\n  "));
+            try!(buffer.write(generals_str.as_bytes()));
+        }
 
+        // Write Binaries vars
+        let binaries_str = self.generals_string();
+        if binaries_str.len() > 0 {
+            try!(buffer.write(b"\nBinary\n  "));
+            try!(buffer.write(binaries_str.as_bytes()));
+        }
 
-
+        try!(buffer.write(b"\nEnd\n  "));
 
         Ok(())
 
-
-
-        /*
-        let path = Path::new("test.lp");
-        let display = path.display();
-
-        // Open a file in write-only mode, returns `io::Result<File>`
-        let mut file = match File::create(&path) {
-            Err(why) => panic!("couldn't create {}: {}",
-                           display,
-                           why.description()),
-            Ok(file) => file,
-        };
-
-        // Write the `LOREM_IPSUM` string to `file`, returns `io::Result<()>`
-        match file.write("toto".as_bytes()) {
-            Err(why) => {
-                panic!("couldn't write to {}: {}", display, why.description())
-            },
-            Ok(_) => (),
-        }
-        */
-
-
     }
+
+    /// Solve the LP model
+    pub fn solve(&self) {
+        println!("Mhmmmm, solving :-)");
+    }
+
 }
 
+/// Add constraints
 impl AddAssign<LpConstraint> for LpProblem {
     fn add_assign(&mut self, _rhs: LpConstraint) {
         self.constraints.push(_rhs);
     }
 }
 
+/// Add an expression as an objective function
 impl<T> AddAssign<T> for LpProblem where T: Into<LpExpression>{
     fn add_assign(&mut self, _rhs: T) {
         //TODO: improve without cloning

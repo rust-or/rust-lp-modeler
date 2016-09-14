@@ -10,7 +10,9 @@ fn main() {
         .upper_bound(20);
     let ref b = LpVariable::new("b", LpType::Integer);
     let ref c = LpVariable::new("c", LpType::Integer);
-    let ref d = LpVariable::new("d", LpType::Integer);
+    let ref d = LpVariable::new("d", LpType::Binary);
+    let ref e = LpVariable::new("e", LpType::Integer).lower_bound(100);
+    let ref f = LpVariable::new("f", LpType::Continuous).lower_bound(50);
 
     println!("{:?}", a + b);
     println!("{:?}", 2 * c);
@@ -27,8 +29,8 @@ fn main() {
 
     println!("{:?}", b.gt(a));
     println!("{:?}", b.gt(3));
-    println!("{:?}", b.eq(2 * a));
-    println!("{:?}", (a + b).eq(a));
+    println!("{:?}", b.equal(2 * a));
+    println!("{:?}", (a + b).equal(a));
 
     let ref expr = b + a;
     let ref e2 = expr + expr;
@@ -39,14 +41,18 @@ fn main() {
     problem += (a + b).gt(a);
     println!("{:?}", problem);
 
+    problem += (a + b + c + d + e).ge(e);
+
     problem += a + 2 ;
     problem += a + 2 * b;
     println!("{:?}", problem);
 
     // in python with pulp : lp_sum([x for x in collections]) > 12
     let ref c = vec!(b, c);
-    problem += lp_sum(c).gt(a);
+    problem += lp_sum(c).equal(a);
     let ref c = vec!(b + 2);
+    problem += lp_sum(c).gt(a);
+    let ref c = vec!(2 * b + 2, 2 * b, b.clone());
     problem += lp_sum(c).gt(a);
     println!("\n\n\n");
     println!("{:?}", lp_sum(c).gt(a));
@@ -54,7 +60,6 @@ fn main() {
     println!("{:?}", problem);
 
     problem.solve();
-    problem.variables();
 
     problem.write_lp();
 
