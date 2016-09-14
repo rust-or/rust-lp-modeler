@@ -1,6 +1,7 @@
 use std;
 use variables::*;
 use variables::LpExpression::*;
+use std::rc::Rc;
 
 //use variables::LpExpression::{AddExpr, MulExpr};
 use std::ops::{AddAssign};
@@ -75,9 +76,47 @@ impl LpProblem {
         lst
     }
 
+    fn dfs(expr: &LpExpression, lst: &mut String) {
+        match expr {
+            &MulExpr(ref e1, ref e2) => {
+                Self::dfs(e1, lst);
+                lst.push_str(" * ");
+                Self::dfs(e2, lst);
+            },
+            &AddExpr(ref e1, ref e2) => {
+                Self::dfs(e1, lst);
+                lst.push_str(" + ");
+                Self::dfs(e2, lst);
+            },
+            &BinaryVariable {name: n, .. } => {
+                lst.push_str(n);
+            },
+            &IntegerVariable {name: n, .. } => {
+                lst.push_str(n);
+            },
+            &ContinuousVariable {name: n, .. } => {
+                lst.push_str(n);
+            },
+            &LitVal(n) => {
+                lst.push_str(&n.to_string());
+            },
+            _ => ()
+        }
+    }
+
     fn objective_string(&self) -> String {
-        println!("{:?}", self.obj_expr);
-        "Toto".to_string()
+
+
+        let mut s = String::new();
+        if let Some(ref expr) = self.obj_expr {
+            println!("{:?}", expr);
+            println!("\n\n");
+            Self::dfs(expr, &mut s);
+        }
+
+
+        println!("{:?}", s);
+        s
     }
     pub fn write_lp(&self) -> std::io::Result<()> {
         use std::fs::File;
@@ -90,6 +129,7 @@ impl LpProblem {
             Objective::Minimize => { try!(buffer.write(b"Minimize")); },
         }
 
+        println!("\n\n\n");
         self.objective_string();
 
 
@@ -135,7 +175,7 @@ impl<T> AddAssign<T> for LpProblem where T: Into<LpExpression>{
     fn add_assign(&mut self, _rhs: T) {
         //TODO: improve without cloning
         if let Some(e) = self.obj_expr.clone() {
-            self.obj_expr = Some(AddExpr(Box::new(_rhs.into()), Box::new(e.clone())));
+            self.obj_expr = Some(AddExpr(Rc::new(_rhs.into()), Rc::new(e.clone())));
         } else {
             self.obj_expr = Some(_rhs.into());
         }

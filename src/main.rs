@@ -17,16 +17,16 @@ fn main() {
     println!("{:?}", 2 * a + b);
     println!("{:?}", 2 * d + 2 * b);
     println!("*{:?}", 2 * a + 2);
-    println!("*{:?}", 2 + d);
-    println!("*{:?}", a + 2);
-    println!("*{:?}", 2 * (a + b));
+    println!("{:?}", 2 + d);
+    println!("{:?}", a + 2);
+    println!("{:?}", 2 * (a + b));
 
     println!("{:?}", (2 * a).gt(d));
     println!("{:?}",  a.gt(d));
     println!("{:?}", (2 * a + 2 * d + 3 * a).gt(a + b));
 
     println!("{:?}", b.gt(a));
-    println!("-{:?}", b.gt(3));
+    println!("{:?}", b.gt(3));
     println!("{:?}", b.eq(2 * a));
     println!("{:?}", (a + b).eq(a));
 
@@ -40,7 +40,7 @@ fn main() {
     println!("{:?}", problem);
 
     problem += a + 2 ;
-    problem += a;
+    problem += a + 2 * b;
     println!("{:?}", problem);
 
     // in python with pulp : lp_sum([x for x in collections]) > 12

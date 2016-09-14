@@ -3,6 +3,7 @@
 use std::ops::{Add, Mul};
 use self::LpExpression::*;
 use std::convert::Into;
+use std::rc::Rc;
 
 /// Type of variables. Using to initialize a linear programming variable
 ///
@@ -38,8 +39,8 @@ pub enum LpExpression {
         lower_bound: Option<i32>,
         upper_bound: Option<i32>,
     },
-    MulExpr(i32, Box<LpExpression>),
-    AddExpr(Box<LpExpression>, Box<LpExpression>),
+    MulExpr(Rc<LpExpression>, Rc<LpExpression>),
+    AddExpr(Rc<LpExpression>, Rc<LpExpression>),
     LitVal(i32),
     EmptyExpr
 }
@@ -159,7 +160,7 @@ impl<T> Add<T> for LpExpression where T: Into<LpExpression> + Clone {
     type Output = LpExpression;
     fn add(self, _rhs: T) -> LpExpression {
         println!("COucOU 2");
-        AddExpr(Box::new(self.clone()), Box::new(_rhs.into()))
+        AddExpr(Rc::new(self.clone()), Rc::new(_rhs.into()))
     }
 }
 
@@ -167,7 +168,7 @@ impl<T> Add<T> for LpExpression where T: Into<LpExpression> + Clone {
 impl<'a, T> Add<T> for &'a LpExpression where T: Into<LpExpression> + Clone {
     type Output = LpExpression;
     fn add(self, _rhs: T) -> LpExpression {
-        AddExpr(Box::new(self.clone()), Box::new(_rhs.into()))
+        AddExpr(Rc::new(self.clone()), Rc::new(_rhs.into()))
     }
 }
 
@@ -175,7 +176,7 @@ impl<'a, T> Add<T> for &'a LpExpression where T: Into<LpExpression> + Clone {
 impl<'a> Add<&'a LpExpression> for i32 {
     type Output = LpExpression;
     fn add(self, _rhs: &'a LpExpression) -> LpExpression {
-        AddExpr(Box::new(LitVal(self)), Box::new(_rhs.clone()))
+        AddExpr(Rc::new(LitVal(self)), Rc::new(_rhs.clone()))
     }
 }
 
@@ -183,7 +184,7 @@ impl<'a> Add<&'a LpExpression> for i32 {
 impl Mul<LpExpression> for i32 {
     type Output = LpExpression;
     fn mul(self, _rhs: LpExpression) -> LpExpression {
-        LpExpression::MulExpr(self, Box::new(_rhs))
+        LpExpression::MulExpr(Rc::new(LitVal(self)), Rc::new(_rhs))
     }
 }
 
@@ -192,7 +193,7 @@ impl<'a> Mul<&'a LpExpression> for i32 {
     type Output = LpExpression;
 
     fn mul(self, _rhs: &'a LpExpression) -> LpExpression {
-        AddExpr(Box::new(LitVal(self)), Box::new(_rhs.clone()))
+        MulExpr(Rc::new(LitVal(self)), Rc::new(_rhs.clone()))
     }
 }
 
@@ -215,9 +216,9 @@ pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression where T : Into<LpExpression> + C
 
     if let Some(e1) = expr.pop() {
         if let Some(e2) = expr.pop() {
-            AddExpr(Box::new(AddExpr(Box::new(MulExpr(1, Box::new(e1.into()))), Box::new(MulExpr(1, Box::new(e2.into()))))), Box::new(lp_sum(&expr)))
+            AddExpr(Rc::new(AddExpr(Rc::new(MulExpr(Rc::new(LitVal(1)), Rc::new(e1.into()))), Rc::new(MulExpr(Rc::new(LitVal(1)), Rc::new(e2.into()))))), Rc::new(lp_sum(&expr)))
         } else {
-            MulExpr(1, Box::new(e1.into()))
+            MulExpr(Rc::new(LitVal(1)), Rc::new(e1.into()))
         }
     }else {
         EmptyExpr
