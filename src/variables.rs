@@ -142,22 +142,23 @@ impl<'a> Into<LpExpression> for &'a LpExpression {
 
 fn general_form_constraints(cstr: &LpConstraint) -> LpConstraint {
     // TODO: Optimize tailrec
-    fn dfs(expr: &LpExpression, acc: i32) -> i32 {
+    fn dfs(expr: &LpExpression, acc: i32, acc_expr: &LpExpression) -> (i32, LpExpression) {
         match expr {
             &MulExpr(ref rc_e1, ref rc_e2) => {
                 let ref e1 = **rc_e1;
                 let ref e2 = **rc_e2;
                 if let &LitVal(ref x) = e1 {
                     if let &LitVal(ref y) = e2 {
-                        acc+x*y
+                        (acc+x*y, acc_expr.clone())
                     }else{
-                        dfs(e2, acc)
+                        dfs(e2, acc, acc_expr)
                     }
                 }else{
                     if let &LitVal(ref y) = e2 {
-                        dfs(e1, acc+y)
+                        dfs(e1, acc+y, acc_expr)
                     }else {
-                        dfs(e1, acc) + dfs(e2, 0)
+                        let (ac, ae) = dfs(e1, acc, acc_expr);
+                        dfs(e2, ac+0, acc_expr)
                     }
                 }
             },
@@ -166,15 +167,16 @@ fn general_form_constraints(cstr: &LpConstraint) -> LpConstraint {
                 let ref e2 = **rc_e2;
                 if let &LitVal(ref x) = e1 {
                     if let &LitVal(ref y) = e2 {
-                        acc+x+y
+                        (acc+x+y, acc_expr.clone())
                     }else {
-                        dfs(e2, acc+x)
+                        dfs(e2, acc+x, acc_expr)
                     }
                 }else{
                     if let &LitVal(ref y) = e2 {
-                        dfs(e1, acc+y)
+                        dfs(e1, acc+y, acc_expr)
                     }else {
-                        dfs(e1, acc) + dfs(e2, 0)
+                        let (ac, ae) = dfs(e1, acc, acc_expr);
+                        dfs(e2, ac+0, acc_expr)
                     }
                 }
             },
@@ -183,19 +185,21 @@ fn general_form_constraints(cstr: &LpConstraint) -> LpConstraint {
                 let ref e2 = **rc_e2;
                 if let &LitVal(ref x) = e1 {
                     if let &LitVal(ref y) = e2 {
-                        acc+x-y
+                        (acc+x-y, acc_expr.clone())
                     }else {
-                        dfs(e2, acc+x)
+                        dfs(e2, acc+x, acc_expr)
                     }
                 }else{
                     if let &LitVal(ref y) = e2 {
-                        dfs(e1, acc-y)
+                        dfs(e1, acc-y, acc_expr)
                     }else {
-                        dfs(e1, acc) - dfs(e2, 0)
+                        let (ac1, ae1) = dfs(e1, acc, acc_expr);
+                        let (ac2, ae2) = dfs(e2, 0, acc_expr);
+                        (ac1-ac2, acc_expr.clone())
                     }
                 }
             },
-            _ => acc
+            _ => (acc, acc_expr.clone())
         }
     }
     let &LpConstraint(ref lhs, ref op, ref rhs) = cstr;
@@ -203,7 +207,8 @@ fn general_form_constraints(cstr: &LpConstraint) -> LpConstraint {
     if let &LitVal(0) = rhs {
         new_cstr = cstr.clone();
     }else{
-        let constant = dfs(&(lhs - rhs), 0);
+        let (constant, new_expr) = dfs(&(lhs - rhs), 0, &EmptyExpr);
+        println!("-> {:?}", new_expr);
         new_cstr = LpConstraint(lhs - rhs, op.clone(), LitVal(constant));
     }
     println!("{:?}\n\n", new_cstr);
