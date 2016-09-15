@@ -177,7 +177,7 @@ impl LpProblem {
                                 res.push_str("  ");
                                 res.push_str(&name);
                                 res.push_str(" free\n");
-                            },
+                            }, // TODO: IntegerVar => -INF to INF
                             _ => ()
                         }
                     }

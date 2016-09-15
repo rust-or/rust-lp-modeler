@@ -50,7 +50,7 @@ pub enum LpExpression {
 
 pub struct LpVariable;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Constraint {
     Greater,
     Less,
@@ -59,7 +59,7 @@ pub enum Constraint {
     Equal
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LpConstraint(pub LpExpression, pub Constraint, pub LpExpression);
 
 impl LpVariable {
@@ -117,16 +117,7 @@ impl LpExpression {
             _ => self.clone()
         }
     }
-    pub fn is_free(&self) -> bool {
-        match self {
-            &IntegerVariable { name: _, lower_bound, upper_bound }
-            | &ContinuousVariable { name: _, lower_bound, upper_bound } => {
-                if lower_bound == None && upper_bound == None { true }
-                else { false }
-            }
-            _ => false
-        }
-    }
+
 }
 
 pub trait LpOperations<T> where T: Into<LpExpression> {
@@ -149,19 +140,91 @@ impl<'a> Into<LpExpression> for &'a LpExpression {
     }
 }
 
-fn general_form_constraints(cstr: &LpConstraint) -> &LpConstraint {
+fn general_form_constraints(cstr: &LpConstraint) -> LpConstraint {
+    // TODO: Optimize tailrec
+    fn dfs(expr: &LpExpression, acc: i32) -> i32 {
+        match expr {
+            &MulExpr(ref rc_e1, ref rc_e2) => {
+                let ref e1 = **rc_e1;
+                let ref e2 = **rc_e2;
+                if let &LitVal(ref x) = e1 {
+                    if let &LitVal(ref y) = e2 {
+                        acc+x*y
+                    }else{
+                        dfs(e2, acc)
+                    }
+                }else{
+                    if let &LitVal(ref y) = e2 {
+                        dfs(e1, acc+y)
+                    }else {
+                        dfs(e1, acc) + dfs(e2, 0)
+                    }
+                }
+            },
+            &AddExpr(ref rc_e1, ref rc_e2) => {
+                let ref e1 = **rc_e1;
+                let ref e2 = **rc_e2;
+                if let &LitVal(ref x) = e1 {
+                    if let &LitVal(ref y) = e2 {
+                        acc+x+y
+                    }else {
+                        dfs(e2, acc+x)
+                    }
+                }else{
+                    if let &LitVal(ref y) = e2 {
+                        dfs(e1, acc+y)
+                    }else {
+                        dfs(e1, acc) + dfs(e2, 0)
+                    }
+                }
+            },
+            &SubExpr(ref rc_e1, ref rc_e2) => {
+                let ref e1 = **rc_e1;
+                let ref e2 = **rc_e2;
+                if let &LitVal(ref x) = e1 {
+                    if let &LitVal(ref y) = e2 {
+                        acc+x-y
+                    }else {
+                        dfs(e2, acc+x)
+                    }
+                }else{
+                    if let &LitVal(ref y) = e2 {
+                        dfs(e1, acc-y)
+                    }else {
+                        dfs(e1, acc) - dfs(e2, 0)
+                    }
+                }
+            },
+            _ => acc
+        }
+    }
+    let &LpConstraint(ref lhs, ref op, ref rhs) = cstr;
+    let mut new_cstr;
+    if let &LitVal(0) = rhs {
+        new_cstr = cstr.clone();
+    }else{
+        let constant = dfs(&(lhs - rhs), 0);
+        new_cstr = LpConstraint(lhs - rhs, op.clone(), LitVal(constant));
+    }
+    println!("{:?}\n\n", new_cstr);
+
     //TODO: put the rhs into the lhs ; Search the total of the constants ; put them on the right ;
     //TODO: and remove them on the left
-    cstr.clone()
+    new_cstr
+    //cstr.clone()
 }
 
 // <LpExr> op <LpExpr> where LpExpr is implicit
 impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
     fn lt(&self, lhs_expr: T) -> LpConstraint {
-        LpConstraint(self.clone().into(), Constraint::Less, lhs_expr.clone().into())
+        let c = LpConstraint(self.clone().into(), Constraint::Less, lhs_expr.clone().into());
+        let _ = general_form_constraints(&c);
+        c
     }
     fn le(&self, lhs_expr: T) -> LpConstraint {
-        LpConstraint(self.clone().into(), Constraint::LessOrEqual, lhs_expr.clone().into())
+        let c = LpConstraint(self.clone().into(), Constraint::LessOrEqual, lhs_expr.clone().into());
+        let c = general_form_constraints(&c);
+        c.clone()
     }
     fn gt(&self, lhs_expr: T) -> LpConstraint {
         LpConstraint(self.clone().into(), Constraint::Greater, lhs_expr.clone().into())

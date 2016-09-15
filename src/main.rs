@@ -17,6 +17,7 @@ fn main() {
     problem += (a + -b).le(0);
     problem += (500 * a + 1200 * b).le(10000);
     problem += (a - b).le(0);
+    problem += (a + 2 * b + 66 + 14 - 2*b - 10).le(12+b + 2);
 
     problem.write_lp("test.lp");
 
