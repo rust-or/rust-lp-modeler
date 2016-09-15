@@ -1,6 +1,6 @@
 /// # Module variables
 
-use std::ops::{Add, Mul};
+use std::ops::{Add, Mul, Sub, Neg};
 use self::LpExpression::*;
 use std::convert::Into;
 use std::rc::Rc;
@@ -10,6 +10,8 @@ use std::rc::Rc;
 /// # Exemples
 ///
 /// ```
+/// use lp_modeler::variables::{LpVariable, LpType};
+///
 /// let ref a1 = LpVariable::new("a1", LpType::Integer)
 ///     .lower_bound(10)
 ///     .upper_bound(20);
@@ -27,20 +29,21 @@ pub enum LpType {
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum LpExpression {
     BinaryVariable {
-        name: &'static str,
+        name: String,
     },
     IntegerVariable {
-        name: &'static str,
+        name: String,
         lower_bound: Option<i32>,
         upper_bound: Option<i32>,
     },
     ContinuousVariable {
-        name: &'static str,
+        name: String,
         lower_bound: Option<i32>,
         upper_bound: Option<i32>,
     },
     MulExpr(Rc<LpExpression>, Rc<LpExpression>),
     AddExpr(Rc<LpExpression>, Rc<LpExpression>),
+    SubExpr(Rc<LpExpression>, Rc<LpExpression>),
     LitVal(i32),
     EmptyExpr
 }
@@ -60,11 +63,11 @@ pub enum Constraint {
 pub struct LpConstraint(pub LpExpression, pub Constraint, pub LpExpression);
 
 impl LpVariable {
-    pub fn new(name: &'static str, var_type: LpType) -> LpExpression {
+    pub fn new<S: Into<String>>(name: S, var_type: LpType) -> LpExpression {
         match var_type {
-            LpType::Binary => BinaryVariable { name: name },
-            LpType::Integer => IntegerVariable { name: name, lower_bound: None, upper_bound: None },
-            LpType::Continuous => ContinuousVariable { name: name, lower_bound: None, upper_bound: None }
+            LpType::Binary => BinaryVariable { name: name.into() },
+            LpType::Integer => IntegerVariable { name: name.into(), lower_bound: None, upper_bound: None },
+            LpType::Continuous => ContinuousVariable { name: name.into(), lower_bound: None, upper_bound: None }
         }
     }
 
@@ -76,17 +79,17 @@ impl LpExpression {
         match self {
             &BinaryVariable { name: ref n } =>
                 BinaryVariable {
-                    name: n
+                    name: n.clone()
                 },
             &IntegerVariable { name: ref n, lower_bound: _, upper_bound: u } =>
                 IntegerVariable {
-                    name: n,
+                    name: n.clone(),
                     lower_bound: Some(lw),
                     upper_bound: u
                 },
             &ContinuousVariable { name: ref n, lower_bound: _, upper_bound: u } =>
                 ContinuousVariable {
-                    name: n,
+                    name: n.clone(),
                     lower_bound: Some(lw),
                     upper_bound: u
                 },
@@ -176,7 +179,6 @@ impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExp
 impl<T> Add<T> for LpExpression where T: Into<LpExpression> + Clone {
     type Output = LpExpression;
     fn add(self, _rhs: T) -> LpExpression {
-        println!("COucOU 2");
         AddExpr(Rc::new(self.clone()), Rc::new(_rhs.into()))
     }
 }
@@ -197,6 +199,39 @@ impl<'a> Add<&'a LpExpression> for i32 {
     }
 }
 
+// LpExpr - (LpExpr, &LpExpr, i32)
+impl<T> Sub<T> for LpExpression where T: Into<LpExpression> + Clone {
+    type Output = LpExpression;
+    fn sub(self, _rhs: T) -> LpExpression {
+        SubExpr(Rc::new(self.clone()), Rc::new(_rhs.into()))
+    }
+}
+
+// &LpExpr - (LpExpr, &LpExpr, i32)
+impl<'a, T> Sub<T> for &'a LpExpression where T: Into<LpExpression> + Clone {
+    type Output = LpExpression;
+    fn sub(self, _rhs: T) -> LpExpression {
+        SubExpr(Rc::new(self.clone()), Rc::new(_rhs.into()))
+    }
+}
+
+// i32 - &LpExpr
+impl<'a> Sub<&'a LpExpression> for i32 {
+    type Output = LpExpression;
+    fn sub(self, _rhs: &'a LpExpression) -> LpExpression {
+        SubExpr(Rc::new(LitVal(self)), Rc::new(_rhs.clone()))
+    }
+}
+
+impl<'a> Neg for &'a LpExpression {
+    type Output = LpExpression;
+    fn neg(self) -> LpExpression {
+        MulExpr(Rc::new(LitVal(-1)), Rc::new(self.clone()))
+    }
+}
+
+
+
 // i32 * LpExpr
 impl Mul<LpExpression> for i32 {
     type Output = LpExpression;
@@ -214,138 +249,38 @@ impl<'a> Mul<&'a LpExpression> for i32 {
     }
 }
 
-/// make a complet expression or a constraint with a vector of expressions
+/// make a complete expression or a constraint with a vector of expressions
 ///
 /// # Exemples
 ///
 /// ```
-/// let mut problem = LpProblem::new("My Problem", Objective::Maximize);
+/// use lp_modeler::problem::{LpObjective, LpProblem};
+/// use lp_modeler::variables::{LpVariable, LpType, lp_sum, LpOperations};
 ///
+/// let mut problem = LpProblem::new("My Problem", LpObjective::Maximize);
 /// let ref a = LpVariable::new("a", LpType::Binary);
 /// let ref b = LpVariable::new("b", LpType::Binary);
+/// let ref c = LpVariable::new("c", LpType::Binary);
 ///
-/// let ref c = vec!(2 * a, b, c);
-/// problem += lp_sum(c).equal(1);
-///
+/// let ref v = vec!(a, b, c);
+/// problem += lp_sum(v).equal(10);
 /// ```
 ///
- /*
-    BinaryVariable {
-        name: &'static str,
-    },
-    IntegerVariable {
-        name: &'static str,
-        lower_bound: Option<i32>,
-        upper_bound: Option<i32>,
-    },
-    ContinuousVariable {
-        name: &'static str,
-        lower_bound: Option<i32>,
-        upper_bound: Option<i32>,
-    },
-    MulExpr(Rc<LpExpression>, Rc<LpExpression>),
-    AddExpr(Rc<LpExpression>, Rc<LpExpression>),
-    LitVal(i32),
-    EmptyExpr
-*/
-
-
 pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression where T : Into<LpExpression> + Clone {
 
-    /*
-    fn dfs(expr: &LpExpression, lst: &mut String) {
-        match expr {
-            &MulExpr(ref e1, ref e2) => {
-                Self::dfs(e1, lst);
-                lst.push_str(" * ");
-                Self::dfs(e2, lst);
-            },
-            &AddExpr(ref e1, ref e2) => {
-                Self::dfs(e1, lst);
-                lst.push_str(" + ");
-                Self::dfs(e2, lst);
-            },
-            &BinaryVariable {name: n, .. } => {
-                lst.push_str(n);
-            },
-            &IntegerVariable {name: n, .. } => {
-                lst.push_str(n);
-            },
-            &ContinuousVariable {name: n, .. } => {
-                lst.push_str(n);
-            },
-            &LitVal(n) => {
-                lst.push_str(&n.to_string());
-            },
-            _ => ()
-        }
-    }
-    */
-
     let mut expr = expr.clone();
-    /*
-    while let Some(e1) = expr.pop() {
-        match expr {
-            &MulExpr(ref e1, ref e2) => {
-
-
-            },
-            &AddExpr(ref e1, ref e2) => {
-
-
-            },
-            &BinaryVariable { name: n, .. } => {
-
-            },
-            &IntegerVariable { name: n, .. } => {
-
-            },
-            &ContinuousVariable { name: n, .. } => {
-
-            },
-            &LitVal(n) => {
-
-            },
-            _ => ()
-        }
-    }
-    */
-
     if let Some(e1) = expr.pop() {
         if let Some(e2) = expr.pop() {
-            println!("**");
             expr.push(e2);
             AddExpr(Rc::new(e1.into()), Rc::new(lp_sum(&expr)))
         } else {
-            println!("*");
             e1.into()
         }
     }else{
         EmptyExpr
     }
-        /*
-        if let Some(e2) = expr.pop() {
-            AddExpr(
-                Rc::new(AddExpr(
-                    Rc::new(MulExpr(
-                        Rc::new(LitVal(1)),
-                        Rc::new(e1.into()))),
-                    Rc::new(MulExpr(
-                        Rc::new(LitVal(1)),
-                        Rc::new(e2.into())
-                    )))),
-                Rc::new(lp_sum(&expr)))
-        } else {
-            e1.into()
-        }
-    }else {
-        EmptyExpr
-    }
-        */
 }
 
-    /*
-    */
 
 
 

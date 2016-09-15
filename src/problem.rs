@@ -15,10 +15,12 @@ use std::ops::{AddAssign};
 /// # Exemples:
 ///
 /// ```
+/// use lp_modeler::problem::{LpObjective, LpProblem};
+///
 /// let mut problem = LpProblem::new("One Problem", Objective::Maximize);
 /// ```
 #[derive(Debug)]
-pub enum Objective {
+pub enum LpObjective {
     Minimize,
     Maximize
 }
@@ -28,7 +30,13 @@ pub enum Objective {
 /// # Exemples:
 ///
 /// ```
-/// let mut problem = LpProblem::new("One Problem", Objective::Maximize);
+/// use lp_modeler::problem::{LpObjective, LpProblem};
+/// use lp_modeler::variables::{LpVariable, LpType, LpOperations};
+///
+/// let ref a = LpVariable::new("a", LpType::Integer);
+/// let ref b = LpVariable::new("b", LpType::Integer);
+///
+/// let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
 /// problem += (a + b).lt(100);
 /// problem += a.gt(b);
 /// problem += 2*a + 3*b;
@@ -38,7 +46,7 @@ pub enum Objective {
 #[derive(Debug)]
 pub struct LpProblem {
     name: &'static str,
-    objective_type: Objective,
+    objective_type: LpObjective,
     obj_expr: Option<LpExpression>,
     constraints: Vec<LpConstraint>
 
@@ -47,7 +55,7 @@ pub struct LpProblem {
 impl LpProblem {
 
     /// Create a new problem
-    pub fn new(name: &'static str, objective: Objective) -> LpProblem {
+    pub fn new(name: &'static str, objective: LpObjective) -> LpProblem {
         LpProblem { name: name, objective_type: objective, obj_expr: None, constraints: Vec::new() }
     }
 
@@ -59,7 +67,7 @@ impl LpProblem {
             match expr {
                 &BinaryVariable {..} | &IntegerVariable {..} | &ContinuousVariable {..} => { lst.push(expr); },
                 &MulExpr(_, ref e) => { var(&*e, lst); },
-                &AddExpr(ref e1, ref e2) => {
+                &AddExpr(ref e1, ref e2) | &SubExpr(ref e1, ref e2) => {
                     var(&*e1, lst);
                     var(&*e2, lst);
                 },
@@ -86,13 +94,18 @@ impl LpProblem {
                 lst.push_str(" + ");
                 Self::dfs(e2, lst);
             },
-            &BinaryVariable {name: n, .. } => {
+            &SubExpr(ref e1, ref e2) => {
+                Self::dfs(e1, lst);
+                lst.push_str(" - ");
+                Self::dfs(e2, lst);
+            },
+            &BinaryVariable {name: ref n, .. } => {
                 lst.push_str(n);
             },
-            &IntegerVariable {name: n, .. } => {
+            &IntegerVariable {name: ref n, .. } => {
                 lst.push_str(n);
             },
-            &ContinuousVariable {name: n, .. } => {
+            &ContinuousVariable {name: ref n, .. } => {
                 lst.push_str(n);
             },
             &LitVal(n) => {
@@ -140,13 +153,13 @@ impl LpProblem {
         let mut res = String::new();
         for v in self.variables() {
             match v {
-                &IntegerVariable { name, lower_bound, upper_bound }
-                    | &ContinuousVariable { name, lower_bound, upper_bound } => {
+                &IntegerVariable { ref name, lower_bound, upper_bound }
+                    | &ContinuousVariable { ref name, lower_bound, upper_bound } => {
                     if let Some(l) = lower_bound {
                         res.push_str("  ");
                         res.push_str(&l.to_string());
                         res.push_str(" <= ");
-                        res.push_str(name);
+                        res.push_str(&name);
                         if let Some(u) = upper_bound {
                             res.push_str(" <= ");
                             res.push_str(&u.to_string());
@@ -154,14 +167,19 @@ impl LpProblem {
                         res.push_str("\n");
                     } else if let Some(u) = upper_bound {
                         res.push_str("  ");
-                        res.push_str(name);
+                        res.push_str(&name);
                         res.push_str(" <= ");
                         res.push_str(&u.to_string());
                         res.push_str("\n");
                     } else {
-                        res.push_str("  ");
-                        res.push_str(name);
-                        res.push_str(" free\n");
+                        match v {
+                            &ContinuousVariable {..} => {
+                                res.push_str("  ");
+                                res.push_str(&name);
+                                res.push_str(" free\n");
+                            },
+                            _ => ()
+                        }
                     }
                 },
                 _ => (),
@@ -174,14 +192,13 @@ impl LpProblem {
         let mut res = String::new();
         for v in self.variables() {
             match v {
-                &IntegerVariable { name, .. } => {
+                &IntegerVariable { ref name, .. } => {
                     res.push_str(name);
                     res.push_str(" ");
                 },
                 _ => (),
             }
         }
-        res.push_str("\n");
         res
     }
 
@@ -189,22 +206,21 @@ impl LpProblem {
         let mut res = String::new();
         for v in self.variables() {
             match v {
-                &BinaryVariable { name } => {
+                &BinaryVariable { ref name } => {
                     res.push_str(name);
                     res.push_str(" ");
                 },
                 _ => (),
             }
         }
-        res.push_str("\n");
         res
     }
 
-    pub fn write_lp(&self) -> std::io::Result<()> {
+    pub fn write_lp<T: Into<String>>(&self, file_name: T) -> std::io::Result<()> {
         use std::fs::File;
         use std::io::prelude::*;
 
-        let mut buffer = try!(File::create("problem.lp"));
+        let mut buffer = try!(File::create(file_name.into()));
 
         try!(buffer.write("\\ ".as_bytes()));
         try!(buffer.write(self.name.as_bytes()));
@@ -212,8 +228,8 @@ impl LpProblem {
 
         // Write objectives
         match self.objective_type {
-            Objective::Maximize => { try!(buffer.write(b"Maximize\n  ")); },
-            Objective::Minimize => { try!(buffer.write(b"Minimize\n  ")); },
+            LpObjective::Maximize => { try!(buffer.write(b"Maximize\n  ")); },
+            LpObjective::Minimize => { try!(buffer.write(b"Minimize\n  ")); },
         }
         let obj_str = self.objective_string();
         try!(buffer.write(obj_str.as_bytes()));
@@ -237,16 +253,19 @@ impl LpProblem {
         if generals_str.len() > 0 {
             try!(buffer.write(b"\nGenerals\n  "));
             try!(buffer.write(generals_str.as_bytes()));
+            try!(buffer.write(b"\n"));
         }
 
         // Write Binaries vars
-        let binaries_str = self.generals_string();
+        let binaries_str = self.binaries_string();
         if binaries_str.len() > 0 {
+            println!("----------------->{}", binaries_str.len());
             try!(buffer.write(b"\nBinary\n  "));
             try!(buffer.write(binaries_str.as_bytes()));
+            try!(buffer.write(b"\n"));
         }
 
-        try!(buffer.write(b"\nEnd\n  "));
+        try!(buffer.write(b"\nEnd"));
 
         Ok(())
 
@@ -278,3 +297,7 @@ impl<T> AddAssign<T> for LpProblem where T: Into<LpExpression>{
     }
 }
 
+#[cfg(test)]
+fn test(){
+    assert!(false);
+}
