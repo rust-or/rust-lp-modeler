@@ -22,7 +22,7 @@ problem += (a).le(b);
 problem.solve();
 ```
 
-it will soon be possible to export this model 
+it is already possible to export this model 
 into the [lp file format](https://www.gurobi.com/documentation/6.5/refman/lp_format.html "lp file format on Gurobi website"). 
 
 ```
