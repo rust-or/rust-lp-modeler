@@ -11,7 +11,7 @@ such an API for python 2.x.
 Dev in progress.
 
 
-The first usable version will provide this SDL to make a LP Model :
+This first alpha version provide this SDL to make a LP Model :
 ```rust
 use lp_modeler::problem::{LpObjective, LpProblem};
 use lp_modeler::variables::{LpVariable, LpType, LpOperations};
