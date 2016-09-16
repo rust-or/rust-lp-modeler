@@ -63,7 +63,10 @@ with a solver supporting lp file format :
     * Cplex
     
 ## Todo
->* lp file format must have only constant literal on the right side of
-   the expression. Working on doing this implicitly.
->* call directly the solver from this library
+* call directly the solver from this library
+* get back the value of the variables
+* it would be great to use some constraint for binary variable like 
+    * a && b which is the constraint a + b = 2
+    * a || b which is the constraint a + b >= 1
+    * ...
 
