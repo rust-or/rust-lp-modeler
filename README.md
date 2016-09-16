@@ -1,4 +1,5 @@
 # lp-modeler
+[![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 * A linear programming modeler written in Rust. This api helps to write LP model and use solver such as CBC, Gurobi, lp\_solve, ...*
 
 ## Usage
@@ -24,7 +25,6 @@ problem.solve();
 
 it is already possible to export this model 
 into the [lp file format](https://www.gurobi.com/documentation/6.5/refman/lp_format.html "lp file format on Gurobi website"). 
-
 ```
 problem.write_lp("problem.lp") 
 ```
