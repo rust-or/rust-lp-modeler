@@ -137,8 +137,6 @@ impl LpProblem {
             Self::dfs(e1, &mut res);
             match op {
                 //TODO: Remove > <, not standard
-                &Greater => res.push_str(" > "),
-                &Less => res.push_str(" < "),
                 &GreaterOrEqual => res.push_str(" >= "),
                 &LessOrEqual => res.push_str(" <= "),
                 &Equal => res.push_str(" = "),
