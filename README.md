@@ -32,7 +32,7 @@ problem.write_lp("problem.lp")
 will produce :
 
 ```
-\ Problem
+\ One Problem
 
 Maximize
   10 a + 20 b
