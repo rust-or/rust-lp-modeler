@@ -1,7 +1,7 @@
 # lp-modeler
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
-A linear programming modeler written in Rust. This api helps to write LP model and 
+A linear programming modeller written in Rust. This api helps to write LP model and 
 use solver such as CBC, Gurobi, lp\_solve, ...*
 
 This library is inspired by [coin-or PuLP](http://www.coin-or.org/PuLP/ "Coin-Or PuLP website") which provide
