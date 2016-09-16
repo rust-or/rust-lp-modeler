@@ -273,25 +273,11 @@ fn general_form_constraints(cstr: &LpConstraint) -> LpConstraint {
 
 // <LpExr> op <LpExpr> where LpExpr is implicit
 impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
-    /*
-    fn lt(&self, lhs_expr: T) -> LpConstraint {
-        let c = LpConstraint(self.clone().into(), Constraint::Less, lhs_expr.clone().into());
-        let c = general_form_constraints(&c);
-        c
-    }
-    */
     fn le(&self, lhs_expr: T) -> LpConstraint {
         let c = LpConstraint(self.clone().into(), Constraint::LessOrEqual, lhs_expr.clone().into());
         let c = general_form_constraints(&c);
         c
     }
-    /*
-    fn gt(&self, lhs_expr: T) -> LpConstraint {
-        let c = LpConstraint(self.clone().into(), Constraint::Greater, lhs_expr.clone().into());
-        let c = general_form_constraints(&c);
-        c
-    }
-    */
     fn ge(&self, lhs_expr: T) -> LpConstraint {
         let c = LpConstraint(self.clone().into(), Constraint::GreaterOrEqual, lhs_expr.clone().into());
         let c = general_form_constraints(&c);
