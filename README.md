@@ -14,9 +14,51 @@ let ref a = LpVariable::new("a", LpType::Integer);
 let ref b = LpVariable::new("b", LpType::Integer);
 
 let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
-problem += (a + b).lt(100);
-problem += a.gt(b);
-problem += 2*a + 3*b;
+
+problem += 10 * a + 20 * b;
+problem += (500 * a + 1200 * b).le(10000);
+problem += (a).le(b);
 
 problem.solve();
 ```
+
+it will soon be possible to export this model 
+into the [lp file format](https://www.gurobi.com/documentation/6.5/refman/lp_format.html "lp file format on Gurobi website"). 
+
+```
+problem.write_lp("problem.lp") 
+```
+
+will produce :
+
+```
+\ Problem
+
+Maximize
+  10 a + 20 b
+
+Subject To
+  c1: 500 a + 1200 b <= -10000
+  c2: a - b <= 0
+
+Generals
+  b a 
+
+End
+```
+
+With this file, you can directly use it 
+with a solver supporting lp file format :
+* open source solvers :
+    * lp_solve
+    * glpk
+    * cbc
+* commercial solvers :
+    * Gurobi
+    * Cplex
+    
+## Todo
+>* lp file format must have only constant literal on the right side of
+   the expression. Working on doing this implicitly.
+>* call directly the solver from this library
+
