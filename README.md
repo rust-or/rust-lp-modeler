@@ -62,11 +62,18 @@ with a solver supporting lp file format :
     * Gurobi
     * Cplex
     
+## Limitation
+* Now, it's only possible to have i32 as literal
+* Connector with the solver is not implemented
+
 ## Todo
 * call directly the solver from this library
 * get back the value of the variables
 * it would be great to use some constraint for binary variable like 
     * a && b which is the constraint a + b = 2
     * a || b which is the constraint a + b >= 1
+    * a <=> b which is the constraint a = b
+    * a => b which is the constraint a <= b
+    * All these cases is easy with two constraints but more complex with expressions
     * ...
 
