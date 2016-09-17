@@ -1,5 +1,6 @@
 # lp-modeler
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
+[![Build Status](https://travis-ci.org/jcavat/rust-lp-modeler.svg?branch=master)](https://travis-ci.org/jcavat/rust-lp-modeler)
 
 A linear programming modeller written in Rust. This api helps to write LP model and 
 use solver such as CBC, Gurobi, lp\_solve, ...*
