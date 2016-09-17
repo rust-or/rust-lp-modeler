@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="API documentation for the Rust `LpType` enum in crate `variables`.">
-    <meta name="keywords" content="rust, rustlang, rust-lang, LpType">
+    <meta name="description" content="Source to the Rust file `src/lib.rs`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang">
 
-    <title>variables::LpType - Rust</title>
+    <title>lib.rs.html -- source</title>
 
-    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
-    <link rel="stylesheet" type="text/css" href="../main.css">
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
     
 
     
@@ -28,7 +28,7 @@
 
     <nav class="sidebar">
         
-        <p class='location'><a href='index.html'>variables</a></p><script>window.sidebarCurrent = {name: 'LpType', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+        
     </nav>
 
     <nav class="sub">
@@ -42,30 +42,23 @@
         </form>
     </nav>
 
-    <section id='main' class="content enum">
-<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>variables</a>::<wbr><a class='enum' href=''>LpType</a></span><span class='out-of-band'><span id='render-detail'>
-                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
-                       [<span class='inner'>&#x2212;</span>]
-                   </a>
-               </span><a id='src-7' class='srclink' href='../src/variables/src/variables.rs.html#17-24' title='goto source code'>[src]</a></span></h1>
-<pre class='rust enum'>pub enum LpType {
-    Binary,
-    Integer,
-    Continuous,
-}</pre><div class='docblock'><p>Type of variables. Using to initialize a linear programming variable</p>
+    <section id='main' class="content source"><pre class="line-numbers"><span id="1">1</span>
+<span id="2">2</span>
+<span id="3">3</span>
+<span id="4">4</span>
+<span id="5">5</span>
+<span id="6">6</span>
+<span id="7">7</span>
+</pre><pre class='rust '>
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>problem</span>;
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>solvers</span>;
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>variables</span>;
 
-<p>Exemples</p>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>tests</span>;
 
-<pre class='rust rust-example-rendered'>
-<span class='kw'>let</span> <span class='kw-2'>ref</span> <span class='ident'>a1</span> <span class='op'>=</span> <span class='ident'>LpVariable</span>::<span class='ident'>new</span>(<span class='string'>&quot;a1&quot;</span>, <span class='ident'>LpType</span>::<span class='ident'>Integer</span>)
-    .<span class='ident'>lower_bound</span>(<span class='number'>10</span>)
-    .<span class='ident'>upper_bound</span>(<span class='number'>20</span>);
 </pre>
-</div><h2 class='variants'>Variants</h2>
-<span id='variant.Binary' class='variant'><code>Binary</code></span><div class='docblock'><p>Binary variable</p>
-</div><span id='variant.Integer' class='variant'><code>Integer</code></span><div class='docblock'><p>Integer variable</p>
-</div><span id='variant.Continuous' class='variant'><code>Continuous</code></span><div class='docblock'><p>Reel variable</p>
-</div></section>
+</section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -119,13 +112,13 @@
     
 
     <script>
-        window.rootPath = "../";
-        window.currentCrate = "variables";
+        window.rootPath = "../../../";
+        window.currentCrate = "lib";
         window.playgroundUrl = "";
     </script>
-    <script src="../jquery.js"></script>
-    <script src="../main.js"></script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
     
-    <script defer src="../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>
