@@ -17,7 +17,7 @@ use std::ops::{AddAssign};
 /// ```
 /// use lp_modeler::problem::{LpObjective, LpProblem};
 ///
-/// let mut problem = LpProblem::new("One Problem", Objective::Maximize);
+/// let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
 /// ```
 #[derive(Debug)]
 pub enum LpObjective {
@@ -37,8 +37,8 @@ pub enum LpObjective {
 /// let ref b = LpVariable::new("b", LpType::Integer);
 ///
 /// let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
-/// problem += (a + b).lt(100);
-/// problem += a.gt(b);
+/// problem += (a + b).le(100);
+/// problem += a.ge(b);
 /// problem += 2*a + 3*b;
 ///
 /// problem.solve();
