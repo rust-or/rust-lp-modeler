@@ -72,7 +72,139 @@ impl LpVariable {
             LpType::Continuous => ContinuousVariable { name: name.into(), lower_bound: None, upper_bound: None }
         }
     }
+}
 
+impl LpConstraint {
+    pub fn generalize(&self) -> LpConstraint {
+        // TODO: Optimize tailrec
+        fn dfs_constant(expr: &LpExpression, acc: i32) -> i32 {
+            match expr {
+                &MulExpr(ref rc_e1, ref rc_e2) => {
+                    let ref e1 = **rc_e1;
+                    let ref e2 = **rc_e2;
+                    if let &LitVal(ref x) = e1 {
+                        if let &LitVal(ref y) = e2 {
+                            acc+x*y
+                        }else{
+                            dfs_constant(e2, acc)
+                        }
+                    }else{
+                        if let &LitVal(ref y) = e2 {
+                            dfs_constant(e1, acc+y)
+                        }else {
+                            dfs_constant(e2, acc) + dfs_constant(e1, 0)
+                        }
+                    }
+                },
+                &AddExpr(ref rc_e1, ref rc_e2) => {
+                    let ref e1 = **rc_e1;
+                    let ref e2 = **rc_e2;
+                    if let &LitVal(ref x) = e1 {
+                        if let &LitVal(ref y) = e2 {
+                            acc+x+y
+                        }else {
+                            dfs_constant(e2, acc+x)
+                        }
+                    }else{
+                        if let &LitVal(ref y) = e2 {
+                            dfs_constant(e1, acc+y)
+                        }else {
+                            dfs_constant(e2, acc) + dfs_constant(e1, 0)
+                        }
+                    }
+                },
+                &SubExpr(ref rc_e1, ref rc_e2) => {
+                    let ref e1 = **rc_e1;
+                    let ref e2 = **rc_e2;
+                    if let &LitVal(ref x) = e1 {
+                        if let &LitVal(ref y) = e2 {
+                            acc+x-y
+                        }else {
+                            dfs_constant(e2, acc+x)
+                        }
+                    }else{
+                        if let &LitVal(ref y) = e2 {
+                            dfs_constant(e1, acc-y)
+                        }else {
+                            dfs_constant(e1, acc) - dfs_constant(e2, 0)
+                        }
+                    }
+                },
+                _ => acc
+            }
+        }
+
+
+
+        fn dfs_remove_constant(expr: &LpExpression) -> LpExpression {
+            match expr {
+                &MulExpr(ref rc_e1, ref rc_e2) => {
+                    let ref e1 = **rc_e1;
+                    let ref e2 = **rc_e2;
+                    if let &LitVal(..) = e1 {
+                        if let &LitVal(..) = e2 {
+                            EmptyExpr
+                        }else{
+                            MulExpr(rc_e1.clone(), Rc::new(dfs_remove_constant(e2)))
+                        }
+                    }else{
+                        if let &LitVal(..) = e2 {
+                            MulExpr(Rc::new(dfs_remove_constant(e1)), rc_e2.clone())
+                        }else {
+                            MulExpr(Rc::new(dfs_remove_constant(e1)), Rc::new(dfs_remove_constant(e2)))
+                        }
+                    }
+                },
+                &AddExpr(ref rc_e1, ref rc_e2) => {
+                    let ref e1 = **rc_e1;
+                    let ref e2 = **rc_e2;
+                    if let &LitVal(..) = e1 {
+                        if let &LitVal(..) = e2 {
+                            EmptyExpr
+                        }else {
+                            dfs_remove_constant(e2)
+                        }
+                    }else{
+                        if let &LitVal(..) = e2 {
+                            dfs_remove_constant(e1)
+                        }else {
+                            AddExpr(Rc::new(dfs_remove_constant(e1)), Rc::new(dfs_remove_constant(e2)))
+                        }
+                    }
+                },
+                &SubExpr(ref rc_e1, ref rc_e2) => {
+                    let ref e1 = **rc_e1;
+                    let ref e2 = **rc_e2;
+                    if let &LitVal(..) = e1 {
+                        if let &LitVal(..) = e2 {
+                            EmptyExpr
+                        }else {
+                            dfs_remove_constant(e2)
+                        }
+                    }else{
+                        if let &LitVal(..) = e2 {
+                            dfs_remove_constant(e1)
+                        }else {
+                            SubExpr(Rc::new(dfs_remove_constant(e1)), Rc::new(dfs_remove_constant(e2)))
+                        }
+                    }
+                },
+                _ => expr.clone()
+            }
+        }
+
+        let &LpConstraint(ref lhs, ref op, ref rhs) = self;
+        let new_cstr;
+        if let &LitVal(0) = rhs {
+            new_cstr = self.clone();
+        }else{
+            let ref lhs_constraint = lhs - rhs;
+            let constant = dfs_constant(lhs_constraint, 0);
+            let lhs_constraint = dfs_remove_constant(lhs_constraint);
+            new_cstr = LpConstraint(lhs_constraint, op.clone(), LitVal(-constant));
+        }
+        new_cstr
+    }
 }
 
 #[allow(dead_code)]
@@ -140,153 +272,17 @@ impl<'a> Into<LpExpression> for &'a LpExpression {
     }
 }
 
-fn general_form_constraints(cstr: &LpConstraint) -> LpConstraint {
-    // TODO: Optimize tailrec
-    fn dfs_constant(expr: &LpExpression, acc: i32) -> i32 {
-        match expr {
-            &MulExpr(ref rc_e1, ref rc_e2) => {
-                let ref e1 = **rc_e1;
-                let ref e2 = **rc_e2;
-                if let &LitVal(ref x) = e1 {
-                    if let &LitVal(ref y) = e2 {
-                        acc+x*y
-                    }else{
-                        dfs_constant(e2, acc)
-                    }
-                }else{
-                    if let &LitVal(ref y) = e2 {
-                        dfs_constant(e1, acc+y)
-                    }else {
-                        dfs_constant(e2, acc) + dfs_constant(e1, 0)
-                    }
-                }
-            },
-            &AddExpr(ref rc_e1, ref rc_e2) => {
-                let ref e1 = **rc_e1;
-                let ref e2 = **rc_e2;
-                if let &LitVal(ref x) = e1 {
-                    if let &LitVal(ref y) = e2 {
-                        acc+x+y
-                    }else {
-                        dfs_constant(e2, acc+x)
-                    }
-                }else{
-                    if let &LitVal(ref y) = e2 {
-                        dfs_constant(e1, acc+y)
-                    }else {
-                        dfs_constant(e2, acc) + dfs_constant(e1, 0)
-                    }
-                }
-            },
-            &SubExpr(ref rc_e1, ref rc_e2) => {
-                let ref e1 = **rc_e1;
-                let ref e2 = **rc_e2;
-                if let &LitVal(ref x) = e1 {
-                    if let &LitVal(ref y) = e2 {
-                        acc+x-y
-                    }else {
-                        dfs_constant(e2, acc+x)
-                    }
-                }else{
-                    if let &LitVal(ref y) = e2 {
-                        dfs_constant(e1, acc-y)
-                    }else {
-                        dfs_constant(e1, acc) - dfs_constant(e2, 0)
-                    }
-                }
-            },
-            _ => acc
-        }
-    }
-
-
-
-    fn dfs_remove_constant(expr: &LpExpression) -> LpExpression {
-        match expr {
-            &MulExpr(ref rc_e1, ref rc_e2) => {
-                let ref e1 = **rc_e1;
-                let ref e2 = **rc_e2;
-                if let &LitVal(..) = e1 {
-                    if let &LitVal(..) = e2 {
-                        EmptyExpr
-                    }else{
-                        MulExpr(rc_e1.clone(), Rc::new(dfs_remove_constant(e2)))
-                    }
-                }else{
-                    if let &LitVal(..) = e2 {
-                        MulExpr(Rc::new(dfs_remove_constant(e1)), rc_e2.clone())
-                    }else {
-                        MulExpr(Rc::new(dfs_remove_constant(e1)), Rc::new(dfs_remove_constant(e2)))
-                    }
-                }
-            },
-            &AddExpr(ref rc_e1, ref rc_e2) => {
-                let ref e1 = **rc_e1;
-                let ref e2 = **rc_e2;
-                if let &LitVal(..) = e1 {
-                    if let &LitVal(..) = e2 {
-                        EmptyExpr
-                    }else {
-                        dfs_remove_constant(e2)
-                    }
-                }else{
-                    if let &LitVal(..) = e2 {
-                        dfs_remove_constant(e1)
-                    }else {
-                        AddExpr(Rc::new(dfs_remove_constant(e1)), Rc::new(dfs_remove_constant(e2)))
-                    }
-                }
-            },
-            &SubExpr(ref rc_e1, ref rc_e2) => {
-                let ref e1 = **rc_e1;
-                let ref e2 = **rc_e2;
-                if let &LitVal(..) = e1 {
-                    if let &LitVal(..) = e2 {
-                        EmptyExpr
-                    }else {
-                        dfs_remove_constant(e2)
-                    }
-                }else{
-                    if let &LitVal(..) = e2 {
-                        dfs_remove_constant(e1)
-                    }else {
-                        SubExpr(Rc::new(dfs_remove_constant(e1)), Rc::new(dfs_remove_constant(e2)))
-                    }
-                }
-            },
-            _ => expr.clone()
-        }
-    }
-
-    let &LpConstraint(ref lhs, ref op, ref rhs) = cstr;
-    let new_cstr;
-    if let &LitVal(0) = rhs {
-        new_cstr = cstr.clone();
-    }else{
-        let ref lhs_constraint = lhs - rhs;
-        let constant = dfs_constant(lhs_constraint, 0);
-        let lhs_constraint = dfs_remove_constant(lhs_constraint);
-        new_cstr = LpConstraint(lhs_constraint, op.clone(), LitVal(-constant));
-    }
-    new_cstr
-}
 
 // <LpExr> op <LpExpr> where LpExpr is implicit
 impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
     fn le(&self, lhs_expr: T) -> LpConstraint {
-        let c = LpConstraint(self.clone().into(), Constraint::LessOrEqual, lhs_expr.clone().into());
-        let c = general_form_constraints(&c);
-        c
+        LpConstraint(self.clone().into(), Constraint::LessOrEqual, lhs_expr.clone().into()).generalize()
     }
     fn ge(&self, lhs_expr: T) -> LpConstraint {
-        let c = LpConstraint(self.clone().into(), Constraint::GreaterOrEqual, lhs_expr.clone().into());
-        let c = general_form_constraints(&c);
-        c
+        LpConstraint(self.clone().into(), Constraint::GreaterOrEqual, lhs_expr.clone().into()).generalize()
     }
     fn equal( &self, lhs_expr: T) -> LpConstraint {
-        let c = LpConstraint(self.clone().into(), Constraint::Equal, lhs_expr.clone().into());
-        let c = general_form_constraints(&c);
-        c
+        LpConstraint(self.clone().into(), Constraint::Equal, lhs_expr.clone().into()).generalize()
     }
 }
 
