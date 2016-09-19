@@ -82,47 +82,14 @@ impl LpProblem {
         lst.iter().map(|&x| x).collect::<HashSet<_>>()
     }
 
-    fn dfs(expr: &LpExpression, lst: &mut String) {
-        match expr {
-            &MulExpr(ref e1, ref e2) => {
-                Self::dfs(e1, lst);
-                lst.push_str(" ");
-                Self::dfs(e2, lst);
-            },
-            &AddExpr(ref e1, ref e2) => {
-                Self::dfs(e1, lst);
-                lst.push_str(" + ");
-                Self::dfs(e2, lst);
-            },
-            &SubExpr(ref e1, ref e2) => {
-                Self::dfs(e1, lst);
-                lst.push_str(" - ");
-                Self::dfs(e2, lst);
-            },
-            &BinaryVariable {name: ref n, .. } => {
-                lst.push_str(n);
-            },
-            &IntegerVariable {name: ref n, .. } => {
-                lst.push_str(n);
-            },
-            &ContinuousVariable {name: ref n, .. } => {
-                lst.push_str(n);
-            },
-            &LitVal(n) => {
-                lst.push_str(&n.to_string());
-            },
-            _ => ()
-        }
-    }
 
     fn objective_string(&self) -> String {
 
-        let mut s = String::new();
         if let Some(ref expr) = self.obj_expr {
-            Self::dfs(expr, &mut s);
+            expr.to_string()
+        } else {
+            String::new()
         }
-        s
-
     }
 
     fn constraints_string(&self) -> String {
@@ -134,14 +101,13 @@ impl LpProblem {
             res.push_str(&index.to_string());
             res.push_str(": ");
             index += 1;
-            Self::dfs(e1, &mut res);
+            res.push_str(&e1.to_string());
             match op {
-                //TODO: Remove > <, not standard
                 &GreaterOrEqual => res.push_str(" >= "),
                 &LessOrEqual => res.push_str(" <= "),
                 &Equal => res.push_str(" = "),
             }
-            Self::dfs(e2, &mut res);
+            res.push_str(&e2.to_string());
             res.push_str("\n");
         }
         res
@@ -295,7 +261,37 @@ impl<T> AddAssign<T> for LpProblem where T: Into<LpExpression>{
     }
 }
 
-#[cfg(test)]
-fn test(){
-    assert!(false);
+impl ToString for LpExpression {
+    fn to_string(&self) -> String {
+
+        fn dfs(expr: &LpExpression, acc: &String) -> String {
+            match expr {
+                &MulExpr(ref e1, ref e2) => {
+                    e1.to_string() + " " + &e2.to_string()
+                },
+                &AddExpr(ref e1, ref e2) => {
+                    e1.to_string() + " + " + &e2.to_string()
+                },
+                &SubExpr(ref e1, ref e2) => {
+                    e1.to_string() + " - " + &e2.to_string()
+                },
+                &BinaryVariable {name: ref n, .. } => {
+                    acc.clone() + n
+                },
+                &IntegerVariable {name: ref n, .. } => {
+                    acc.clone() + n
+                },
+                &ContinuousVariable {name: ref n, .. } => {
+                    acc.clone() + n
+                },
+                &LitVal(n) => {
+                    acc.clone() + &n.to_string()
+                },
+                _ => acc.clone()
+            }
+        }
+
+        println!("{:?}", self);
+        dfs(self, &String::new())
+    }
 }
