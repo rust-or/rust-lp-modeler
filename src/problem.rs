@@ -31,7 +31,8 @@ pub enum LpObjective {
 ///
 /// ```
 /// use lp_modeler::problem::{LpObjective, LpProblem};
-/// use lp_modeler::variables::{LpVariable, LpType, LpOperations};
+/// use lp_modeler::operations::{LpOperations};
+/// use lp_modeler::variables::{LpVariable, LpType};
 ///
 /// let ref a = LpVariable::new("a", LpType::Integer);
 /// let ref b = LpVariable::new("b", LpType::Integer);

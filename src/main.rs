@@ -1,7 +1,8 @@
 extern crate lp_modeler;
 
-use lp_modeler::variables::*;
+use lp_modeler::operations::{LpOperations};
 use lp_modeler::problem::{LpProblem, LpObjective};
+use lp_modeler::variables::{LpVariable, LpType, LpExpression};
 use lp_modeler::variables::LpExpression::*;
 
 fn main() {
