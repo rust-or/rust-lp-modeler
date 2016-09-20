@@ -19,7 +19,7 @@ use std::ops::{AddAssign};
 ///
 /// let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
 /// ```
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum LpObjective {
     Minimize,
     Maximize
@@ -51,6 +51,11 @@ pub struct LpProblem {
     obj_expr: Option<LpExpression>,
     constraints: Vec<LpConstraint>
 
+}
+
+pub enum Solver {
+    Cbc,
+    CbcPath(String)
 }
 
 impl LpProblem {
@@ -224,7 +229,6 @@ impl LpProblem {
         // Write Binaries vars
         let binaries_str = self.binaries_string();
         if binaries_str.len() > 0 {
-            println!("----------------->{}", binaries_str.len());
             try!(buffer.write(b"\nBinary\n  "));
             try!(buffer.write(binaries_str.as_bytes()));
             try!(buffer.write(b"\n"));
@@ -237,8 +241,46 @@ impl LpProblem {
     }
 
     /// Solve the LP model
-    pub fn solve(&self) {
-        println!("Mhmmmm, solving :-)");
+    pub fn solve(&self) -> std::io::Result<()> {
+        use std::process::Command;
+        use std::fs::File;
+        use std::io::BufReader;
+        use std::io::BufRead;
+
+        //let cmd = String::new("cbc test.lp solve solution sol.mps");
+        let _output = Command::new("cbc").arg("test.lp").arg("solve").arg("solution").arg("sol.mps").output().expect("failed");
+
+        let f = try!(File::open("sol.mps"));
+        let mut file = BufReader::new(&f);
+
+
+        let mut buffer = String::new();
+        let _ = file.read_line(&mut buffer);
+
+        let mut vars_value: HashMap<_,_> = HashMap::new();
+        if let Some(result_type) = buffer.split(" ").next() {
+            println!("result: {}", result_type);
+            for line in file.lines() {
+                let l = line.unwrap();
+                let result_line: Vec<_> = l.split_whitespace().collect();
+                if result_line.len() == 4 {
+                    match result_line[3].parse::<f32>(){
+                        Ok(n) => {
+                            if self.objective_type == LpObjective::Maximize {
+                                vars_value.insert(result_line[1].to_string(), -n);
+                            }else{
+                                vars_value.insert(result_line[1].to_string(), n);
+                            }
+                        },
+                        Err(_) => {}
+                    }
+
+                }
+            }
+            println!("{:?}", vars_value);
+        }
+
+        Ok(())
     }
 
 }
@@ -292,7 +334,6 @@ impl ToString for LpExpression {
             }
         }
 
-        println!("{:?}", self);
         dfs(self, &String::new())
     }
 }

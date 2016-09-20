@@ -49,13 +49,13 @@ macro_rules! num_ops_expr {
         impl $trait_name<LpExpression> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: LpExpression) -> LpExpression {
-                MulExpr(Rc::new(LitVal(self)), Rc::new(_rhs))
+                MulExpr(Rc::new(LitVal(self as f32)), Rc::new(_rhs))
             }
         }
         impl<'a> $trait_name<&'a LpExpression> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: &'a LpExpression) -> LpExpression {
-                MulExpr(Rc::new(LitVal(self)), Rc::new(_rhs.clone()))
+                MulExpr(Rc::new(LitVal(self as f32)), Rc::new(_rhs.clone()))
             }
         }
     };
@@ -97,5 +97,8 @@ expr_ops_expr!(Sub, sub, SubExpr);
 num_ops_expr!(f32, Add, add);
 num_ops_expr!(f32, Mul, mul);
 num_ops_expr!(f32, Sub, sub);
+num_ops_expr!(i32, Add, add);
+num_ops_expr!(i32, Mul, mul);
+num_ops_expr!(i32, Sub, sub);
 
 
