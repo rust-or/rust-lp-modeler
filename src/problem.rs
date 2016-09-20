@@ -38,9 +38,9 @@ pub enum LpObjective {
 /// let ref b = LpVariable::new("b", LpType::Integer);
 ///
 /// let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
-/// problem += (a + b).le(100);
+/// problem += (a + b).le(100.0);
 /// problem += a.ge(b);
-/// problem += 2*a + 3*b;
+/// problem += 2.0*a + 3.0*b;
 ///
 /// problem.solve();
 /// ```

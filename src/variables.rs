@@ -12,8 +12,8 @@ use std::rc::Rc;
 /// use lp_modeler::variables::{LpVariable, LpType};
 ///
 /// let ref a1 = LpVariable::new("a1", LpType::Integer)
-///     .lower_bound(10)
-///     .upper_bound(20);
+///     .lower_bound(10.0)
+///     .upper_bound(20.0);
 ///
 /// ```
 pub enum LpType {
@@ -267,7 +267,7 @@ impl LpExpression {
 /// let ref c = LpVariable::new("c", LpType::Binary);
 ///
 /// let ref v = vec!(a, b, c);
-/// problem += lp_sum(v).equal(10);
+/// problem += lp_sum(v).equal(10.0);
 /// ```
 ///
 pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression where T : Into<LpExpression> + Clone {

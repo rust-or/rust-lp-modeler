@@ -7,8 +7,8 @@ use std::rc::Rc;
 #[test]
 fn expressions_creation() {
     let ref a = LpVariable::new("a", LpType::Integer)
-        .lower_bound(10)
-        .upper_bound(20);
+        .lower_bound(10.0)
+        .upper_bound(20.0);
     let ref b = LpVariable::new("b", LpType::Integer);
     let ref c = LpVariable::new("c", LpType::Integer);
 
