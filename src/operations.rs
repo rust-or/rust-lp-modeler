@@ -5,8 +5,11 @@ use std::rc::Rc;
 
 // Operations trait for any type implementing Into<LpExpressions> trait
 pub trait LpOperations<T> where T: Into<LpExpression> {
+    /// Less or equal binary syntax for LpExpression
     fn le(&self, lhs_expr: T) -> LpConstraint;
+    /// Greater or equal binary syntax for LpExpression
     fn ge(&self, lhs_expr: T) -> LpConstraint;
+    /// Equality binary syntax for LpExpression
     fn equal(&self, lhs_expr: T) -> LpConstraint;
 }
 

@@ -162,6 +162,9 @@
 <span id="118">118</span>
 <span id="119">119</span>
 <span id="120">120</span>
+<span id="121">121</span>
+<span id="122">122</span>
+<span id="123">123</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::{<span class='ident'>Add</span>, <span class='ident'>Mul</span>, <span class='ident'>Sub</span>, <span class='ident'>Neg</span>};
 <span class='kw'>use</span> <span class='ident'>variables</span>::{<span class='ident'>LpExpression</span>, <span class='ident'>LpConstraint</span>, <span class='ident'>Constraint</span>};
@@ -170,8 +173,11 @@
 
 <span class='comment'>// Operations trait for any type implementing Into&lt;LpExpressions&gt; trait</span>
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>LpOperations</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> {
+    <span class='doccomment'>/// Less or equal binary syntax for LpExpression</span>
     <span class='kw'>fn</span> <span class='ident'>le</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>lhs_expr</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpConstraint</span>;
+    <span class='doccomment'>/// Greater or equal binary syntax for LpExpression</span>
     <span class='kw'>fn</span> <span class='ident'>ge</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>lhs_expr</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpConstraint</span>;
+    <span class='doccomment'>/// Equality binary syntax for LpExpression</span>
     <span class='kw'>fn</span> <span class='ident'>equal</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>lhs_expr</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpConstraint</span>;
 }
 
