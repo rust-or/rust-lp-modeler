@@ -3,17 +3,26 @@ use variables::{LpExpression, LpConstraint, Constraint};
 use variables::LpExpression::*;
 use std::rc::Rc;
 
+// Operations trait for any type implementing Into<LpExpressions> trait
 pub trait LpOperations<T> where T: Into<LpExpression> {
     fn le(&self, lhs_expr: T) -> LpConstraint;
     fn ge(&self, lhs_expr: T) -> LpConstraint;
     fn equal(&self, lhs_expr: T) -> LpConstraint;
 }
 
-impl Into<LpExpression> for f32 {
-    fn into(self) -> LpExpression {
-        LitVal(self)
-    }
+/// Macro implementing Into<LpExpression> for any type coercing to f32
+macro_rules! num_to_into_expr {
+    ($type_to:ty) => {
+        impl Into<LpExpression> for $type_to {
+            fn into(self) -> LpExpression {
+                LitVal(self as f32)
+            }
+        }
+    };
 }
+
+num_to_into_expr!(f32);
+num_to_into_expr!(i32);
 
 impl<'a> Into<LpExpression> for &'a LpExpression {
     fn into(self) -> LpExpression {

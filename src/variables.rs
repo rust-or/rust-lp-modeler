@@ -25,6 +25,7 @@ pub enum LpType {
     Continuous
 }
 
+/// ADT for Linear Programming Expression
 #[derive(Debug, Clone, PartialEq)]
 pub enum LpExpression {
     BinaryVariable {

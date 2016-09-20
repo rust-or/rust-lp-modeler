@@ -340,16 +340,13 @@
 <span id="296">296</span>
 <span id="297">297</span>
 <span id="298">298</span>
-<span id="299">299</span>
-<span id="300">300</span>
-<span id="301">301</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>;
 <span class='kw'>use</span> <span class='ident'>variables</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>variables</span>::<span class='ident'>LpExpression</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>variables</span>::<span class='ident'>Constraint</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashSet</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
 
 <span class='comment'>//use variables::LpExpression::{AddExpr, MulExpr};</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::{<span class='ident'>AddAssign</span>};
@@ -377,15 +374,16 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// ```</span>
 <span class='doccomment'>/// use lp_modeler::problem::{LpObjective, LpProblem};</span>
-<span class='doccomment'>/// use lp_modeler::variables::{LpVariable, LpType, LpOperations};</span>
+<span class='doccomment'>/// use lp_modeler::operations::{LpOperations};</span>
+<span class='doccomment'>/// use lp_modeler::variables::{LpVariable, LpType};</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// let ref a = LpVariable::new(&quot;a&quot;, LpType::Integer);</span>
 <span class='doccomment'>/// let ref b = LpVariable::new(&quot;b&quot;, LpType::Integer);</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// let mut problem = LpProblem::new(&quot;One Problem&quot;, LpObjective::Maximize);</span>
-<span class='doccomment'>/// problem += (a + b).le(100);</span>
+<span class='doccomment'>/// problem += (a + b).le(100.0);</span>
 <span class='doccomment'>/// problem += a.ge(b);</span>
-<span class='doccomment'>/// problem += 2*a + 3*b;</span>
+<span class='doccomment'>/// problem += 2.0*a + 3.0*b;</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// problem.solve();</span>
 <span class='doccomment'>/// ```</span>
@@ -407,11 +405,11 @@
 
     <span class='comment'>// TODO: Call once and pass into parameter</span>
     <span class='comment'>// TODO: Check variables on the objective function</span>
-    <span class='kw'>fn</span> <span class='ident'>variables</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>HashSet</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>variables</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>String</span>, <span class='kw-2'>&amp;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> {
 
-        <span class='kw'>fn</span> <span class='ident'>var</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='ident'>expr</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span>, <span class='ident'>lst</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span><span class='op'>&gt;</span>) {
+        <span class='kw'>fn</span> <span class='ident'>var</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='ident'>expr</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span>, <span class='ident'>lst</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='ident'>String</span>, <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span>)<span class='op'>&gt;</span>) {
             <span class='kw'>match</span> <span class='ident'>expr</span> {
-                <span class='kw-2'>&amp;</span><span class='ident'>BinaryVariable</span> {..} <span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='ident'>IntegerVariable</span> {..} <span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='ident'>ContinuousVariable</span> {..} <span class='op'>=&gt;</span> { <span class='ident'>lst</span>.<span class='ident'>push</span>(<span class='ident'>expr</span>); },
+                <span class='kw-2'>&amp;</span><span class='ident'>BinaryVariable</span> {<span class='kw-2'>ref</span> <span class='ident'>name</span>, ..} <span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='ident'>IntegerVariable</span> {<span class='kw-2'>ref</span> <span class='ident'>name</span>, ..} <span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='ident'>ContinuousVariable</span> {<span class='kw-2'>ref</span> <span class='ident'>name</span>, ..} <span class='op'>=&gt;</span> { <span class='ident'>lst</span>.<span class='ident'>push</span>((<span class='ident'>name</span>.<span class='ident'>clone</span>(), <span class='ident'>expr</span>)); },
                 <span class='kw-2'>&amp;</span><span class='ident'>MulExpr</span>(_, <span class='kw-2'>ref</span> <span class='ident'>e</span>) <span class='op'>=&gt;</span> { <span class='ident'>var</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>e</span>, <span class='ident'>lst</span>); },
                 <span class='kw-2'>&amp;</span><span class='ident'>AddExpr</span>(<span class='kw-2'>ref</span> <span class='ident'>e1</span>, <span class='kw-2'>ref</span> <span class='ident'>e2</span>) <span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='ident'>SubExpr</span>(<span class='kw-2'>ref</span> <span class='ident'>e1</span>, <span class='kw-2'>ref</span> <span class='ident'>e2</span>) <span class='op'>=&gt;</span> {
                     <span class='ident'>var</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>e1</span>, <span class='ident'>lst</span>);
@@ -421,54 +419,21 @@
             }
         }
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>lst</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>lst</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
         <span class='kw'>for</span> <span class='ident'>e</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>constraints</span> {
             <span class='ident'>var</span>(<span class='kw-2'>&amp;</span><span class='ident'>e</span>.<span class='number'>0</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>lst</span>);
         }
-        <span class='ident'>lst</span>.<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='kw-2'>&amp;</span><span class='ident'>x</span><span class='op'>|</span> <span class='ident'>x</span>).<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>HashSet</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>()
+        <span class='ident'>lst</span>.<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='kw-2'>&amp;</span>(<span class='kw-2'>ref</span> <span class='ident'>n</span>, <span class='kw-2'>ref</span> <span class='ident'>x</span>)<span class='op'>|</span> (<span class='ident'>n</span>.<span class='ident'>clone</span>(), <span class='op'>*</span><span class='ident'>x</span>)).<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>String</span>, <span class='kw-2'>&amp;</span><span class='ident'>LpExpression</span><span class='op'>&gt;&gt;</span>()
     }
 
-    <span class='kw'>fn</span> <span class='ident'>dfs</span>(<span class='ident'>expr</span>: <span class='kw-2'>&amp;</span><span class='ident'>LpExpression</span>, <span class='ident'>lst</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>String</span>) {
-        <span class='kw'>match</span> <span class='ident'>expr</span> {
-            <span class='kw-2'>&amp;</span><span class='ident'>MulExpr</span>(<span class='kw-2'>ref</span> <span class='ident'>e1</span>, <span class='kw-2'>ref</span> <span class='ident'>e2</span>) <span class='op'>=&gt;</span> {
-                <span class='self'>Self</span>::<span class='ident'>dfs</span>(<span class='ident'>e1</span>, <span class='ident'>lst</span>);
-                <span class='ident'>lst</span>.<span class='ident'>push_str</span>(<span class='string'>&quot; &quot;</span>);
-                <span class='self'>Self</span>::<span class='ident'>dfs</span>(<span class='ident'>e2</span>, <span class='ident'>lst</span>);
-            },
-            <span class='kw-2'>&amp;</span><span class='ident'>AddExpr</span>(<span class='kw-2'>ref</span> <span class='ident'>e1</span>, <span class='kw-2'>ref</span> <span class='ident'>e2</span>) <span class='op'>=&gt;</span> {
-                <span class='self'>Self</span>::<span class='ident'>dfs</span>(<span class='ident'>e1</span>, <span class='ident'>lst</span>);
-                <span class='ident'>lst</span>.<span class='ident'>push_str</span>(<span class='string'>&quot; + &quot;</span>);
-                <span class='self'>Self</span>::<span class='ident'>dfs</span>(<span class='ident'>e2</span>, <span class='ident'>lst</span>);
-            },
-            <span class='kw-2'>&amp;</span><span class='ident'>SubExpr</span>(<span class='kw-2'>ref</span> <span class='ident'>e1</span>, <span class='kw-2'>ref</span> <span class='ident'>e2</span>) <span class='op'>=&gt;</span> {
-                <span class='self'>Self</span>::<span class='ident'>dfs</span>(<span class='ident'>e1</span>, <span class='ident'>lst</span>);
-                <span class='ident'>lst</span>.<span class='ident'>push_str</span>(<span class='string'>&quot; - &quot;</span>);
-                <span class='self'>Self</span>::<span class='ident'>dfs</span>(<span class='ident'>e2</span>, <span class='ident'>lst</span>);
-            },
-            <span class='kw-2'>&amp;</span><span class='ident'>BinaryVariable</span> {<span class='ident'>name</span>: <span class='kw-2'>ref</span> <span class='ident'>n</span>, .. } <span class='op'>=&gt;</span> {
-                <span class='ident'>lst</span>.<span class='ident'>push_str</span>(<span class='ident'>n</span>);
-            },
-            <span class='kw-2'>&amp;</span><span class='ident'>IntegerVariable</span> {<span class='ident'>name</span>: <span class='kw-2'>ref</span> <span class='ident'>n</span>, .. } <span class='op'>=&gt;</span> {
-                <span class='ident'>lst</span>.<span class='ident'>push_str</span>(<span class='ident'>n</span>);
-            },
-            <span class='kw-2'>&amp;</span><span class='ident'>ContinuousVariable</span> {<span class='ident'>name</span>: <span class='kw-2'>ref</span> <span class='ident'>n</span>, .. } <span class='op'>=&gt;</span> {
-                <span class='ident'>lst</span>.<span class='ident'>push_str</span>(<span class='ident'>n</span>);
-            },
-            <span class='kw-2'>&amp;</span><span class='ident'>LitVal</span>(<span class='ident'>n</span>) <span class='op'>=&gt;</span> {
-                <span class='ident'>lst</span>.<span class='ident'>push_str</span>(<span class='kw-2'>&amp;</span><span class='ident'>n</span>.<span class='ident'>to_string</span>());
-            },
-            _ <span class='op'>=&gt;</span> ()
-        }
-    }
 
     <span class='kw'>fn</span> <span class='ident'>objective_string</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
 
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>s</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>ref</span> <span class='ident'>expr</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>obj_expr</span> {
-            <span class='self'>Self</span>::<span class='ident'>dfs</span>(<span class='ident'>expr</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>s</span>);
+            <span class='ident'>expr</span>.<span class='ident'>to_string</span>()
+        } <span class='kw'>else</span> {
+            <span class='ident'>String</span>::<span class='ident'>new</span>()
         }
-        <span class='ident'>s</span>
-
     }
 
     <span class='kw'>fn</span> <span class='ident'>constraints_string</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
@@ -480,14 +445,13 @@
             <span class='ident'>res</span>.<span class='ident'>push_str</span>(<span class='kw-2'>&amp;</span><span class='ident'>index</span>.<span class='ident'>to_string</span>());
             <span class='ident'>res</span>.<span class='ident'>push_str</span>(<span class='string'>&quot;: &quot;</span>);
             <span class='ident'>index</span> <span class='op'>+=</span> <span class='number'>1</span>;
-            <span class='self'>Self</span>::<span class='ident'>dfs</span>(<span class='ident'>e1</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>res</span>);
+            <span class='ident'>res</span>.<span class='ident'>push_str</span>(<span class='kw-2'>&amp;</span><span class='ident'>e1</span>.<span class='ident'>to_string</span>());
             <span class='kw'>match</span> <span class='ident'>op</span> {
-                <span class='comment'>//TODO: Remove &gt; &lt;, not standard</span>
                 <span class='kw-2'>&amp;</span><span class='ident'>GreaterOrEqual</span> <span class='op'>=&gt;</span> <span class='ident'>res</span>.<span class='ident'>push_str</span>(<span class='string'>&quot; &gt;= &quot;</span>),
                 <span class='kw-2'>&amp;</span><span class='ident'>LessOrEqual</span> <span class='op'>=&gt;</span> <span class='ident'>res</span>.<span class='ident'>push_str</span>(<span class='string'>&quot; &lt;= &quot;</span>),
                 <span class='kw-2'>&amp;</span><span class='ident'>Equal</span> <span class='op'>=&gt;</span> <span class='ident'>res</span>.<span class='ident'>push_str</span>(<span class='string'>&quot; = &quot;</span>),
             }
-            <span class='self'>Self</span>::<span class='ident'>dfs</span>(<span class='ident'>e2</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>res</span>);
+            <span class='ident'>res</span>.<span class='ident'>push_str</span>(<span class='kw-2'>&amp;</span><span class='ident'>e2</span>.<span class='ident'>to_string</span>());
             <span class='ident'>res</span>.<span class='ident'>push_str</span>(<span class='string'>&quot;\n&quot;</span>);
         }
         <span class='ident'>res</span>
@@ -495,7 +459,7 @@
 
     <span class='kw'>fn</span> <span class='ident'>bounds_string</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
-        <span class='kw'>for</span> <span class='ident'>v</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>variables</span>() {
+        <span class='kw'>for</span> (_,<span class='ident'>v</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>variables</span>() {
             <span class='kw'>match</span> <span class='ident'>v</span> {
                 <span class='kw-2'>&amp;</span><span class='ident'>IntegerVariable</span> { <span class='kw-2'>ref</span> <span class='ident'>name</span>, <span class='ident'>lower_bound</span>, <span class='ident'>upper_bound</span> }
                     <span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='ident'>ContinuousVariable</span> { <span class='kw-2'>ref</span> <span class='ident'>name</span>, <span class='ident'>lower_bound</span>, <span class='ident'>upper_bound</span> } <span class='op'>=&gt;</span> {
@@ -534,7 +498,7 @@
 
     <span class='kw'>fn</span> <span class='ident'>generals_string</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
-        <span class='kw'>for</span> <span class='ident'>v</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>variables</span>() {
+        <span class='kw'>for</span> (_,<span class='ident'>v</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>variables</span>() {
             <span class='kw'>match</span> <span class='ident'>v</span> {
                 <span class='kw-2'>&amp;</span><span class='ident'>IntegerVariable</span> { <span class='kw-2'>ref</span> <span class='ident'>name</span>, .. } <span class='op'>=&gt;</span> {
                     <span class='ident'>res</span>.<span class='ident'>push_str</span>(<span class='ident'>name</span>);
@@ -548,7 +512,7 @@
 
     <span class='kw'>fn</span> <span class='ident'>binaries_string</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
-        <span class='kw'>for</span> <span class='ident'>v</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>variables</span>() {
+        <span class='kw'>for</span> (_,<span class='ident'>v</span>) <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>variables</span>() {
             <span class='kw'>match</span> <span class='ident'>v</span> {
                 <span class='kw-2'>&amp;</span><span class='ident'>BinaryVariable</span> { <span class='kw-2'>ref</span> <span class='ident'>name</span> } <span class='op'>=&gt;</span> {
                     <span class='ident'>res</span>.<span class='ident'>push_str</span>(<span class='ident'>name</span>);
@@ -641,9 +605,39 @@
     }
 }
 
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
-<span class='kw'>fn</span> <span class='ident'>test</span>(){
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='bool-val'>false</span>);
+<span class='kw'>impl</span> <span class='ident'>ToString</span> <span class='kw'>for</span> <span class='ident'>LpExpression</span> {
+    <span class='kw'>fn</span> <span class='ident'>to_string</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
+
+        <span class='kw'>fn</span> <span class='ident'>dfs</span>(<span class='ident'>expr</span>: <span class='kw-2'>&amp;</span><span class='ident'>LpExpression</span>, <span class='ident'>acc</span>: <span class='kw-2'>&amp;</span><span class='ident'>String</span>) <span class='op'>-&gt;</span> <span class='ident'>String</span> {
+            <span class='kw'>match</span> <span class='ident'>expr</span> {
+                <span class='kw-2'>&amp;</span><span class='ident'>MulExpr</span>(<span class='kw-2'>ref</span> <span class='ident'>e1</span>, <span class='kw-2'>ref</span> <span class='ident'>e2</span>) <span class='op'>=&gt;</span> {
+                    <span class='ident'>e1</span>.<span class='ident'>to_string</span>() <span class='op'>+</span> <span class='string'>&quot; &quot;</span> <span class='op'>+</span> <span class='kw-2'>&amp;</span><span class='ident'>e2</span>.<span class='ident'>to_string</span>()
+                },
+                <span class='kw-2'>&amp;</span><span class='ident'>AddExpr</span>(<span class='kw-2'>ref</span> <span class='ident'>e1</span>, <span class='kw-2'>ref</span> <span class='ident'>e2</span>) <span class='op'>=&gt;</span> {
+                    <span class='ident'>e1</span>.<span class='ident'>to_string</span>() <span class='op'>+</span> <span class='string'>&quot; + &quot;</span> <span class='op'>+</span> <span class='kw-2'>&amp;</span><span class='ident'>e2</span>.<span class='ident'>to_string</span>()
+                },
+                <span class='kw-2'>&amp;</span><span class='ident'>SubExpr</span>(<span class='kw-2'>ref</span> <span class='ident'>e1</span>, <span class='kw-2'>ref</span> <span class='ident'>e2</span>) <span class='op'>=&gt;</span> {
+                    <span class='ident'>e1</span>.<span class='ident'>to_string</span>() <span class='op'>+</span> <span class='string'>&quot; - &quot;</span> <span class='op'>+</span> <span class='kw-2'>&amp;</span><span class='ident'>e2</span>.<span class='ident'>to_string</span>()
+                },
+                <span class='kw-2'>&amp;</span><span class='ident'>BinaryVariable</span> {<span class='ident'>name</span>: <span class='kw-2'>ref</span> <span class='ident'>n</span>, .. } <span class='op'>=&gt;</span> {
+                    <span class='ident'>acc</span>.<span class='ident'>clone</span>() <span class='op'>+</span> <span class='ident'>n</span>
+                },
+                <span class='kw-2'>&amp;</span><span class='ident'>IntegerVariable</span> {<span class='ident'>name</span>: <span class='kw-2'>ref</span> <span class='ident'>n</span>, .. } <span class='op'>=&gt;</span> {
+                    <span class='ident'>acc</span>.<span class='ident'>clone</span>() <span class='op'>+</span> <span class='ident'>n</span>
+                },
+                <span class='kw-2'>&amp;</span><span class='ident'>ContinuousVariable</span> {<span class='ident'>name</span>: <span class='kw-2'>ref</span> <span class='ident'>n</span>, .. } <span class='op'>=&gt;</span> {
+                    <span class='ident'>acc</span>.<span class='ident'>clone</span>() <span class='op'>+</span> <span class='ident'>n</span>
+                },
+                <span class='kw-2'>&amp;</span><span class='ident'>LitVal</span>(<span class='ident'>n</span>) <span class='op'>=&gt;</span> {
+                    <span class='ident'>acc</span>.<span class='ident'>clone</span>() <span class='op'>+</span> <span class='kw-2'>&amp;</span><span class='ident'>n</span>.<span class='ident'>to_string</span>()
+                },
+                _ <span class='op'>=&gt;</span> <span class='ident'>acc</span>.<span class='ident'>clone</span>()
+            }
+        }
+
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='self'>self</span>);
+        <span class='ident'>dfs</span>(<span class='self'>self</span>, <span class='kw-2'>&amp;</span><span class='ident'>String</span>::<span class='ident'>new</span>())
+    }
 }
 </pre>
 </section>
