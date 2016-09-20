@@ -10,9 +10,7 @@ fn expressions_creation() {
         .lower_bound(10.0)
         .upper_bound(20.0);
     let ref b = LpVariable::new("b", LpType::Integer);
-    let ref c = LpVariable::new("c", LpType::Integer);
 
     assert_eq!(a + b, AddExpr(Rc::new(a.clone()), Rc::new(b.clone())));
-
 }
 
