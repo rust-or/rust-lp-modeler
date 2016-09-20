@@ -13,15 +13,15 @@ fn main() {
 
     let mut problem = LpProblem::new("Problem", LpObjective::Maximize);
 
-    problem += 10 * a + 20 * b;
-    problem += (500 * a + 1200 * b + 1000 + 1000).le(10000);
+    problem += 10.0 * a + 20.0 * b;
+    problem += (500.0 * a + 1200.0 * b + 1000.0 + 1000.0).le(10000.0);
     problem += (a).le(b);
-    problem += (LitVal(12) + LitVal(33)).ge(a);
-    problem += (-b).le(0);
-    problem += (a + -b).le(0);
-    problem += (500 * a + 1200 * b).le(10000);
-    problem += (a - b).le(0);
-    problem += (a + 2 * b + 66 + 14 - 2*b - 10).le(12+b + 2);
+    problem += (LitVal(12.0) + LitVal(33.0)).ge(a);
+    problem += (-b).le(0.0);
+    problem += (a + -b).le(0.0);
+    problem += (500.0 * a + 1200.0 * b).le(10000.0);
+    problem += (a - b).le(0.0);
+    problem += (a + 2.0 * b + 66.0 + 14.0 - 2.0*b - 10.0).le(12.0+b + 2.0);
 
     if let Ok(..) = problem.write_lp("test.lp") {
         println!("File exported");

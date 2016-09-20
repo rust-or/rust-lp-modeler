@@ -25,27 +25,29 @@ pub enum LpType {
     Continuous
 }
 
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LpExpression {
     BinaryVariable {
         name: String,
     },
     IntegerVariable {
         name: String,
-        lower_bound: Option<i32>,
-        upper_bound: Option<i32>,
+        lower_bound: Option<f32>,
+        upper_bound: Option<f32>,
     },
     ContinuousVariable {
         name: String,
-        lower_bound: Option<i32>,
-        upper_bound: Option<i32>,
+        lower_bound: Option<f32>,
+        upper_bound: Option<f32>,
     },
     MulExpr(Rc<LpExpression>, Rc<LpExpression>),
     AddExpr(Rc<LpExpression>, Rc<LpExpression>),
     SubExpr(Rc<LpExpression>, Rc<LpExpression>),
-    LitVal(i32),
+    LitVal(f32),
     EmptyExpr
 }
+
+
 
 pub struct LpVariable;
 
@@ -76,7 +78,7 @@ impl LpVariable {
 impl LpConstraint {
     pub fn generalize(&self) -> LpConstraint {
         // TODO: Optimize tailrec
-        fn dfs_constant(expr: &LpExpression, acc: i32) -> i32 {
+        fn dfs_constant(expr: &LpExpression, acc: f32) -> f32 {
             match expr {
                 &MulExpr(ref rc_e1, ref rc_e2) => {
                     let ref e1 = **rc_e1;
@@ -91,7 +93,7 @@ impl LpConstraint {
                         if let &LitVal(ref y) = e2 {
                             dfs_constant(e1, acc+y)
                         }else {
-                            dfs_constant(e2, acc) + dfs_constant(e1, 0)
+                            dfs_constant(e2, acc) + dfs_constant(e1, 0.0)
                         }
                     }
                 },
@@ -108,7 +110,7 @@ impl LpConstraint {
                         if let &LitVal(ref y) = e2 {
                             dfs_constant(e1, acc+y)
                         }else {
-                            dfs_constant(e2, acc) + dfs_constant(e1, 0)
+                            dfs_constant(e2, acc) + dfs_constant(e1, 0.0)
                         }
                     }
                 },
@@ -125,7 +127,7 @@ impl LpConstraint {
                         if let &LitVal(ref y) = e2 {
                             dfs_constant(e1, acc-y)
                         }else {
-                            dfs_constant(e1, acc) - dfs_constant(e2, 0)
+                            dfs_constant(e1, acc) - dfs_constant(e2, 0.0)
                         }
                     }
                 },
@@ -191,11 +193,11 @@ impl LpConstraint {
         }
 
         let &LpConstraint(ref lhs, ref op, ref rhs) = self;
-        if let &LitVal(0) = rhs {
+        if let &LitVal(0.0) = rhs {
             self.clone()
         }else{
             let ref lhs_constraint = lhs - rhs;
-            let constant = dfs_constant(lhs_constraint, 0);
+            let constant = dfs_constant(lhs_constraint, 0.0);
             let lhs_constraint = dfs_remove_constant(lhs_constraint);
             LpConstraint(lhs_constraint, op.clone(), LitVal(-constant))
         }
@@ -204,7 +206,7 @@ impl LpConstraint {
 
 #[allow(dead_code)]
 impl LpExpression {
-    pub fn lower_bound(&self, lw: i32) -> LpExpression {
+    pub fn lower_bound(&self, lw: f32) -> LpExpression {
         match self {
             &BinaryVariable { name: ref n } =>
                 BinaryVariable {
@@ -225,7 +227,7 @@ impl LpExpression {
             _ => self.clone()
         }
     }
-    pub fn upper_bound(&self, up: i32) -> LpExpression {
+    pub fn upper_bound(&self, up: f32) -> LpExpression {
         match self {
             &BinaryVariable { name: ref n } =>
                 BinaryVariable {

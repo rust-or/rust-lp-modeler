@@ -3,7 +3,7 @@ use variables::*;
 use variables::LpExpression::*;
 use variables::Constraint::*;
 use std::rc::Rc;
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 //use variables::LpExpression::{AddExpr, MulExpr};
 use std::ops::{AddAssign};
@@ -62,11 +62,11 @@ impl LpProblem {
 
     // TODO: Call once and pass into parameter
     // TODO: Check variables on the objective function
-    fn variables(&self) -> HashSet<&LpExpression> {
+    fn variables(&self) -> HashMap<String, &LpExpression> {
 
-        fn var<'a>(expr: &'a LpExpression, lst: &mut Vec<&'a LpExpression>) {
+        fn var<'a>(expr: &'a LpExpression, lst: &mut Vec<(String, &'a LpExpression)>) {
             match expr {
-                &BinaryVariable {..} | &IntegerVariable {..} | &ContinuousVariable {..} => { lst.push(expr); },
+                &BinaryVariable {ref name, ..} | &IntegerVariable {ref name, ..} | &ContinuousVariable {ref name, ..} => { lst.push((name.clone(), expr)); },
                 &MulExpr(_, ref e) => { var(&*e, lst); },
                 &AddExpr(ref e1, ref e2) | &SubExpr(ref e1, ref e2) => {
                     var(&*e1, lst);
@@ -76,11 +76,11 @@ impl LpProblem {
             }
         }
 
-        let mut lst = Vec::new();
+        let mut lst: Vec<_> = Vec::new();
         for e in &self.constraints {
             var(&e.0, &mut lst);
         }
-        lst.iter().map(|&x| x).collect::<HashSet<_>>()
+        lst.iter().map(|&(ref n, ref x)| (n.clone(), *x)).collect::<HashMap<String, &LpExpression>>()
     }
 
 
@@ -116,7 +116,7 @@ impl LpProblem {
 
     fn bounds_string(&self) -> String {
         let mut res = String::new();
-        for v in self.variables() {
+        for (_,v) in self.variables() {
             match v {
                 &IntegerVariable { ref name, lower_bound, upper_bound }
                     | &ContinuousVariable { ref name, lower_bound, upper_bound } => {
@@ -155,7 +155,7 @@ impl LpProblem {
 
     fn generals_string(&self) -> String {
         let mut res = String::new();
-        for v in self.variables() {
+        for (_,v) in self.variables() {
             match v {
                 &IntegerVariable { ref name, .. } => {
                     res.push_str(name);
@@ -169,7 +169,7 @@ impl LpProblem {
 
     fn binaries_string(&self) -> String {
         let mut res = String::new();
-        for v in self.variables() {
+        for (_,v) in self.variables() {
             match v {
                 &BinaryVariable { ref name } => {
                     res.push_str(name);
