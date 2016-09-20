@@ -3,7 +3,7 @@ use variables::{LpExpression, LpConstraint, Constraint};
 use variables::LpExpression::*;
 use std::rc::Rc;
 
-// Operations trait for any type implementing Into<LpExpressions> trait
+/// Operations trait for any type implementing Into<LpExpressions> trait
 pub trait LpOperations<T> where T: Into<LpExpression> {
     /// Less or equal binary syntax for LpExpression
     fn le(&self, lhs_expr: T) -> LpConstraint;
@@ -24,17 +24,51 @@ macro_rules! num_to_into_expr {
     };
 }
 
-num_to_into_expr!(f32);
-num_to_into_expr!(i32);
+/// Macro implementing binary operations Into<LpExpression> and &Into<LpExpression>
+macro_rules! expr_ops_expr {
+    ($trait_name: ident, $f_name: ident, $expr_type: ident) => {
+        impl<T> $trait_name<T> for LpExpression where T: Into<LpExpression> + Clone {
+            type Output = LpExpression;
+            fn $f_name(self, _rhs: T) -> LpExpression {
+                $expr_type(Rc::new(self.clone()), Rc::new(_rhs.into()))
+            }
+        }
 
+        impl<'a, T> $trait_name<T> for &'a LpExpression where T: Into<LpExpression> + Clone {
+            type Output = LpExpression;
+            fn $f_name(self, _rhs: T) -> LpExpression {
+                $expr_type(Rc::new(self.clone()), Rc::new(_rhs.into()))
+            }
+        }
+    };
+}
+
+/// Macro implementing binary operations for a numeric type
+macro_rules! num_ops_expr {
+    ($num_type: ty, $trait_name: ident, $f_name: ident) => {
+        impl $trait_name<LpExpression> for $num_type {
+            type Output = LpExpression;
+            fn $f_name(self, _rhs: LpExpression) -> LpExpression {
+                MulExpr(Rc::new(LitVal(self)), Rc::new(_rhs))
+            }
+        }
+        impl<'a> $trait_name<&'a LpExpression> for $num_type {
+            type Output = LpExpression;
+            fn $f_name(self, _rhs: &'a LpExpression) -> LpExpression {
+                MulExpr(Rc::new(LitVal(self)), Rc::new(_rhs.clone()))
+            }
+        }
+    };
+}
+
+/// &LpExpression to LpExpression
 impl<'a> Into<LpExpression> for &'a LpExpression {
     fn into(self) -> LpExpression {
         self.clone()
     }
 }
 
-
-// <LpExr> op <LpExpr> where LpExpr is implicit
+/// Implementing LpOperations trait for any Into<LpExpression>
 impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
     fn le(&self, lhs_expr: T) -> LpConstraint {
         LpConstraint(self.clone().into(), Constraint::LessOrEqual, lhs_expr.clone().into()).generalize()
@@ -47,55 +81,6 @@ impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExp
     }
 }
 
-
-// LpExpr + (LpExpr, &LpExpr, f32)
-impl<T> Add<T> for LpExpression where T: Into<LpExpression> + Clone {
-    type Output = LpExpression;
-    fn add(self, _rhs: T) -> LpExpression {
-        AddExpr(Rc::new(self.clone()), Rc::new(_rhs.into()))
-    }
-}
-
-// &LpExpr + (LpExpr, &LpExpr, f32)
-impl<'a, T> Add<T> for &'a LpExpression where T: Into<LpExpression> + Clone {
-    type Output = LpExpression;
-    fn add(self, _rhs: T) -> LpExpression {
-        AddExpr(Rc::new(self.clone()), Rc::new(_rhs.into()))
-    }
-}
-
-// f32 + &LpExpr
-impl<'a> Add<&'a LpExpression> for f32 {
-    type Output = LpExpression;
-    fn add(self, _rhs: &'a LpExpression) -> LpExpression {
-        AddExpr(Rc::new(LitVal(self)), Rc::new(_rhs.clone()))
-    }
-}
-
-// LpExpr - (LpExpr, &LpExpr, f32)
-impl<T> Sub<T> for LpExpression where T: Into<LpExpression> + Clone {
-    type Output = LpExpression;
-    fn sub(self, _rhs: T) -> LpExpression {
-        SubExpr(Rc::new(self.clone()), Rc::new(_rhs.into()))
-    }
-}
-
-// &LpExpr - (LpExpr, &LpExpr, f32)
-impl<'a, T> Sub<T> for &'a LpExpression where T: Into<LpExpression> + Clone {
-    type Output = LpExpression;
-    fn sub(self, _rhs: T) -> LpExpression {
-        SubExpr(Rc::new(self.clone()), Rc::new(_rhs.into()))
-    }
-}
-
-// f32 - &LpExpr
-impl<'a> Sub<&'a LpExpression> for f32 {
-    type Output = LpExpression;
-    fn sub(self, _rhs: &'a LpExpression) -> LpExpression {
-        SubExpr(Rc::new(LitVal(self)), Rc::new(_rhs.clone()))
-    }
-}
-
 impl<'a> Neg for &'a LpExpression {
     type Output = LpExpression;
     fn neg(self) -> LpExpression {
@@ -103,21 +88,14 @@ impl<'a> Neg for &'a LpExpression {
     }
 }
 
+num_to_into_expr!(f32);
+num_to_into_expr!(i32);
+
+expr_ops_expr!(Add, add, AddExpr);
+expr_ops_expr!(Sub, sub, SubExpr);
+
+num_ops_expr!(f32, Add, add);
+num_ops_expr!(f32, Mul, mul);
+num_ops_expr!(f32, Sub, sub);
 
 
-// f32 * LpExpr
-impl Mul<LpExpression> for f32 {
-    type Output = LpExpression;
-    fn mul(self, _rhs: LpExpression) -> LpExpression {
-        LpExpression::MulExpr(Rc::new(LitVal(self)), Rc::new(_rhs))
-    }
-}
-
-// f32 * &LpExp
-impl<'a> Mul<&'a LpExpression> for f32 {
-    type Output = LpExpression;
-
-    fn mul(self, _rhs: &'a LpExpression) -> LpExpression {
-        MulExpr(Rc::new(LitVal(self)), Rc::new(_rhs.clone()))
-    }
-}
