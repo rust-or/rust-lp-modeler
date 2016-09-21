@@ -3,4 +3,4 @@ rust:
   - 1.11.0
 
 before_install:
-    - sudo apt-get install coinor-cbc
+    - apt-get install coinor-cbc
