@@ -22,6 +22,7 @@ fn main() {
     problem += c.ge(1);
 
     let res = problem.solve();
+    problem.write_lp("toto.lp");
     println!("{:?}", res);
 
     for r in res.iter() {
