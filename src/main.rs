@@ -2,8 +2,8 @@ extern crate lp_modeler;
 
 use lp_modeler::operations::{LpOperations};
 use lp_modeler::problem::{LpProblem, LpObjective};
-use lp_modeler::variables::{LpVariable, LpType, LpExpression};
-use lp_modeler::variables::LpExpression::*;
+use lp_modeler::variables::{LpVariable, LpType};
+use lp_modeler::solvers::*;
 
 fn main() {
 
@@ -21,12 +21,16 @@ fn main() {
     problem += b.le(4);
     problem += c.ge(1);
 
-    let res = problem.solve();
-    println!("{:?}", res);
+    problem.write_lp("toto.lp");
 
-    for r in res.iter() {
-        println!("value of {} = {}", r.0, r.1);
+    match problem.solve(Solver::Cbc) {
+        Ok((status, res)) => {
+            println!("Status {:?}", status);
+            for r in res.iter() {
+                println!("value of {} = {}", r.0, r.1);
+            }
+        },
+        Err(msg) => println!("{}", msg),
     }
-
 
 }
