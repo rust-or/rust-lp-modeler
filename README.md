@@ -32,7 +32,9 @@ for r in res.iter() {
 }
 ```
 
-it is already possible to export this model 
+This version are tested with coinor-cbc.
+
+It is already possible to export this model 
 into the [lp file format](https://www.gurobi.com/documentation/6.5/refman/lp_format.html "lp file format on Gurobi website"). 
 ```
 problem.write_lp("problem.lp") 
@@ -67,12 +69,12 @@ with a solver supporting lp file format :
     * Cplex
     
 ## Limitation
-* Now, it's only possible to have i32 as literal
-* Connector with the solver is not implemented
+* Use with CBC for now
 
 ## Todo
-* call directly the solver from this library
-* get back the value of the variables
+* test with other solver
+
+## Further work
 * it would be great to use some constraint for binary variable like 
     * a && b which is the constraint a + b = 2
     * a || b which is the constraint a + b >= 1
