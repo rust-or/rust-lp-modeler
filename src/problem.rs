@@ -250,13 +250,9 @@ impl LpProblem {
                 let status = try!(s.run_solver(file_model, file_solution));
                 let (status_read, res) = try!(s.read_solution(file_solution));
                 let _ = fs::remove_file(file_model);
-                if s.name().contains("gurobi") {
-                    match status {
-                        Some(s) => Ok((s, res)),
-                        _ => Ok((status_read, res))
-                    }
-                }else{
-                    Ok((status_read, res))
+                match status {
+                    Some(s) => Ok((s, res)),
+                    _ => Ok((status_read, res))
                 }
             },
             Err(e) => Err(e.to_string())
