@@ -5,6 +5,7 @@ use variables::LpExpression::*;
 use variables::Constraint::*;
 use std::rc::Rc;
 use std::collections::HashMap;
+use solvers::*;
 
 //use variables::LpExpression::{AddExpr, MulExpr};
 use std::ops::{AddAssign};
@@ -34,6 +35,7 @@ pub enum LpObjective {
 /// use lp_modeler::problem::{LpObjective, LpProblem};
 /// use lp_modeler::operations::{LpOperations};
 /// use lp_modeler::variables::{LpVariable, LpType};
+/// use lp_modeler::solvers::Solver;
 ///
 /// let ref a = LpVariable::new("a", LpType::Integer);
 /// let ref b = LpVariable::new("b", LpType::Integer);
@@ -43,7 +45,7 @@ pub enum LpObjective {
 /// problem += a.ge(b);
 /// problem += 2.0*a + 3.0*b;
 ///
-/// problem.solve();
+/// problem.solve(Solver::Cbc);
 /// ```
 #[derive(Debug)]
 pub struct LpProblem {
@@ -54,10 +56,6 @@ pub struct LpProblem {
 
 }
 
-pub enum Solver {
-    Cbc,
-    CbcPath(String)
-}
 
 impl LpProblem {
 
@@ -242,58 +240,28 @@ impl LpProblem {
     }
 
     /// Solve the LP model
-    pub fn solve(&self) -> HashMap<String,f32> {
-
-        use std::process::Command;
-        use std::fs::File;
-        use std::io::BufReader;
-        use std::io::BufRead;
+    pub fn solve(&self, s: Solver) -> Result<(Status, HashMap<String,f32>), String> {
 
         let file_model = "test.lp";
-        let file_solution = "sol.lp";
+        let file_solution = "sol.sol";
 
-        let mut vars_value: HashMap<_,_> = HashMap::new();
         match self.write_lp(file_model) {
             Ok(_) => {
-                Command::new("cbc").arg("test.lp").arg("solve").arg("solution").arg(file_solution).output().expect("failed");
-
-                match File::open(file_solution) {
-                    Ok(f) => {
-                        let mut file = BufReader::new(&f);
-
-
-                        let mut buffer = String::new();
-                        let _ = file.read_line(&mut buffer);
-
-                        if let Some(result_type) = buffer.split(" ").next() {
-                            println!("result: {}", result_type);
-                            for line in file.lines() {
-                                let l = line.unwrap();
-                                let result_line: Vec<_> = l.split_whitespace().collect();
-                                if result_line.len() == 4 {
-                                    match result_line[2].parse::<f32>() {
-                                        Ok(n) => {
-                                            vars_value.insert(result_line[1].to_string(), n);
-                                        },
-                                        Err(_) => {}
-                                    }
-                                }
-                            }
-                        }
-                        let _ = fs::remove_file(file_solution);
-                    },
-                    Err(_) => {}
-                }
-
+                let status = try!(s.run_solver(file_model, file_solution));
+                let (status_read, res) = try!(s.read_solution(file_solution));
                 let _ = fs::remove_file(file_model);
+                if s == Solver::Gurobi {
+                    match status {
+                        Some(s) => Ok((s, res)),
+                        _ => Ok((status_read, res))
+                    }
+                }else{
+                    Ok((status_read, res))
+                }
             },
-            Err(_) => {}
+            Err(e) => Err(e.to_string())
         }
-
-        vars_value
-
     }
-
 }
 
 /// Add constraints
