@@ -7,6 +7,4 @@ before_install:
     - sudo apt-get update -qq
 
 install:
-    - sudo apt-get install -qq build-essential pkg-config
-    - sudo apt-get install -qq python-dev libboost-python-dev
-    - sudo apt-get install -qq coinor-libosi-dev coinor-libcoinutils-dev coinor-libclp-dev libbz2-dev
+    - sudo apt-get install -qq coinor-cbc
