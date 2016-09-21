@@ -17,6 +17,7 @@ This first alpha version provide this SDL to make a LP Model :
 ```rust
 use lp_modeler::problem::{LpObjective, LpProblem};
 use lp_modeler::variables::{LpVariable, LpType, LpOperations};
+use lp_modeler::solvers::Solver;
 
 let ref a = LpVariable::new("a", LpType::Integer);
 let ref b = LpVariable::new("b", LpType::Integer);
