@@ -253,7 +253,6 @@ impl LpProblem {
         let file_solution = "sol.lp";
 
         let mut vars_value: HashMap<_,_> = HashMap::new();
-        /*
         match self.write_lp(file_model) {
             Ok(_) => {
                 Command::new("cbc").arg("test.lp").arg("solve").arg("solution").arg(file_solution).output().expect("failed");
@@ -290,7 +289,6 @@ impl LpProblem {
             },
             Err(_) => {}
         }
-        */
 
         vars_value
 

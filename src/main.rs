@@ -21,14 +21,12 @@ fn main() {
     problem += b.le(4);
     problem += c.ge(1);
 
-    /*
     let res = problem.solve();
     println!("{:?}", res);
 
     for r in res.iter() {
         println!("value of {} = {}", r.0, r.1);
     }
-    */
 
 
 }
