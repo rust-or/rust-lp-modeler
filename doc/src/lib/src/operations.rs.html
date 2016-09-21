@@ -146,32 +146,13 @@
 <span id="102">102</span>
 <span id="103">103</span>
 <span id="104">104</span>
-<span id="105">105</span>
-<span id="106">106</span>
-<span id="107">107</span>
-<span id="108">108</span>
-<span id="109">109</span>
-<span id="110">110</span>
-<span id="111">111</span>
-<span id="112">112</span>
-<span id="113">113</span>
-<span id="114">114</span>
-<span id="115">115</span>
-<span id="116">116</span>
-<span id="117">117</span>
-<span id="118">118</span>
-<span id="119">119</span>
-<span id="120">120</span>
-<span id="121">121</span>
-<span id="122">122</span>
-<span id="123">123</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::{<span class='ident'>Add</span>, <span class='ident'>Mul</span>, <span class='ident'>Sub</span>, <span class='ident'>Neg</span>};
 <span class='kw'>use</span> <span class='ident'>variables</span>::{<span class='ident'>LpExpression</span>, <span class='ident'>LpConstraint</span>, <span class='ident'>Constraint</span>};
 <span class='kw'>use</span> <span class='ident'>variables</span>::<span class='ident'>LpExpression</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
 
-<span class='comment'>// Operations trait for any type implementing Into&lt;LpExpressions&gt; trait</span>
+<span class='doccomment'>/// Operations trait for any type implementing Into&lt;LpExpressions&gt; trait</span>
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>LpOperations</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Less or equal binary syntax for LpExpression</span>
     <span class='kw'>fn</span> <span class='ident'>le</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>lhs_expr</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpConstraint</span>;
@@ -192,17 +173,51 @@
     };
 }
 
-<span class='macro'>num_to_into_expr</span><span class='macro'>!</span>(<span class='ident'>f32</span>);
-<span class='macro'>num_to_into_expr</span><span class='macro'>!</span>(<span class='ident'>i32</span>);
+<span class='doccomment'>/// Macro implementing binary operations Into&lt;LpExpression&gt; and &amp;Into&lt;LpExpression&gt;</span>
+<span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>expr_ops_expr</span> {
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>trait_name</span>: <span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>f_name</span>: <span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>expr_type</span>: <span class='ident'>ident</span>) <span class='op'>=&gt;</span> {
+        <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>trait_name</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>LpExpression</span> <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
+            <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
+            <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>f_name</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
+                <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>expr_type</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='self'>self</span>.<span class='ident'>clone</span>()), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>.<span class='ident'>into</span>()))
+            }
+        }
 
+        <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>T</span><span class='op'>&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>trait_name</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span> <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
+            <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
+            <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>f_name</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
+                <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>expr_type</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='self'>self</span>.<span class='ident'>clone</span>()), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>.<span class='ident'>into</span>()))
+            }
+        }
+    };
+}
+
+<span class='doccomment'>/// Macro implementing binary operations for a numeric type</span>
+<span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>num_ops_expr</span> {
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>num_type</span>: <span class='ident'>ty</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>trait_name</span>: <span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>f_name</span>: <span class='ident'>ident</span>) <span class='op'>=&gt;</span> {
+        <span class='kw'>impl</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>trait_name</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>num_type</span> {
+            <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
+            <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>f_name</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='ident'>LpExpression</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
+                <span class='ident'>MulExpr</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>LitVal</span>(<span class='self'>self</span> <span class='kw'>as</span> <span class='ident'>f32</span>)), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>))
+            }
+        }
+        <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>trait_name</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>num_type</span> {
+            <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
+            <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>f_name</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
+                <span class='ident'>MulExpr</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>LitVal</span>(<span class='self'>self</span> <span class='kw'>as</span> <span class='ident'>f32</span>)), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>.<span class='ident'>clone</span>()))
+            }
+        }
+    };
+}
+
+<span class='doccomment'>/// &amp;LpExpression to LpExpression</span>
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span> {
     <span class='kw'>fn</span> <span class='ident'>into</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
         <span class='self'>self</span>.<span class='ident'>clone</span>()
     }
 }
 
-
-<span class='comment'>// &lt;LpExr&gt; op &lt;LpExpr&gt; where LpExpr is implicit</span>
+<span class='doccomment'>/// Implementing LpOperations trait for any Into&lt;LpExpression&gt;</span>
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span>, <span class='ident'>U</span><span class='op'>&gt;</span> <span class='ident'>LpOperations</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>U</span> <span class='kw'>where</span> <span class='ident'>U</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
     <span class='kw'>fn</span> <span class='ident'>le</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>lhs_expr</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpConstraint</span> {
         <span class='ident'>LpConstraint</span>(<span class='self'>self</span>.<span class='ident'>clone</span>().<span class='ident'>into</span>(), <span class='ident'>Constraint</span>::<span class='ident'>LessOrEqual</span>, <span class='ident'>lhs_expr</span>.<span class='ident'>clone</span>().<span class='ident'>into</span>()).<span class='ident'>generalize</span>()
@@ -215,55 +230,6 @@
     }
 }
 
-
-<span class='comment'>// LpExpr + (LpExpr, &amp;LpExpr, f32)</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>Add</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>LpExpression</span> <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
-    <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
-    <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
-        <span class='ident'>AddExpr</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='self'>self</span>.<span class='ident'>clone</span>()), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>.<span class='ident'>into</span>()))
-    }
-}
-
-<span class='comment'>// &amp;LpExpr + (LpExpr, &amp;LpExpr, f32)</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>Add</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span> <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
-    <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
-    <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
-        <span class='ident'>AddExpr</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='self'>self</span>.<span class='ident'>clone</span>()), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>.<span class='ident'>into</span>()))
-    }
-}
-
-<span class='comment'>// f32 + &amp;LpExpr</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>Add</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>f32</span> {
-    <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
-    <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
-        <span class='ident'>AddExpr</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>LitVal</span>(<span class='self'>self</span>)), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>.<span class='ident'>clone</span>()))
-    }
-}
-
-<span class='comment'>// LpExpr - (LpExpr, &amp;LpExpr, f32)</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>Sub</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>LpExpression</span> <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
-    <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
-    <span class='kw'>fn</span> <span class='ident'>sub</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
-        <span class='ident'>SubExpr</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='self'>self</span>.<span class='ident'>clone</span>()), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>.<span class='ident'>into</span>()))
-    }
-}
-
-<span class='comment'>// &amp;LpExpr - (LpExpr, &amp;LpExpr, f32)</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>Sub</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span> <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Clone</span> {
-    <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
-    <span class='kw'>fn</span> <span class='ident'>sub</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
-        <span class='ident'>SubExpr</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='self'>self</span>.<span class='ident'>clone</span>()), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>.<span class='ident'>into</span>()))
-    }
-}
-
-<span class='comment'>// f32 - &amp;LpExpr</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>Sub</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>f32</span> {
-    <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
-    <span class='kw'>fn</span> <span class='ident'>sub</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
-        <span class='ident'>SubExpr</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>LitVal</span>(<span class='self'>self</span>)), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>.<span class='ident'>clone</span>()))
-    }
-}
-
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>Neg</span> <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span> {
     <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
     <span class='kw'>fn</span> <span class='ident'>neg</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
@@ -271,24 +237,20 @@
     }
 }
 
+<span class='macro'>num_to_into_expr</span><span class='macro'>!</span>(<span class='ident'>f32</span>);
+<span class='macro'>num_to_into_expr</span><span class='macro'>!</span>(<span class='ident'>i32</span>);
+
+<span class='macro'>expr_ops_expr</span><span class='macro'>!</span>(<span class='ident'>Add</span>, <span class='ident'>add</span>, <span class='ident'>AddExpr</span>);
+<span class='macro'>expr_ops_expr</span><span class='macro'>!</span>(<span class='ident'>Sub</span>, <span class='ident'>sub</span>, <span class='ident'>SubExpr</span>);
+
+<span class='macro'>num_ops_expr</span><span class='macro'>!</span>(<span class='ident'>f32</span>, <span class='ident'>Add</span>, <span class='ident'>add</span>);
+<span class='macro'>num_ops_expr</span><span class='macro'>!</span>(<span class='ident'>f32</span>, <span class='ident'>Mul</span>, <span class='ident'>mul</span>);
+<span class='macro'>num_ops_expr</span><span class='macro'>!</span>(<span class='ident'>f32</span>, <span class='ident'>Sub</span>, <span class='ident'>sub</span>);
+<span class='macro'>num_ops_expr</span><span class='macro'>!</span>(<span class='ident'>i32</span>, <span class='ident'>Add</span>, <span class='ident'>add</span>);
+<span class='macro'>num_ops_expr</span><span class='macro'>!</span>(<span class='ident'>i32</span>, <span class='ident'>Mul</span>, <span class='ident'>mul</span>);
+<span class='macro'>num_ops_expr</span><span class='macro'>!</span>(<span class='ident'>i32</span>, <span class='ident'>Sub</span>, <span class='ident'>sub</span>);
 
 
-<span class='comment'>// f32 * LpExpr</span>
-<span class='kw'>impl</span> <span class='ident'>Mul</span><span class='op'>&lt;</span><span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>f32</span> {
-    <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
-    <span class='kw'>fn</span> <span class='ident'>mul</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='ident'>LpExpression</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
-        <span class='ident'>LpExpression</span>::<span class='ident'>MulExpr</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>LitVal</span>(<span class='self'>self</span>)), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>))
-    }
-}
-
-<span class='comment'>// f32 * &amp;LpExp</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>Mul</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>f32</span> {
-    <span class='kw'>type</span> <span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>LpExpression</span>;
-
-    <span class='kw'>fn</span> <span class='ident'>mul</span>(<span class='self'>self</span>, <span class='ident'>_rhs</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>LpExpression</span>) <span class='op'>-&gt;</span> <span class='ident'>LpExpression</span> {
-        <span class='ident'>MulExpr</span>(<span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>LitVal</span>(<span class='self'>self</span>)), <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>_rhs</span>.<span class='ident'>clone</span>()))
-    }
-}
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

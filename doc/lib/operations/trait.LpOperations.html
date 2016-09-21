@@ -47,12 +47,13 @@
                    <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                        [<span class='inner'>&#x2212;</span>]
                    </a>
-               </span><a id='src-433' class='srclink' href='../../src/lib/src/operations.rs.html#7-14' title='goto source code'>[src]</a></span></h1>
+               </span><a id='src-456' class='srclink' href='../../src/lib/src/operations.rs.html#7-14' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait LpOperations&lt;T&gt; <span class='where'>where T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='enum' href='../../lib/variables/enum.LpExpression.html' title='lib::variables::LpExpression'>LpExpression</a>&gt;</span> {
     fn <a href='#tymethod.le' class='fnname'>le</a>(&amp;self, lhs_expr: T) -&gt; <a class='struct' href='../../lib/variables/struct.LpConstraint.html' title='lib::variables::LpConstraint'>LpConstraint</a>;
     fn <a href='#tymethod.ge' class='fnname'>ge</a>(&amp;self, lhs_expr: T) -&gt; <a class='struct' href='../../lib/variables/struct.LpConstraint.html' title='lib::variables::LpConstraint'>LpConstraint</a>;
     fn <a href='#tymethod.equal' class='fnname'>equal</a>(&amp;self, lhs_expr: T) -&gt; <a class='struct' href='../../lib/variables/struct.LpConstraint.html' title='lib::variables::LpConstraint'>LpConstraint</a>;
-}</pre>
+}</pre><div class='docblock'><p>Operations trait for any type implementing Into<LpExpressions> trait</p>
+</div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
         <h3 id='tymethod.le' class='method stab '><code>fn <a href='#tymethod.le' class='fnname'>le</a>(&amp;self, lhs_expr: T) -&gt; <a class='struct' href='../../lib/variables/struct.LpConstraint.html' title='lib::variables::LpConstraint'>LpConstraint</a></code></h3><div class='docblock'><p>Less or equal binary syntax for LpExpression</p>
