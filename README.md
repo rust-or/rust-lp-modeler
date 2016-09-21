@@ -26,10 +26,17 @@ problem += 10 * a + 20 * b; // Add the objective function (expression)
 problem += (500 * a + 1200 * b).le(10000); // Add a constraint expression . 500a + 1200b <= 10000
 problem += (a).le(b); // Add a constraint expression a <= b
 
-let res = problem.solve();
-for r in res.iter() {
-    println!("value of {} = {}", r.0, r.1);
+match problem.solve(Solver::Cbc) {
+    Ok((status, res)) => {
+        println!("Status {:?}", status);
+        for r in res.iter() {
+            println!("value of {} = {}", r.0, r.1);
+        }
+    },
+    Err(msg) => println!("{}", msg),
 }
+
+
 ```
 
 This version are tested with coinor-cbc.
@@ -72,7 +79,7 @@ with a solver supporting lp file format :
 * Use with CBC for now
 
 ## Todo
-* test with other solver
+* Config for GLPK, lp_solve and CPLEX
 
 ## Further work
 * it would be great to use some constraint for binary variable like 
