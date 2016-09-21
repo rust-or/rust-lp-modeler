@@ -22,11 +22,14 @@ let ref b = LpVariable::new("b", LpType::Integer);
 
 let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
 
-problem += 10 * a + 20 * b;
-problem += (500 * a + 1200 * b).le(10000);
-problem += (a).le(b);
+problem += 10 * a + 20 * b; // Add the objective function (expression)
+problem += (500 * a + 1200 * b).le(10000); // Add a constraint expression . 500a + 1200b <= 10000
+problem += (a).le(b); // Add a constraint expression a <= b
 
-problem.solve();
+let res = problem.solve();
+for r in res.iter() {
+    println!("value of {} = {}", r.0, r.1);
+}
 ```
 
 it is already possible to export this model 
