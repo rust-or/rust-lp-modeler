@@ -247,7 +247,10 @@ impl LpProblem {
 
         match self.write_lp(file_model) {
             Ok(_) => {
+                // Sometimes, we have to read on stdin to know the status
                 let status = try!(s.run_solver(file_model, file_solution));
+
+                // Otherwise, the status is written on the output file
                 let (status_read, res) = try!(s.read_solution(file_solution));
                 let _ = fs::remove_file(file_model);
                 match status {

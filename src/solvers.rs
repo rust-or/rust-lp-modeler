@@ -1,4 +1,3 @@
-use self::Solver::*;
 use std::fs;
 use std::fs::{File};
 use std::io::prelude::*;
@@ -6,18 +5,6 @@ use std::process::Command;
 use std::collections::HashMap;
 use std::io::BufReader;
 
-#[derive(Debug, PartialEq)]
-pub enum Solver {
-    Cbc,
-    CbcPath(String),
-    Gurobi,
-    GurobiPath(String)
-}
-
-pub enum SolverEnum {
-    Cbc(CbcSolver),
-    Gurobi(GurobiSolver),
-}
 
 #[derive(Debug, PartialEq)]
 pub enum Status {
@@ -43,7 +30,6 @@ pub trait SolverTrait {
             Err(_) => return Err("Cannot open file".to_string())
         }
     }
-
 }
 
 pub struct GurobiSolver {}
@@ -157,84 +143,3 @@ impl SolverTrait for CbcSolver {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-impl Solver {
-    pub fn run_solver(&self, file_model: &str, file_solution: &str) -> Result<Option<Status>, String> {
-        match self {
-            &Cbc => {
-            },
-            &CbcPath(_) => Err("Not implemented yet".to_string()),
-            &Gurobi => {
-            }
-            &GurobiPath(_) => Err("Not implemented yet".to_string()),
-        }
-    }
-
-    fn read_cbc_solution(&self, f: &File) -> Result<(Status, HashMap<String, f32>), String> {
-
-        let mut vars_value: HashMap<_,_> = HashMap::new();
-
-        let mut file = BufReader::new(f);
-        let mut buffer = String::new();
-        let _ = file.read_line(&mut buffer);
-        let mut status = Status::SubOptimal;
-
-        if let Some(status_line) = buffer.split(" ").next() {
-            if status_line.contains("Optimal") {
-                status = Status::Optimal;
-            }
-            for line in file.lines() {
-                let l = line.unwrap();
-                let result_line: Vec<_> = l.split_whitespace().collect();
-                if result_line.len() == 4 {
-                    match result_line[2].parse::<f32>() {
-                        Ok(n) => {
-                            vars_value.insert(result_line[1].to_string(), n);
-                        },
-                        Err(e) => return Err(format!("{}", e.to_string()))
-                    }
-                }else{
-                    return Err("Incorrect solution format".to_string())
-                }
-            }
-        }else{
-            return Err("Incorrect solution format".to_string())
-        }
-        Ok((status, vars_value))
-    }
-
-
-    pub fn read_solution(&self, file_solution: &str) ->  Result<(Status, HashMap<String,f32>), String> {
-        match File::open(file_solution) {
-            Ok(f) => {
-                let res;
-                match self {
-                    &Solver::Cbc => { res = try!(self.read_cbc_solution(&f)); },
-                    &Solver::Gurobi => { res = try!(self.read_gurobi_solution(&f)); },
-                    _ => return Err("Not implemented yet".to_string())
-                }
-
-                let _ = fs::remove_file(file_solution);
-                Ok(res)
-            },
-            Err(_) => return Err("Cannot open file".to_string())
-        }
-    }
-}
-
-*/
