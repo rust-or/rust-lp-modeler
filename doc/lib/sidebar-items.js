@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["operations",""],["problem",""],["variables",""]]});
+initSidebarItems({"mod":[["operations",""],["problem",""],["solvers",""],["variables",""]]});
