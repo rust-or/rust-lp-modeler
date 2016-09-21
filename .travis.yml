@@ -2,5 +2,7 @@ language: rust
 rust:
   - 1.11.0
 
-before_install:
-    - apt-get install coinor-cbc
+addons:
+    apt:
+        packages:
+            coinor-cbc
