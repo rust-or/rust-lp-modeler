@@ -21,9 +21,7 @@ fn main() {
     problem += b.le(4);
     problem += c.ge(1);
 
-    problem.write_lp("toto.lp");
-
-    match problem.solve(Solver::Cbc) {
+    match problem.solve(GurobiSolver {}) {
         Ok((status, res)) => {
             println!("Status {:?}", status);
             for r in res.iter() {

@@ -240,7 +240,7 @@ impl LpProblem {
     }
 
     /// Solve the LP model
-    pub fn solve(&self, s: Solver) -> Result<(Status, HashMap<String,f32>), String> {
+    pub fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String> {
 
         let file_model = "test.lp";
         let file_solution = "sol.sol";
@@ -250,7 +250,7 @@ impl LpProblem {
                 let status = try!(s.run_solver(file_model, file_solution));
                 let (status_read, res) = try!(s.read_solution(file_solution));
                 let _ = fs::remove_file(file_model);
-                if s == Solver::Gurobi {
+                if s.name().contains("gurobi") {
                     match status {
                         Some(s) => Ok((s, res)),
                         _ => Ok((status_read, res))
