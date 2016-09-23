@@ -24,8 +24,8 @@ fn main() {
     match problem.solve(GurobiSolver) {
         Ok((status, res)) => {
             println!("Status {:?}", status);
-            for r in res.iter() {
-                println!("value of {} = {}", r.0, r.1);
+            for (name, value) in res.iter() {
+                println!("value of {} = {}", name, value);
             }
         },
         Err(msg) => println!("{}", msg),
