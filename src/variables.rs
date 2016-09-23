@@ -25,6 +25,52 @@ pub enum LpType {
     Continuous
 }
 
+
+trait Lp {}
+trait Boundable {
+    fn lower_bound(&self, lw: f32) -> Self;
+    fn upper_bound(&self, up: f32) -> Self;
+}
+struct LpBinary {
+    name: String
+}
+struct LpInteger {
+    name: String,
+    lower_bound: Option<f32>,
+    upper_bound: Option<f32>,
+}
+struct LpContinuous {
+    name: String,
+    lower_bound: Option<f32>,
+    upper_bound: Option<f32>,
+}
+
+impl Boundable for LpInteger {
+    fn lower_bound(&self, lw: f32) -> LpInteger {
+        LpInteger {
+            name: self.name.clone(),
+            lower_bound: Some(lw),
+            upper_bound: self.upper_bound
+        }
+    }
+    fn upper_bound(&self, up: f32) -> LpInteger {
+        LpInteger {
+            name: self.name.clone(),
+            lower_bound: self.lower_bound,
+            upper_bound: Some(up)
+        }
+    }
+}
+
+enum Test {
+    ConsInt(LpInteger),
+    ConsBin(LpBinary),
+    ConsCont(LpContinuous),
+    Toto(Rc<Test>, Rc<Test>),
+}
+
+
+
 /// ADT for Linear Programming Expression
 #[derive(Debug, Clone, PartialEq)]
 pub enum LpExpression {
