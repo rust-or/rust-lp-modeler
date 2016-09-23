@@ -15,9 +15,11 @@ Dev in progress.
 
 This first alpha version provide this SDL to make a LP Model :
 ```rust
-use lp_modeler::problem::{LpObjective, LpProblem};
-use lp_modeler::variables::{LpVariable, LpType, LpOperations};
-use lp_modeler::solvers::Solver;
+
+use lp_modeler::operations::{LpOperations};
+use lp_modeler::problem::{LpProblem, LpObjective};
+use lp_modeler::variables::{LpVariable, LpType};
+use lp_modeler::solvers::*;
 
 let ref a = LpVariable::new("a", LpType::Integer);
 let ref b = LpVariable::new("b", LpType::Integer);
@@ -28,7 +30,7 @@ problem += 10 * a + 20 * b; // Add the objective function (expression)
 problem += (500 * a + 1200 * b).le(10000); // Add a constraint expression . 500a + 1200b <= 10000
 problem += (a).le(b); // Add a constraint expression a <= b
 
-match problem.solve(Solver::Cbc) {
+match problem.solve(GurobiSolver) {
     Ok((status, res)) => {
         println!("Status {:?}", status);
         for r in res.iter() {
@@ -37,7 +39,6 @@ match problem.solve(Solver::Cbc) {
     },
     Err(msg) => println!("{}", msg),
 }
-
 
 ```
 
