@@ -32,8 +32,8 @@ pub trait SolverTrait {
     }
 }
 
-pub struct GurobiSolver {}
-pub struct CbcSolver {}
+pub struct GurobiSolver;
+pub struct CbcSolver;
 
 impl SolverTrait for GurobiSolver {
     fn name(&self) -> String {

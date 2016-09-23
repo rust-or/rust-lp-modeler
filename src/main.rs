@@ -21,7 +21,7 @@ fn main() {
     problem += b.le(4);
     problem += c.ge(1);
 
-    match problem.solve(GurobiSolver {}) {
+    match problem.solve(GurobiSolver) {
         Ok((status, res)) => {
             println!("Status {:?}", status);
             for r in res.iter() {
