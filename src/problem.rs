@@ -70,7 +70,11 @@ impl LpProblem {
 
         fn var<'a>(expr: &'a LpExpression, lst: &mut Vec<(String, &'a LpExpression)>) {
             match expr {
-                &BinaryVariable {ref name, ..} | &IntegerVariable {ref name, ..} | &ContinuousVariable {ref name, ..} => { lst.push((name.clone(), expr)); },
+                &ConsBin(LpBinary {ref name, ..}) |
+                &ConsInt(LpInteger {ref name, ..}) |
+                &ConsCont(LpContinuous {ref name, ..})
+                    => { lst.push((name.clone(), expr)); },
+
                 &MulExpr(_, ref e) => { var(&*e, lst); },
                 &AddExpr(ref e1, ref e2) | &SubExpr(ref e1, ref e2) => {
                     var(&*e1, lst);
@@ -122,8 +126,8 @@ impl LpProblem {
         let mut res = String::new();
         for (_,v) in self.variables() {
             match v {
-                &IntegerVariable { ref name, lower_bound, upper_bound }
-                    | &ContinuousVariable { ref name, lower_bound, upper_bound } => {
+                &ConsInt(LpInteger { ref name, lower_bound, upper_bound })
+                    | &ConsCont(LpContinuous { ref name, lower_bound, upper_bound }) => {
                     if let Some(l) = lower_bound {
                         res.push_str("  ");
                         res.push_str(&l.to_string());
@@ -142,7 +146,7 @@ impl LpProblem {
                         res.push_str("\n");
                     } else {
                         match v {
-                            &ContinuousVariable {..} => {
+                            &ConsCont(LpContinuous {..}) => {
                                 res.push_str("  ");
                                 res.push_str(&name);
                                 res.push_str(" free\n");
@@ -161,7 +165,7 @@ impl LpProblem {
         let mut res = String::new();
         for (_,v) in self.variables() {
             match v {
-                &IntegerVariable { ref name, .. } => {
+                &ConsInt(LpInteger { ref name, .. }) => {
                     res.push_str(name);
                     res.push_str(" ");
                 },
@@ -175,7 +179,7 @@ impl LpProblem {
         let mut res = String::new();
         for (_,v) in self.variables() {
             match v {
-                &BinaryVariable { ref name } => {
+                &ConsBin(LpBinary { ref name }) => {
                     res.push_str(name);
                     res.push_str(" ");
                 },
@@ -296,13 +300,13 @@ impl ToString for LpExpression {
                 &SubExpr(ref e1, ref e2) => {
                     e1.to_string() + " - " + &e2.to_string()
                 },
-                &BinaryVariable {name: ref n, .. } => {
+                &ConsBin(LpBinary {name: ref n, .. }) => {
                     acc.clone() + n
                 },
-                &IntegerVariable {name: ref n, .. } => {
+                &ConsInt(LpInteger {name: ref n, .. }) => {
                     acc.clone() + n
                 },
-                &ContinuousVariable {name: ref n, .. } => {
+                &ConsCont(LpContinuous {name: ref n, .. }) => {
                     acc.clone() + n
                 },
                 &LitVal(n) => {

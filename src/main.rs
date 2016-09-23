@@ -2,18 +2,19 @@ extern crate lp_modeler;
 
 use lp_modeler::operations::{LpOperations};
 use lp_modeler::problem::{LpProblem, LpObjective};
-use lp_modeler::variables::{LpVariable, LpType};
 use lp_modeler::solvers::*;
+use lp_modeler::variables::{LpInteger};
 
 fn main() {
 
 
-    let ref a = LpVariable::new("a", LpType::Integer);
-    let ref b = LpVariable::new("b", LpType::Integer);
-    let ref c = LpVariable::new("c", LpType::Integer);
+    let ref a = LpInteger::new("a");
+    let ref b = LpInteger::new("b");
+    let ref c = LpInteger::new("c");
 
     let mut problem = LpProblem::new("Problem", LpObjective::Maximize);
 
+    problem += a * 10.0;
     problem += 10.0 * a + 20.0 * b + 5 * c;
 
     problem += (500*a + 1200*b + 1500*c).le(10000);

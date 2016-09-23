@@ -1,5 +1,5 @@
 use std::ops::{Add, Mul, Sub, Neg};
-use variables::{LpExpression, LpConstraint, Constraint};
+use variables::{LpExpression, LpConstraint, Constraint, LpContinuous, LpInteger, LpBinary};
 use variables::LpExpression::*;
 use std::rc::Rc;
 
@@ -23,6 +23,21 @@ macro_rules! num_to_into_expr {
         }
     };
 }
+
+/// Macro implementing Into<LpExpression> for LP variables types
+macro_rules! lpvars_to_into_expr {
+    ($type_to:ty, $wrapper: ident) => {
+        impl Into<LpExpression> for $type_to {
+            fn into(self) -> LpExpression {
+                $wrapper(self)
+            }
+        }
+    };
+}
+
+lpvars_to_into_expr!(LpBinary, ConsBin);
+lpvars_to_into_expr!(LpInteger, ConsInt);
+lpvars_to_into_expr!(LpContinuous, ConsCont);
 
 /// Macro implementing binary operations Into<LpExpression> and &Into<LpExpression>
 macro_rules! expr_ops_expr {
@@ -68,6 +83,7 @@ impl<'a> Into<LpExpression> for &'a LpExpression {
     }
 }
 
+
 /// Implementing LpOperations trait for any Into<LpExpression>
 impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
     fn le(&self, lhs_expr: T) -> LpConstraint {
@@ -93,6 +109,7 @@ num_to_into_expr!(i32);
 
 expr_ops_expr!(Add, add, AddExpr);
 expr_ops_expr!(Sub, sub, SubExpr);
+//expr_ops_expr!(Mul, mul, MulExpr);
 
 num_ops_expr!(f32, Add, add);
 num_ops_expr!(f32, Mul, mul);

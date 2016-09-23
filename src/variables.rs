@@ -4,48 +4,47 @@ use self::LpExpression::*;
 use std::convert::Into;
 use std::rc::Rc;
 
-/// Type of variables. Using to initialize a linear programming variable
-///
-/// # Exemples
-///
-/// ```
-/// use lp_modeler::variables::{LpVariable, LpType};
-///
-/// let ref a1 = LpVariable::new("a1", LpType::Integer)
-///     .lower_bound(10.0)
-///     .upper_bound(20.0);
-///
-/// ```
-pub enum LpType {
-    /// Binary variable
-    Binary,
-    /// Integer variable
-    Integer,
-    /// Reel variable
-    Continuous
-}
 
-
-trait Lp {}
-trait Boundable {
+trait BoundableLp : PartialEq + Clone {
     fn lower_bound(&self, lw: f32) -> Self;
     fn upper_bound(&self, up: f32) -> Self;
 }
-struct LpBinary {
-    name: String
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct LpBinary {
+    pub name: String
 }
-struct LpInteger {
-    name: String,
-    lower_bound: Option<f32>,
-    upper_bound: Option<f32>,
-}
-struct LpContinuous {
-    name: String,
-    lower_bound: Option<f32>,
-    upper_bound: Option<f32>,
+impl LpBinary {
+    pub fn new(name: &str) -> LpBinary {
+        LpBinary { name: name.to_string() }
+    }
 }
 
-impl Boundable for LpInteger {
+#[derive(Debug, Clone, PartialEq)]
+pub struct LpInteger {
+    pub name: String,
+    pub lower_bound: Option<f32>,
+    pub upper_bound: Option<f32>,
+}
+impl LpInteger {
+    pub fn new(name: &str) -> LpInteger {
+        LpInteger { name: name.to_string(), lower_bound: None, upper_bound: None }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct LpContinuous {
+    pub name: String,
+    pub lower_bound: Option<f32>,
+    pub upper_bound: Option<f32>,
+}
+impl LpContinuous {
+    pub fn new(name: &str) -> LpContinuous {
+        LpContinuous { name: name.to_string(), lower_bound: None, upper_bound: None }
+    }
+}
+
+impl BoundableLp for LpInteger {
     fn lower_bound(&self, lw: f32) -> LpInteger {
         LpInteger {
             name: self.name.clone(),
@@ -62,31 +61,12 @@ impl Boundable for LpInteger {
     }
 }
 
-enum Test {
-    ConsInt(LpInteger),
-    ConsBin(LpBinary),
-    ConsCont(LpContinuous),
-    Toto(Rc<Test>, Rc<Test>),
-}
-
-
-
 /// ADT for Linear Programming Expression
 #[derive(Debug, Clone, PartialEq)]
 pub enum LpExpression {
-    BinaryVariable {
-        name: String,
-    },
-    IntegerVariable {
-        name: String,
-        lower_bound: Option<f32>,
-        upper_bound: Option<f32>,
-    },
-    ContinuousVariable {
-        name: String,
-        lower_bound: Option<f32>,
-        upper_bound: Option<f32>,
-    },
+    ConsInt(LpInteger),
+    ConsBin(LpBinary),
+    ConsCont(LpContinuous),
     MulExpr(Rc<LpExpression>, Rc<LpExpression>),
     AddExpr(Rc<LpExpression>, Rc<LpExpression>),
     SubExpr(Rc<LpExpression>, Rc<LpExpression>),
@@ -95,8 +75,6 @@ pub enum LpExpression {
 }
 
 
-
-pub struct LpVariable;
 
 #[derive(Debug, Clone)]
 pub enum Constraint {
@@ -111,16 +89,6 @@ pub enum Constraint {
 
 #[derive(Debug, Clone)]
 pub struct LpConstraint(pub LpExpression, pub Constraint, pub LpExpression);
-
-impl LpVariable {
-    pub fn new<S: Into<String>>(name: S, var_type: LpType) -> LpExpression {
-        match var_type {
-            LpType::Binary => BinaryVariable { name: name.into() },
-            LpType::Integer => IntegerVariable { name: name.into(), lower_bound: None, upper_bound: None },
-            LpType::Continuous => ContinuousVariable { name: name.into(), lower_bound: None, upper_bound: None }
-        }
-    }
-}
 
 impl LpConstraint {
     pub fn generalize(&self) -> LpConstraint {
@@ -249,53 +217,6 @@ impl LpConstraint {
             LpConstraint(lhs_constraint, op.clone(), LitVal(-constant))
         }
     }
-}
-
-#[allow(dead_code)]
-impl LpExpression {
-    pub fn lower_bound(&self, lw: f32) -> LpExpression {
-        match self {
-            &BinaryVariable { name: ref n } =>
-                BinaryVariable {
-                    name: n.clone()
-                },
-            &IntegerVariable { name: ref n, lower_bound: _, upper_bound: u } =>
-                IntegerVariable {
-                    name: n.clone(),
-                    lower_bound: Some(lw),
-                    upper_bound: u
-                },
-            &ContinuousVariable { name: ref n, lower_bound: _, upper_bound: u } =>
-                ContinuousVariable {
-                    name: n.clone(),
-                    lower_bound: Some(lw),
-                    upper_bound: u
-                },
-            _ => self.clone()
-        }
-    }
-    pub fn upper_bound(&self, up: f32) -> LpExpression {
-        match self {
-            &BinaryVariable { name: ref n } =>
-                BinaryVariable {
-                    name: n.clone()
-                },
-            &IntegerVariable { name: ref n, lower_bound: l, upper_bound: _ } =>
-                IntegerVariable {
-                    name: n.clone(),
-                    lower_bound: l,
-                    upper_bound: Some(up)
-                },
-            &ContinuousVariable { name: ref n, lower_bound: l, upper_bound: _ } =>
-                ContinuousVariable {
-                    name: n.clone(),
-                    lower_bound: l,
-                    upper_bound: Some(up)
-                },
-            _ => self.clone()
-        }
-    }
-
 }
 
 
