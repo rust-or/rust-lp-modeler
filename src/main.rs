@@ -14,6 +14,7 @@ fn main() {
 
     let mut problem = LpProblem::new("Problem", LpObjective::Maximize);
 
+    // TODO: mult lit on the left side for expression obj. func.
     // problem += a * 10; not readable FIX:
     problem += 10.0 * a + 20.0 * b + 5 * c;
 

@@ -76,6 +76,7 @@ pub enum LpExpression {
 
 
 
+
 #[derive(Debug, Clone)]
 pub enum Constraint {
     /* Not supported by solver format files (lp file or mps file) !
@@ -163,7 +164,9 @@ impl LpConstraint {
                         }
                     }else{
                         if let &LitVal(..) = e2 {
-                            MulExpr(Rc::new(dfs_remove_constant(e1)), rc_e2.clone())
+                            // Fix: Literal must be on the left side for multiplication
+                            //MulExpr(Rc::new(dfs_remove_constant(e1)), rc_e2.clone())
+                            MulExpr(rc_e2.clone(), Rc::new(dfs_remove_constant(e1)))
                         }else {
                             MulExpr(Rc::new(dfs_remove_constant(e1)), Rc::new(dfs_remove_constant(e2)))
                         }
