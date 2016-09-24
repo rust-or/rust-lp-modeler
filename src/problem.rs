@@ -279,9 +279,9 @@ impl<T> AddAssign<T> for LpProblem where T: Into<LpExpression>{
     fn add_assign(&mut self, _rhs: T) {
         //TODO: improve without cloning
         if let Some(e) = self.obj_expr.clone() {
-            self.obj_expr = Some(AddExpr(Rc::new(_rhs.into()), Rc::new(e.clone())));
+            self.obj_expr = Some(AddExpr(Rc::new(_rhs.into()), Rc::new(e.clone())).dfs_remove_constant());
         } else {
-            self.obj_expr = Some(_rhs.into());
+            self.obj_expr = Some(_rhs.into().dfs_remove_constant());
         }
     }
 }
