@@ -13,8 +13,8 @@ pub trait LpOperations<T> where T: Into<LpExpression> {
     fn equal(&self, lhs_expr: T) -> LpConstraint;
 }
 
-/// Macro implementing Into<LpExpression> for any type coercing to f32
-macro_rules! num_to_into_expr {
+/// Macro implementing Into<LpExpression> for types
+macro_rules! to_into_expr {
     ($type_to:ty) => {
         impl Into<LpExpression> for $type_to {
             fn into(self) -> LpExpression {
@@ -22,25 +22,28 @@ macro_rules! num_to_into_expr {
             }
         }
     };
-}
-
-/// Macro implementing Into<LpExpression> for LP variables types
-macro_rules! lpvars_to_into_expr {
     ($type_to:ty, $wrapper: ident) => {
         impl Into<LpExpression> for $type_to {
             fn into(self) -> LpExpression {
                 $wrapper(self)
             }
         }
+        impl<'a> Into<LpExpression> for &'a $type_to {
+            fn into(self) -> LpExpression {
+                $wrapper(self.clone())
+            }
+        }
     };
 }
+to_into_expr!(f32);
+to_into_expr!(i32);
+to_into_expr!(LpBinary, ConsBin);
+to_into_expr!(LpInteger, ConsInt);
+to_into_expr!(LpContinuous, ConsCont);
 
-lpvars_to_into_expr!(LpBinary, ConsBin);
-lpvars_to_into_expr!(LpInteger, ConsInt);
-lpvars_to_into_expr!(LpContinuous, ConsCont);
 
-/// Macro implementing binary operations Into<LpExpression> and &Into<LpExpression>
-macro_rules! expr_ops_expr {
+/// Macro implementing binary operations for Into<LpExpression> or &Into<LpExpression>
+macro_rules! operations_for_expr {
     ($trait_name: ident, $f_name: ident, $expr_type: ident) => {
         impl<T> $trait_name<T> for LpExpression where T: Into<LpExpression> + Clone {
             type Output = LpExpression;
@@ -48,7 +51,6 @@ macro_rules! expr_ops_expr {
                 $expr_type(Rc::new(self.clone()), Rc::new(_rhs.into()))
             }
         }
-
         impl<'a, T> $trait_name<T> for &'a LpExpression where T: Into<LpExpression> + Clone {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
@@ -58,23 +60,60 @@ macro_rules! expr_ops_expr {
     };
 }
 
+operations_for_expr!(Add, add, AddExpr);
+operations_for_expr!(Sub, sub, SubExpr);
+operations_for_expr!(Mul, mul, MulExpr);
+
+/// Macro implementing a binary operation with a LpVars and a Into<Expression>
+macro_rules! lpvars_operation_for_intoexpr {
+    ($trait_name: ident, $f_name: ident, $lp_type: ident, $expr_type: ident, $cons_type: ident) => {
+        impl<T> $trait_name<T> for $lp_type where T: Into<LpExpression> + Clone {
+            type Output = LpExpression;
+            fn $f_name(self, _rhs: T) -> LpExpression {
+                $expr_type(Rc::new($cons_type(self.clone())), Rc::new(_rhs.into()))
+            }
+        }
+        impl<'a, T> $trait_name<T> for &'a $lp_type where T: Into<LpExpression> + Clone {
+            type Output = LpExpression;
+            fn $f_name(self, _rhs: T) -> LpExpression {
+                $expr_type(Rc::new($cons_type(self.clone())), Rc::new(_rhs.into()))
+            }
+        }
+    };
+}
+lpvars_operation_for_intoexpr!(Mul, mul, LpInteger, MulExpr, ConsInt);
+lpvars_operation_for_intoexpr!(Add, add, LpInteger, AddExpr, ConsInt);
+lpvars_operation_for_intoexpr!(Sub, sub, LpInteger, SubExpr, ConsInt);
+
 /// Macro implementing binary operations for a numeric type
-macro_rules! num_ops_expr {
-    ($num_type: ty, $trait_name: ident, $f_name: ident) => {
+macro_rules! numeric_operation_for_expr {
+    ($num_type: ty, $trait_name: ident, $f_name: ident, $type_expr: ident) => {
         impl $trait_name<LpExpression> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: LpExpression) -> LpExpression {
-                MulExpr(Rc::new(LitVal(self as f32)), Rc::new(_rhs))
+                $type_expr(Rc::new(LitVal(self as f32)), Rc::new(_rhs))
             }
         }
         impl<'a> $trait_name<&'a LpExpression> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: &'a LpExpression) -> LpExpression {
-                MulExpr(Rc::new(LitVal(self as f32)), Rc::new(_rhs.clone()))
+                $type_expr(Rc::new(LitVal(self as f32)), Rc::new(_rhs.clone()))
             }
         }
     };
 }
+/// Macro implementing add, mul and sub for a specific numeric type
+macro_rules! numeric_all_ops_for_expr {
+    ($num_type: ty) => {
+        numeric_operation_for_expr!($num_type, Add, add, AddExpr);
+        numeric_operation_for_expr!($num_type, Mul, mul, MulExpr);
+        numeric_operation_for_expr!($num_type, Sub, sub, SubExpr);
+    }
+}
+numeric_all_ops_for_expr!(f32);
+numeric_all_ops_for_expr!(i32);
+
+
 
 /// &LpExpression to LpExpression
 impl<'a> Into<LpExpression> for &'a LpExpression {
@@ -104,18 +143,46 @@ impl<'a> Neg for &'a LpExpression {
     }
 }
 
-num_to_into_expr!(f32);
-num_to_into_expr!(i32);
 
-expr_ops_expr!(Add, add, AddExpr);
-expr_ops_expr!(Sub, sub, SubExpr);
-//expr_ops_expr!(Mul, mul, MulExpr);
 
-num_ops_expr!(f32, Add, add);
-num_ops_expr!(f32, Mul, mul);
-num_ops_expr!(f32, Sub, sub);
-num_ops_expr!(i32, Add, add);
-num_ops_expr!(i32, Mul, mul);
-num_ops_expr!(i32, Sub, sub);
+
+
+
+/// Macro implementing binary operations for a numeric type
+macro_rules! numeric_operation_for_lpvars {
+    ($num_type: ty, $trait_name: ident, $f_name: ident, $type_expr: ident, $lp_type: ty, $cons_expr: ident) => {
+        impl $trait_name<$lp_type> for $num_type {
+            type Output = LpExpression;
+            fn $f_name(self, _rhs: $lp_type) -> LpExpression {
+                $type_expr(Rc::new(LitVal(self as f32)), Rc::new($cons_expr(_rhs)))
+            }
+        }
+        impl<'a> $trait_name<&'a $lp_type> for $num_type {
+            type Output = LpExpression;
+            fn $f_name(self, _rhs: &'a $lp_type) -> LpExpression {
+                $type_expr(Rc::new(LitVal(self as f32)), Rc::new($cons_expr(_rhs.clone())))
+            }
+        }
+    };
+}
+
+/// Macro implementing add, mul and sub for a specific numeric type
+macro_rules! numeric_all_ops_for_lpvars{
+    ($num_type: ty) => {
+        numeric_operation_for_lpvars!($num_type, Add, add, AddExpr, LpInteger, ConsInt);
+        numeric_operation_for_lpvars!($num_type, Add, add, AddExpr, LpBinary, ConsBin);
+        numeric_operation_for_lpvars!($num_type, Add, add, AddExpr, LpContinuous, ConsCont);
+        numeric_operation_for_lpvars!($num_type, Mul, mul, MulExpr, LpInteger, ConsInt);
+        numeric_operation_for_lpvars!($num_type, Mul, mul, MulExpr, LpBinary, ConsBin);
+        numeric_operation_for_lpvars!($num_type, Mul, mul, MulExpr, LpContinuous, ConsCont);
+    }
+}
+numeric_all_ops_for_lpvars!(i32);
+numeric_all_ops_for_lpvars!(f32);
+
+
+
+
+
 
 

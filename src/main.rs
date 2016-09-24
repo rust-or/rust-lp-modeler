@@ -14,13 +14,11 @@ fn main() {
 
     let mut problem = LpProblem::new("Problem", LpObjective::Maximize);
 
-    problem += a * 10.0;
+    // problem += a * 10; not readable FIX:
     problem += 10.0 * a + 20.0 * b + 5 * c;
 
     problem += (500*a + 1200*b + 1500*c).le(10000);
     problem += (a).le(b);
-    problem += b.le(4);
-    problem += c.ge(1);
 
     match problem.solve(GurobiSolver) {
         Ok((status, res)) => {
