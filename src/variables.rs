@@ -44,22 +44,28 @@ impl LpContinuous {
     }
 }
 
-impl BoundableLp for LpInteger {
-    fn lower_bound(&self, lw: f32) -> LpInteger {
-        LpInteger {
-            name: self.name.clone(),
-            lower_bound: Some(lw),
-            upper_bound: self.upper_bound
-        }
-    }
-    fn upper_bound(&self, up: f32) -> LpInteger {
-        LpInteger {
-            name: self.name.clone(),
-            lower_bound: self.lower_bound,
-            upper_bound: Some(up)
+macro_rules! implement_boundable {
+    ($lp_type: ident) => {
+        impl BoundableLp for $lp_type {
+            fn lower_bound(&self, lw: f32) -> $lp_type {
+                $lp_type {
+                    name: self.name.clone(),
+                    lower_bound: Some(lw),
+                    upper_bound: self.upper_bound
+                }
+            }
+            fn upper_bound(&self, up: f32) -> $lp_type {
+                $lp_type {
+                    name: self.name.clone(),
+                    lower_bound: self.lower_bound,
+                    upper_bound: Some(up)
+                }
+            }
         }
     }
 }
+implement_boundable!(LpInteger);
+implement_boundable!(LpContinuous);
 
 /// ADT for Linear Programming Expression
 #[derive(Debug, Clone, PartialEq)]
