@@ -34,11 +34,11 @@ pub enum LpObjective {
 /// ```
 /// use lp_modeler::problem::{LpObjective, LpProblem};
 /// use lp_modeler::operations::{LpOperations};
-/// use lp_modeler::variables::{LpVariable, LpType};
+/// use lp_modeler::variables::LpInteger;
 /// use lp_modeler::solvers::CbcSolver;
 ///
-/// let ref a = LpVariable::new("a", LpType::Integer);
-/// let ref b = LpVariable::new("b", LpType::Integer);
+/// let ref a = LpInteger::new("a");
+/// let ref b = LpInteger::new("b");
 ///
 /// let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
 /// problem += (a + b).le(100.0);

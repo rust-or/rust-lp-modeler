@@ -5,7 +5,7 @@ use std::convert::Into;
 use std::rc::Rc;
 
 
-trait BoundableLp : PartialEq + Clone {
+pub trait BoundableLp : PartialEq + Clone {
     fn lower_bound(&self, lw: f32) -> Self;
     fn upper_bound(&self, up: f32) -> Self;
 }
@@ -238,12 +238,12 @@ impl LpConstraint {
 /// ```
 /// use lp_modeler::problem::{LpObjective, LpProblem};
 /// use lp_modeler::operations::LpOperations;
-/// use lp_modeler::variables::{LpVariable, LpType, lp_sum};
+/// use lp_modeler::variables::{LpBinary, lp_sum};
 ///
 /// let mut problem = LpProblem::new("My Problem", LpObjective::Maximize);
-/// let ref a = LpVariable::new("a", LpType::Binary);
-/// let ref b = LpVariable::new("b", LpType::Binary);
-/// let ref c = LpVariable::new("c", LpType::Binary);
+/// let ref a = LpBinary::new("a");
+/// let ref b = LpBinary::new("b");
+/// let ref c = LpBinary::new("c");
 ///
 /// let ref v = vec!(a, b, c);
 /// problem += lp_sum(v).equal(10.0);
