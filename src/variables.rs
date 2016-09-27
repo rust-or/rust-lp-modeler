@@ -233,7 +233,7 @@ impl LpConstraint {
 
 /// make a complete expression or a constraint with a vector of expressions
 ///
-/// # Exemples
+/// # Examples
 ///
 /// ```
 /// use lp_modeler::problem::{LpObjective, LpProblem};

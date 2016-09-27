@@ -14,7 +14,7 @@ use std::ops::{AddAssign};
 
 /// Enum helping to specify the objective function of the linear problem.
 ///
-/// # Exemples:
+/// # Examples:
 ///
 /// ```
 /// use lp_modeler::problem::{LpObjective, LpProblem};
@@ -29,7 +29,7 @@ pub enum LpObjective {
 
 /// Structure used for creating the model and solving a linear problem.
 ///
-/// # Exemples:
+/// # Examples:
 ///
 /// ```
 /// use lp_modeler::problem::{LpObjective, LpProblem};
