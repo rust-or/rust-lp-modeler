@@ -3,6 +3,8 @@
 use self::LpExpression::*;
 use std::convert::Into;
 use std::rc::Rc;
+use variables::Constraint::*;
+
 
 
 pub trait BoundableLp : PartialEq + Clone {
@@ -141,7 +143,39 @@ impl LpExpression {
     }
 }
 
+impl ToString for LpExpression {
+    fn to_string(&self) -> String {
 
+        fn dfs(expr: &LpExpression, acc: &String) -> String {
+            match expr {
+                &MulExpr(ref e1, ref e2) => {
+                    e1.to_string() + " " + &e2.to_string()
+                },
+                &AddExpr(ref e1, ref e2) => {
+                    e1.to_string() + " + " + &e2.to_string()
+                },
+                &SubExpr(ref e1, ref e2) => {
+                    e1.to_string() + " - " + &e2.to_string()
+                },
+                &ConsBin(LpBinary {name: ref n, .. }) => {
+                    acc.clone() + n
+                },
+                &ConsInt(LpInteger {name: ref n, .. }) => {
+                    acc.clone() + n
+                },
+                &ConsCont(LpContinuous {name: ref n, .. }) => {
+                    acc.clone() + n
+                },
+                &LitVal(n) => {
+                    acc.clone() + &n.to_string()
+                },
+                _ => acc.clone()
+            }
+        }
+
+        dfs(self, &String::new())
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum Constraint {
@@ -227,6 +261,20 @@ impl LpConstraint {
             let lhs_constraint = lhs_constraint.dfs_remove_constant();
             LpConstraint(lhs_constraint, op.clone(), LitVal(-constant))
         }
+    }
+}
+
+impl ToString for LpConstraint {
+    fn to_string(&self) -> String {
+        let mut res = String::new();
+        res.push_str(&self.0.to_string());
+        match self.1 {
+            GreaterOrEqual => res.push_str(" >= "),
+            LessOrEqual => res.push_str(" <= "),
+            Equal => res.push_str(" = "),
+        }
+        res.push_str(&self.2.to_string());
+        res
     }
 }
 

@@ -105,18 +105,14 @@ impl LpProblem {
         let mut res = String::new();
         let mut cstrs = self.constraints.iter();
         let mut index = 1;
-        while let Some(&LpConstraint(ref e1, ref op, ref e2)) = cstrs.next() {
+        while let Some(ref  constraint) = cstrs.next() {
             res.push_str("  c");
             res.push_str(&index.to_string());
             res.push_str(": ");
             index += 1;
-            res.push_str(&e1.to_string());
-            match op {
-                &GreaterOrEqual => res.push_str(" >= "),
-                &LessOrEqual => res.push_str(" <= "),
-                &Equal => res.push_str(" = "),
-            }
-            res.push_str(&e2.to_string());
+
+            res.push_str(&constraint.to_string());
+
             res.push_str("\n");
         }
         res
@@ -286,36 +282,3 @@ impl<T> AddAssign<T> for LpProblem where T: Into<LpExpression>{
     }
 }
 
-impl ToString for LpExpression {
-    fn to_string(&self) -> String {
-
-        fn dfs(expr: &LpExpression, acc: &String) -> String {
-            match expr {
-                &MulExpr(ref e1, ref e2) => {
-                    e1.to_string() + " " + &e2.to_string()
-                },
-                &AddExpr(ref e1, ref e2) => {
-                    e1.to_string() + " + " + &e2.to_string()
-                },
-                &SubExpr(ref e1, ref e2) => {
-                    e1.to_string() + " - " + &e2.to_string()
-                },
-                &ConsBin(LpBinary {name: ref n, .. }) => {
-                    acc.clone() + n
-                },
-                &ConsInt(LpInteger {name: ref n, .. }) => {
-                    acc.clone() + n
-                },
-                &ConsCont(LpContinuous {name: ref n, .. }) => {
-                    acc.clone() + n
-                },
-                &LitVal(n) => {
-                    acc.clone() + &n.to_string()
-                },
-                _ => acc.clone()
-            }
-        }
-
-        dfs(self, &String::new())
-    }
-}
