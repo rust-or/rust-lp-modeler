@@ -94,7 +94,7 @@ impl LpExpression {
                     }
                 }else{
                     if let &LitVal(..) = e2 {
-                        // Fix: Literal must be on the left side for multiplication
+                        // Fixed: Literal must be on the left side for multiplication
                         //MulExpr(Rc::new(dfs_remove_constant(e1)), rc_e2.clone())
                         MulExpr(rc_e2.clone(), Rc::new(e1.dfs_remove_constant()))
                     }else {
