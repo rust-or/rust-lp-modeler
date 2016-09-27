@@ -19,6 +19,10 @@ fn main() {
     problem += (500*a + 1200*b + 1500*c).le(10000);
     problem += (a).le(b);
 
+
+    // let solver = GurobiSolver
+    // solver <<= BaseDirectory("/opt/gurobi1.2/...")
+    // solver <<= Config().arg("-thread 2").arg("...")
     match problem.solve(GurobiSolver) {
         Ok((status, res)) => {
             println!("Status {:?}", status);
