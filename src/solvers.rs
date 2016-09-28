@@ -19,17 +19,7 @@ pub trait SolverTrait {
     fn name(&self) -> String;
     fn command_name(&self) -> String;
     fn run_solver(&self, file_model: &str, file_solution: &str) -> Result<Option<Status>, String>;
-    fn read_specific_solution(&self, f: &File) -> Result<(Status, HashMap<String, f32>), String>;
-    fn read_solution(&self, file_solution: &str) ->  Result<(Status, HashMap<String,f32>), String> {
-        match File::open(file_solution) {
-            Ok(f) => {
-                let res = try!(self.read_specific_solution(&f));
-                let _ = fs::remove_file(file_solution);
-                Ok(res)
-            },
-            Err(_) => return Err("Cannot open file".to_string())
-        }
-    }
+    fn read_solution(&self, file_solution: &str) ->  Result<(Status, HashMap<String,f32>), String>;
 }
 
 pub struct GurobiSolver;
@@ -59,33 +49,44 @@ impl SolverTrait for GurobiSolver {
         }
     }
 
-    fn read_specific_solution(&self, f: &File) -> Result<(Status, HashMap<String, f32>), String> {
+    fn read_solution(&self, file_solution: &str) -> Result<(Status, HashMap<String, f32>), String> {
 
-        let mut vars_value: HashMap<_,_> = HashMap::new();
+        fn read_specific_solution(f: &File) -> Result<(Status, HashMap<String, f32>), String> {
 
-        let mut file = BufReader::new(f);
-        let mut buffer = String::new();
-        let _ = file.read_line(&mut buffer);
+            let mut vars_value: HashMap<_,_> = HashMap::new();
+            let mut file = BufReader::new(f);
+            let mut buffer = String::new();
+            let _ = file.read_line(&mut buffer);
 
-        if let Some(_) = buffer.split(" ").next() {
-            for line in file.lines() {
-                let l = line.unwrap();
-                let result_line: Vec<_> = l.split_whitespace().collect();
-                if result_line.len() == 2 {
-                    match result_line[1].parse::<f32>() {
-                        Ok(n) => {
-                            vars_value.insert(result_line[0].to_string(), n);
-                        },
-                        Err(e) => return Err(format!("{}", e.to_string()))
+            if let Some(_) = buffer.split(" ").next() {
+                for line in file.lines() {
+                    let l = line.unwrap();
+                    let result_line: Vec<_> = l.split_whitespace().collect();
+                    if result_line.len() == 2 {
+                        match result_line[1].parse::<f32>() {
+                            Ok(n) => {
+                                vars_value.insert(result_line[0].to_string(), n);
+                            },
+                            Err(e) => return Err(format!("{}", e.to_string()))
+                        }
+                    }else{
+                        return Err("Incorrect solution format".to_string())
                     }
-                }else{
-                    return Err("Incorrect solution format".to_string())
                 }
+            }else{
+                return Err("Incorrect solution format".to_string())
             }
-        }else{
-            return Err("Incorrect solution format".to_string())
+            Ok((Status::Optimal, vars_value))
         }
-        Ok((Status::Optimal, vars_value))
+
+        match File::open(file_solution) {
+            Ok(f) => {
+                let res = try!(read_specific_solution(&f));
+                let _ = fs::remove_file(file_solution);
+                Ok(res)
+            },
+            Err(_) => return Err("Cannot open file".to_string())
+        }
     }
 }
 
@@ -109,37 +110,47 @@ impl SolverTrait for CbcSolver {
         }
     }
 
-    fn read_specific_solution(&self, f: &File) -> Result<(Status, HashMap<String, f32>), String> {
+    fn read_solution(&self, file_solution: &str) -> Result<(Status, HashMap<String, f32>), String> {
+        fn read_specific_solution(f: &File) -> Result<(Status, HashMap<String, f32>), String> {
+            let mut vars_value: HashMap<_, _> = HashMap::new();
 
-        let mut vars_value: HashMap<_,_> = HashMap::new();
+            let mut file = BufReader::new(f);
+            let mut buffer = String::new();
+            let _ = file.read_line(&mut buffer);
+            let mut status = Status::SubOptimal;
 
-        let mut file = BufReader::new(f);
-        let mut buffer = String::new();
-        let _ = file.read_line(&mut buffer);
-        let mut status = Status::SubOptimal;
-
-        if let Some(status_line) = buffer.split(" ").next() {
-            if status_line.contains("Optimal") {
-                status = Status::Optimal;
-            }
-            for line in file.lines() {
-                let l = line.unwrap();
-                let result_line: Vec<_> = l.split_whitespace().collect();
-                if result_line.len() == 4 {
-                    match result_line[2].parse::<f32>() {
-                        Ok(n) => {
-                            vars_value.insert(result_line[1].to_string(), n);
-                        },
-                        Err(e) => return Err(format!("{}", e.to_string()))
-                    }
-                }else{
-                    return Err("Incorrect solution format".to_string())
+            if let Some(status_line) = buffer.split(" ").next() {
+                if status_line.contains("Optimal") {
+                    status = Status::Optimal;
                 }
+                for line in file.lines() {
+                    let l = line.unwrap();
+                    let result_line: Vec<_> = l.split_whitespace().collect();
+                    if result_line.len() == 4 {
+                        match result_line[2].parse::<f32>() {
+                            Ok(n) => {
+                                vars_value.insert(result_line[1].to_string(), n);
+                            },
+                            Err(e) => return Err(format!("{}", e.to_string()))
+                        }
+                    } else {
+                        return Err("Incorrect solution format".to_string())
+                    }
+                }
+            } else {
+                return Err("Incorrect solution format".to_string())
             }
-        }else{
-            return Err("Incorrect solution format".to_string())
+            Ok((status, vars_value))
         }
-        Ok((status, vars_value))
+
+        match File::open(file_solution) {
+            Ok(f) => {
+                let res = try!(read_specific_solution(&f));
+                let _ = fs::remove_file(file_solution);
+                Ok(res)
+            },
+            Err(_) => return Err("Cannot open file".to_string())
+        }
     }
 }
 
