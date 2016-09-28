@@ -1,4 +1,3 @@
-use std::fs;
 use std::fs::{File};
 use std::io::prelude::*;
 use std::process::Command;
@@ -82,7 +81,6 @@ impl SolverTrait for GurobiSolver {
         match File::open(file_solution) {
             Ok(f) => {
                 let res = try!(read_specific_solution(&f));
-                let _ = fs::remove_file(file_solution);
                 Ok(res)
             },
             Err(_) => return Err("Cannot open file".to_string())
@@ -146,7 +144,6 @@ impl SolverTrait for CbcSolver {
         match File::open(file_solution) {
             Ok(f) => {
                 let res = try!(read_specific_solution(&f));
-                let _ = fs::remove_file(file_solution);
                 Ok(res)
             },
             Err(_) => return Err("Cannot open file".to_string())
