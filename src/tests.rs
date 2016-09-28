@@ -22,6 +22,11 @@ fn expressions_to_string() {
 
     assert_eq!((a + 2*b + c).to_string(), "a + 2 b + c");
     assert_eq!((a + b*2 + c).to_string(), "a + 2 b + c");
+    assert_eq!((a + b*2 + 3 * 2 * c).to_string(), "a + 2 b + 6 c");
+    assert_eq!((a + 2).to_string(), "a + 2");
+    assert_eq!((2*a + 2*b -4*c).to_string(), "2 a + 2 b - 4 c");
+    assert_eq!((-2*a).to_string(), "-2 a");
+
 }
 
 
