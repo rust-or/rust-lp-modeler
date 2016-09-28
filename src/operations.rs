@@ -70,13 +70,13 @@ macro_rules! lpvars_operation_for_intoexpr {
         impl<T> $trait_name<T> for $lp_type where T: Into<LpExpression> + Clone {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
-                $expr_type(Rc::new($cons_type(self.clone())), Rc::new(_rhs.into()))
+                $expr_type(Rc::new($cons_type(self.clone())), Rc::new(_rhs.into())).normalize()
             }
         }
         impl<'a, T> $trait_name<T> for &'a $lp_type where T: Into<LpExpression> + Clone {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
-                $expr_type(Rc::new($cons_type(self.clone())), Rc::new(_rhs.into()))
+                $expr_type(Rc::new($cons_type(self.clone())), Rc::new(_rhs.into())).normalize()
             }
         }
     };

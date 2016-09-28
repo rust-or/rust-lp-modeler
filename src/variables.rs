@@ -95,13 +95,7 @@ impl LpExpression {
                         MulExpr(rc_e1.clone(), Rc::new(e2.dfs_remove_constant()))
                     }
                 }else{
-                    if let &LitVal(..) = e2 {
-                        // Fixed: Literal must be on the left side for multiplication
-                        //MulExpr(Rc::new(dfs_remove_constant(e1)), rc_e2.clone())
-                        MulExpr(rc_e2.clone(), Rc::new(e1.dfs_remove_constant()))
-                    }else {
-                        MulExpr(Rc::new(e1.dfs_remove_constant()), Rc::new(e2.dfs_remove_constant()))
-                    }
+                    MulExpr(Rc::new(e1.dfs_remove_constant()), Rc::new(e2.dfs_remove_constant()))
                 }
             },
             &AddExpr(ref rc_e1, ref rc_e2) => {
@@ -140,6 +134,25 @@ impl LpExpression {
             },
             _ => self.clone()
         }
+    }
+    /// Fix the numeric operand in a multiplication in an expression
+    /// c * 4 must be considered as 4 c in a linear formulation lp file
+    pub fn normalize(&self) -> LpExpression {
+        if let &MulExpr(ref rc_e1, ref rc_e2) = self {
+            let ref e1 = **rc_e1;
+            let ref e2 = **rc_e2;
+            if let &LitVal(..) = e1 {
+                println!("{:?}", e1);
+                return self.clone();
+            }else{
+                if let &LitVal(..) = e2 {
+                    return MulExpr(rc_e2.clone(), rc_e1.clone());
+                }else {
+                    return MulExpr(rc_e1.clone(), rc_e2.clone());
+                }
+            }
+        }
+        self.clone()
     }
 }
 
@@ -256,10 +269,10 @@ impl LpConstraint {
         if let &LitVal(0.0) = rhs {
             self.clone()
         }else{
-            let ref lhs_constraint = lhs - rhs;
-            let constant = dfs_constant(lhs_constraint, 0.0);
-            let lhs_constraint = lhs_constraint.dfs_remove_constant();
-            LpConstraint(lhs_constraint, op.clone(), LitVal(-constant))
+            let ref lhs_expr = lhs - rhs;
+            let constant = dfs_constant(lhs_expr, 0.0);
+            let lhs_expr = lhs_expr.dfs_remove_constant();
+            LpConstraint(lhs_expr, op.clone(), LitVal(-constant))
         }
     }
 }
