@@ -162,7 +162,11 @@ impl ToString for LpExpression {
         fn dfs(expr: &LpExpression, acc: &String) -> String {
             match expr {
                 &MulExpr(ref e1, ref e2) => {
-                    e1.to_string() + " " + &e2.to_string()
+                    match **e1 {
+                        LitVal(v) if v == 1.0 => e2.to_string(),
+                        LitVal(v) if v == -1.0 => "-".to_string() + &e2.to_string(),
+                        _ => e1.to_string() + " " + &e2.to_string()
+                    }
                 },
                 &AddExpr(ref e1, ref e2) => {
                     e1.to_string() + " + " + &e2.to_string()
@@ -186,7 +190,20 @@ impl ToString for LpExpression {
             }
         }
 
-        dfs(self, &String::new())
+        fn formalize_signs(s: String) -> String {
+            let mut s = s.clone();
+            let mut t = "".to_string();
+            while s != t {
+                t = s.clone();
+                s = s.replace("+ +", "+ ");
+                s = s.replace("- +", "- ");
+                s = s.replace("+ -", "- ");
+                s = s.replace("- -", "+ ");
+                s = s.replace("  ", " ");
+            }
+            s
+        }
+        formalize_signs(dfs(self, &String::new()))
     }
 }
 
