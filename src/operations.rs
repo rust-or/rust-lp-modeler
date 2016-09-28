@@ -142,11 +142,19 @@ impl<'a> Neg for &'a LpExpression {
         MulExpr(Rc::new(LitVal(-1.0)), Rc::new(self.clone()))
     }
 }
-
-
-
-
-
+macro_rules! neg_operation_for_lpvars {
+    ($lp_var_type: ty, $constr_expr: ident) => {
+        impl<'a> Neg for &'a $lp_var_type {
+            type Output = LpExpression;
+            fn neg(self) -> LpExpression {
+                MulExpr(Rc::new(LitVal(-1.0)), Rc::new($constr_expr(self.clone())))
+            }
+        }
+    }
+}
+neg_operation_for_lpvars!(LpInteger, ConsInt);
+neg_operation_for_lpvars!(LpContinuous, ConsCont);
+neg_operation_for_lpvars!(LpBinary, ConsBin);
 
 /// Macro implementing binary operations for a numeric type
 macro_rules! numeric_operation_for_lpvars {
@@ -179,10 +187,3 @@ macro_rules! numeric_all_ops_for_lpvars{
 }
 numeric_all_ops_for_lpvars!(i32);
 numeric_all_ops_for_lpvars!(f32);
-
-
-
-
-
-
-
