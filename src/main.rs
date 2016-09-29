@@ -1,7 +1,7 @@
 extern crate lp_modeler;
 
 use lp_modeler::operations::LpOperations;
-use lp_modeler::problem::{LpProblem, LpObjective};
+use lp_modeler::problem::{Problem, LpProblem, LpObjective};
 use lp_modeler::solvers::*;
 use lp_modeler::variables::{LpInteger};
 

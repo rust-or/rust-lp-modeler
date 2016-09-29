@@ -55,9 +55,13 @@ pub struct LpProblem {
 
 }
 
+pub trait Problem {
+    fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String>;
+    fn add_objective_expression(&mut self, expr: &LpExpression);
+    fn add_constraints(&mut self, expr: &LpConstraint);
+}
 
 impl LpProblem {
-
     /// Create a new problem
     pub fn new(name: &'static str, objective: LpObjective) -> LpProblem {
         LpProblem { name: name, objective_type: objective, obj_expr: None, constraints: Vec::new() }
@@ -66,13 +70,12 @@ impl LpProblem {
     // TODO: Call once and pass into parameter
     // TODO: Check variables on the objective function
     fn variables(&self) -> HashMap<String, &LpExpression> {
-
         fn var<'a>(expr: &'a LpExpression, lst: &mut Vec<(String, &'a LpExpression)>) {
             match expr {
-                &ConsBin(LpBinary {ref name, ..}) |
-                &ConsInt(LpInteger {ref name, ..}) |
-                &ConsCont(LpContinuous {ref name, ..})
-                    => { lst.push((name.clone(), expr)); },
+                &ConsBin(LpBinary { ref name, .. }) |
+                &ConsInt(LpInteger { ref name, .. }) |
+                &ConsCont(LpContinuous { ref name, .. })
+                => { lst.push((name.clone(), expr)); },
 
                 &MulExpr(_, ref e) => { var(&*e, lst); },
                 &AddExpr(ref e1, ref e2) | &SubExpr(ref e1, ref e2) => {
@@ -92,7 +95,6 @@ impl LpProblem {
 
 
     fn objective_string(&self) -> String {
-
         if let Some(ref expr) = self.obj_expr {
             expr.to_string()
         } else {
@@ -104,7 +106,7 @@ impl LpProblem {
         let mut res = String::new();
         let mut cstrs = self.constraints.iter();
         let mut index = 1;
-        while let Some(ref  constraint) = cstrs.next() {
+        while let Some(ref constraint) = cstrs.next() {
             res.push_str("  c");
             res.push_str(&index.to_string());
             res.push_str(": ");
@@ -119,10 +121,10 @@ impl LpProblem {
 
     fn bounds_string(&self) -> String {
         let mut res = String::new();
-        for (_,v) in self.variables() {
+        for (_, v) in self.variables() {
             match v {
                 &ConsInt(LpInteger { ref name, lower_bound, upper_bound })
-                    | &ConsCont(LpContinuous { ref name, lower_bound, upper_bound }) => {
+                | &ConsCont(LpContinuous { ref name, lower_bound, upper_bound }) => {
                     if let Some(l) = lower_bound {
                         res.push_str("  ");
                         res.push_str(&l.to_string());
@@ -141,7 +143,7 @@ impl LpProblem {
                         res.push_str("\n");
                     } else {
                         match v {
-                            &ConsCont(LpContinuous {..}) => {
+                            &ConsCont(LpContinuous { .. }) => {
                                 res.push_str("  ");
                                 res.push_str(&name);
                                 res.push_str(" free\n");
@@ -158,7 +160,7 @@ impl LpProblem {
 
     fn generals_string(&self) -> String {
         let mut res = String::new();
-        for (_,v) in self.variables() {
+        for (_, v) in self.variables() {
             match v {
                 &ConsInt(LpInteger { ref name, .. }) => {
                     res.push_str(name);
@@ -172,7 +174,7 @@ impl LpProblem {
 
     fn binaries_string(&self) -> String {
         let mut res = String::new();
-        for (_,v) in self.variables() {
+        for (_, v) in self.variables() {
             match v {
                 &ConsBin(LpBinary { ref name }) => {
                     res.push_str(name);
@@ -235,11 +237,23 @@ impl LpProblem {
         try!(buffer.write(b"\nEnd"));
 
         Ok(())
-
     }
+}
 
+impl Problem for LpProblem {
+
+    fn add_objective_expression(&mut self, expr: &LpExpression) {
+        if let Some(e) = self.obj_expr.clone() {
+            self.obj_expr = Some(AddExpr(Rc::new(expr.clone()), Rc::new(e.clone())).dfs_remove_constant());
+        } else {
+            self.obj_expr = Some(expr.dfs_remove_constant());
+        }
+    }
+    fn add_constraints(&mut self, expr: &LpConstraint) {
+        self.constraints.push(expr.clone());
+    }
     /// Solve the LP model
-    pub fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String> {
+    fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String> {
 
         let file_model = "test.lp";
 
@@ -264,19 +278,14 @@ impl LpProblem {
 /// Add constraints
 impl AddAssign<LpConstraint> for LpProblem {
     fn add_assign(&mut self, _rhs: LpConstraint) {
-        self.constraints.push(_rhs);
+        self.add_constraints(&_rhs);
     }
 }
 
 /// Add an expression as an objective function
 impl<T> AddAssign<T> for LpProblem where T: Into<LpExpression>{
     fn add_assign(&mut self, _rhs: T) {
-        //TODO: improve without cloning
-        if let Some(e) = self.obj_expr.clone() {
-            self.obj_expr = Some(AddExpr(Rc::new(_rhs.into()), Rc::new(e.clone())).dfs_remove_constant());
-        } else {
-            self.obj_expr = Some(_rhs.into().dfs_remove_constant());
-        }
+        self.add_objective_expression(&_rhs.into());
     }
 }
 
