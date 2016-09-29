@@ -1,3 +1,4 @@
+use std::fs;
 use std::fs::{File};
 use std::io::prelude::*;
 use std::process::Command;
@@ -14,25 +15,43 @@ pub enum Status {
     NotSolved,
 }
 
+// TODO: Let only run_solver which run, read and send the solution
 pub trait SolverTrait {
-    fn name(&self) -> String;
-    fn command_name(&self) -> String;
-    fn run_solver(&self, file_model: &str, file_solution: &str) -> Result<Option<Status>, String>;
-    fn read_solution(&self, file_solution: &str) ->  Result<(Status, HashMap<String,f32>), String>;
+    fn run_solver(&self, file_model: &str) -> Result<Option<Status>, String>;
+    fn read_solution(&self) ->  Result<(Status, HashMap<String,f32>), String>;
 }
 
-pub struct GurobiSolver;
-pub struct CbcSolver;
+pub struct GurobiSolver {
+    name: String,
+    command_name: String,
+    temp_solution_file: String,
+}
+pub struct CbcSolver {
+    name: String,
+    command_name: String,
+    temp_solution_file: String,
+}
+
+impl GurobiSolver {
+    pub fn new() -> GurobiSolver {
+        GurobiSolver { name: "Gurobi".to_string(), command_name: "gurobi_cl".to_string(), temp_solution_file: "sol.sol".to_string() }
+    }
+    pub fn command_name(&self, command_name: String) -> GurobiSolver {
+        GurobiSolver { name: self.name.clone(), command_name: command_name, temp_solution_file: self.temp_solution_file.clone() }
+    }
+}
+impl CbcSolver {
+    pub fn new() -> CbcSolver {
+        CbcSolver { name: "Cbc".to_string(), command_name: "cbc".to_string(), temp_solution_file: "sol.sol".to_string() }
+    }
+    pub fn command_name(&self, command_name: String) -> CbcSolver {
+        CbcSolver { name: self.name.clone(), command_name: command_name, temp_solution_file: self.temp_solution_file.clone() }
+    }
+}
 
 impl SolverTrait for GurobiSolver {
-    fn name(&self) -> String {
-        "gurobi".to_string()
-    }
-    fn command_name(&self) -> String {
-        "gurobi_cl".to_string()
-    }
-    fn run_solver(&self, file_model: &str, file_solution: &str) -> Result<Option<Status>, String> {
-        match Command::new(self.command_name()).arg(format!("ResultFile={}", file_solution)).arg(file_model).output() {
+    fn run_solver(&self, file_model: &str) -> Result<Option<Status>, String> {
+        match Command::new(&self.command_name).arg(format!("ResultFile={}", self.temp_solution_file)).arg(file_model).output() {
             Ok(r) => {
                 let mut status = Status::SubOptimal;
                 if String::from_utf8(r.stdout).expect("").contains("Optimal solution found") {
@@ -44,11 +63,11 @@ impl SolverTrait for GurobiSolver {
                     Err(r.status.to_string())
                 }
             },
-            Err(_) => Err(format!("Error running the {} solver", self.name())),
+            Err(_) => Err(format!("Error running the {} solver", self.name)),
         }
     }
 
-    fn read_solution(&self, file_solution: &str) -> Result<(Status, HashMap<String, f32>), String> {
+    fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
 
         fn read_specific_solution(f: &File) -> Result<(Status, HashMap<String, f32>), String> {
 
@@ -78,9 +97,10 @@ impl SolverTrait for GurobiSolver {
             Ok((Status::Optimal, vars_value))
         }
 
-        match File::open(file_solution) {
+        match File::open(&self.temp_solution_file) {
             Ok(f) => {
                 let res = try!(read_specific_solution(&f));
+                let _ = fs::remove_file(&self.temp_solution_file);
                 Ok(res)
             },
             Err(_) => return Err("Cannot open file".to_string())
@@ -89,14 +109,8 @@ impl SolverTrait for GurobiSolver {
 }
 
 impl SolverTrait for CbcSolver {
-    fn name(&self) -> String {
-        "cbc".to_string()
-    }
-    fn command_name(&self) -> String {
-        "cbc".to_string()
-    }
-    fn run_solver(&self, file_model: &str, file_solution: &str) -> Result<Option<Status>, String> {
-        match Command::new(self.command_name()).arg(file_model).arg("solve").arg("solution").arg(file_solution).output() {
+    fn run_solver(&self, file_model: &str) -> Result<Option<Status>, String> {
+        match Command::new(&self.command_name).arg(file_model).arg("solve").arg("solution").arg(&self.temp_solution_file).output() {
             Ok(r) => {
                 if r.status.success(){
                     Ok(None)
@@ -104,11 +118,11 @@ impl SolverTrait for CbcSolver {
                     Err(r.status.to_string())
                 }
             },
-            Err(_) => Err(format!("Error running the {} solver", self.name())),
+            Err(_) => Err(format!("Error running the {} solver", self.name)),
         }
     }
 
-    fn read_solution(&self, file_solution: &str) -> Result<(Status, HashMap<String, f32>), String> {
+    fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
         fn read_specific_solution(f: &File) -> Result<(Status, HashMap<String, f32>), String> {
             let mut vars_value: HashMap<_, _> = HashMap::new();
 
@@ -141,9 +155,10 @@ impl SolverTrait for CbcSolver {
             Ok((status, vars_value))
         }
 
-        match File::open(file_solution) {
+        match File::open(&self.temp_solution_file) {
             Ok(f) => {
                 let res = try!(read_specific_solution(&f));
+                let _ = fs::remove_file(&self.temp_solution_file);
                 Ok(res)
             },
             Err(_) => return Err("Cannot open file".to_string())

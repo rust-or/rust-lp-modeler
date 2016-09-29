@@ -44,7 +44,7 @@ pub enum LpObjective {
 /// problem += a.ge(b);
 /// problem += 2.0*a + 3.0*b;
 ///
-/// problem.solve(CbcSolver);
+/// problem.solve(CbcSolver::new());
 /// ```
 #[derive(Debug)]
 pub struct LpProblem {
@@ -242,17 +242,15 @@ impl LpProblem {
     pub fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String> {
 
         let file_model = "test.lp";
-        let file_temp_solution = "sol.sol";
 
         match self.write_lp(file_model) {
             Ok(_) => {
                 // Sometimes, we have to read on stdin to know the status
-                let status = try!(s.run_solver(file_model, file_temp_solution));
+                let status = try!(s.run_solver(file_model));
 
                 // Otherwise, the status is written on the output file
-                let (status_read, res) = try!(s.read_solution(file_temp_solution));
+                let (status_read, res) = try!(s.read_solution());
                 let _ = fs::remove_file(file_model);
-                let _ = fs::remove_file(file_temp_solution);
                 match status {
                     Some(s) => Ok((s, res)),
                     _ => Ok((status_read, res))

@@ -1,6 +1,5 @@
 use variables::*;
 use variables::LpExpression::*;
-use problem::*;
 use std::rc::Rc;
 use operations::LpOperations;
 

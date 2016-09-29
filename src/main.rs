@@ -1,6 +1,6 @@
 extern crate lp_modeler;
 
-use lp_modeler::operations::{LpOperations};
+use lp_modeler::operations::LpOperations;
 use lp_modeler::problem::{LpProblem, LpObjective};
 use lp_modeler::solvers::*;
 use lp_modeler::variables::{LpInteger};
@@ -17,14 +17,17 @@ fn main() {
     problem += 10.0 * a + 20.0 * b;
 
     problem += (500*a + 1200*b + 1500*c).le(10000);
+    problem += (a + b*2 + c).le(10);
     problem += (a).le(b);
 
+    // Suboptimal instead of unfeasible
+    // problem += (a+b).equal(10);
 
     // let solver = GurobiSolver
     // solver <<= BaseDirectory("/opt/gurobi1.2/...")
     // solver <<= Config().arg("-thread 2").arg("...")
-    problem.write_lp("toto.lp");
-    match problem.solve(GurobiSolver) {
+    let _ = problem.write_lp("toto.lp");
+    match problem.solve(GurobiSolver::new()) {
         Ok((status, res)) => {
             println!("Status {:?}", status);
             for (name, value) in res.iter() {
