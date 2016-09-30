@@ -1,6 +1,7 @@
 language: rust
 rust:
   - 1.11.0
+  - 1.12.0
 
 before_install:
     - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
