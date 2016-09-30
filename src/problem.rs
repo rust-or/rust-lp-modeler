@@ -31,7 +31,7 @@ pub enum LpObjective {
 /// # Examples:
 ///
 /// ```
-/// use lp_modeler::problem::{LpObjective, LpProblem};
+/// use lp_modeler::problem::{LpObjective, Problem, LpProblem};
 /// use lp_modeler::operations::{LpOperations};
 /// use lp_modeler::variables::LpInteger;
 /// use lp_modeler::solvers::CbcSolver;
@@ -275,6 +275,7 @@ impl Problem for LpProblem {
     }
 }
 
+/*
 /// Add constraints
 impl AddAssign<LpConstraint> for LpProblem {
     fn add_assign(&mut self, _rhs: LpConstraint) {
@@ -288,4 +289,22 @@ impl<T> AddAssign<T> for LpProblem where T: Into<LpExpression>{
         self.add_objective_expression(&_rhs.into());
     }
 }
+*/
 
+macro_rules! impl_addassign_for_generic_problem {
+    ($problem: ty) => {
+        /// Add constraints
+        impl AddAssign<LpConstraint> for $problem {
+            fn add_assign(&mut self, _rhs: LpConstraint) {
+                self.add_constraints(&_rhs);
+            }
+        }
+        /// Add an expression as an objective function
+        impl<T> AddAssign<T> for $problem where T: Into<LpExpression>{
+            fn add_assign(&mut self, _rhs: T) {
+                self.add_objective_expression(&_rhs.into());
+            }
+        }
+    }
+}
+impl_addassign_for_generic_problem!(LpProblem);
