@@ -24,6 +24,11 @@ pub trait SolverTrait {
 }
 
 pub trait LinearSolverTrait : SolverTrait {
+    fn write_lp(&self, problem: &LpProblem, file_model: &str) -> std::io::Result<()>  {
+        let mut buffer = try!(File::create(file_model));
+        try!(buffer.write(problem.to_lp_file_format().as_bytes()));
+        Ok(())
+    }
 }
 
 pub struct GurobiSolver {
@@ -144,13 +149,7 @@ impl SolverTrait for GurobiSolver {
         use std::io::prelude::*;
         let file_model = "test.lp";
 
-        fn write_lp(problem: &LpProblem, file_model: &str) -> std::io::Result<()>  {
-            let mut buffer = try!(File::create(file_model));
-            try!(buffer.write(problem.to_lp_file_format().as_bytes()));
-            Ok(())
-        }
-
-        match write_lp(problem, file_model) {
+        match self.write_lp(problem, file_model) {
             Ok(_) => {
                 match Command::new(&self.command_name).arg(format!("ResultFile={}", self.temp_solution_file)).arg(file_model).output() {
                     Ok(r) => {
@@ -181,13 +180,7 @@ impl SolverTrait for CbcSolver {
         use std::io::prelude::*;
         let file_model = "test.lp";
 
-        fn write_lp(problem: &LpProblem, file_model: &str) -> std::io::Result<()>  {
-            let mut buffer = try!(File::create(file_model));
-            try!(buffer.write(problem.to_lp_file_format().as_bytes()));
-            Ok(())
-        }
-
-        match write_lp(problem, file_model) {
+        match self.write_lp(problem, file_model) {
             Ok(_) => {
                 match Command::new(&self.command_name).arg(format!("ResultFile={}", self.temp_solution_file)).arg(file_model).output() {
                     Ok(r) => {

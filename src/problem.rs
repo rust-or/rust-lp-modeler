@@ -94,6 +94,7 @@ impl LpProblem {
     }
 
 
+    /*
     fn objective_string(&self) -> String {
         if let Some(ref expr) = self.obj_expr {
             expr.to_lp_file_format()
@@ -238,6 +239,7 @@ impl LpProblem {
 
         Ok(())
     }
+    */
 }
 
 pub trait LpFileFormat {
@@ -405,10 +407,9 @@ impl Problem for LpProblem {
     fn add_constraints(&mut self, expr: &LpConstraint) {
         self.constraints.push(expr.clone());
     }
+
     /// Solve the LP model
     fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String> {
-
-        let file_model = "test.lp";
         s.run_solver(self)
     }
 }
