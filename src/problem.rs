@@ -5,6 +5,8 @@ use variables::LpExpression::*;
 use std::rc::Rc;
 use std::collections::HashMap;
 use solvers::*;
+use std::fs::File;
+use std::io::prelude::*;
 
 //use variables::LpExpression::{AddExpr, MulExpr};
 use std::ops::{AddAssign};
@@ -93,159 +95,16 @@ impl LpProblem {
         lst.iter().map(|&(ref n, ref x)| (n.clone(), *x)).collect::<HashMap<String, &LpExpression>>()
     }
 
-
-    /*
-    fn objective_string(&self) -> String {
-        if let Some(ref expr) = self.obj_expr {
-            expr.to_lp_file_format()
-        } else {
-            String::new()
-        }
-    }
-
-    fn constraints_string(&self) -> String {
-        let mut res = String::new();
-        let mut cstrs = self.constraints.iter();
-        let mut index = 1;
-        while let Some(ref constraint) = cstrs.next() {
-            res.push_str("  c");
-            res.push_str(&index.to_string());
-            res.push_str(": ");
-            index += 1;
-
-            res.push_str(&constraint.to_lp_file_format());
-
-            res.push_str("\n");
-        }
-        res
-    }
-
-    fn bounds_string(&self) -> String {
-        let mut res = String::new();
-        for (_, v) in self.variables() {
-            match v {
-                &ConsInt(LpInteger { ref name, lower_bound, upper_bound })
-                | &ConsCont(LpContinuous { ref name, lower_bound, upper_bound }) => {
-                    if let Some(l) = lower_bound {
-                        res.push_str("  ");
-                        res.push_str(&l.to_string());
-                        res.push_str(" <= ");
-                        res.push_str(&name);
-                        if let Some(u) = upper_bound {
-                            res.push_str(" <= ");
-                            res.push_str(&u.to_string());
-                        }
-                        res.push_str("\n");
-                    } else if let Some(u) = upper_bound {
-                        res.push_str("  ");
-                        res.push_str(&name);
-                        res.push_str(" <= ");
-                        res.push_str(&u.to_string());
-                        res.push_str("\n");
-                    } else {
-                        match v {
-                            &ConsCont(LpContinuous { .. }) => {
-                                res.push_str("  ");
-                                res.push_str(&name);
-                                res.push_str(" free\n");
-                            }, // TODO: IntegerVar => -INF to INF
-                            _ => ()
-                        }
-                    }
-                },
-                _ => (),
-            }
-        }
-        res
-    }
-
-    fn integers_string(&self) -> String {
-        let mut res = String::new();
-        for (_, v) in self.variables() {
-            match v {
-                &ConsInt(LpInteger { ref name, .. }) => {
-                    res.push_str(name);
-                    res.push_str(" ");
-                },
-                _ => (),
-            }
-        }
-        res
-    }
-
-    fn binaries_string(&self) -> String {
-        let mut res = String::new();
-        for (_, v) in self.variables() {
-            match v {
-                &ConsBin(LpBinary { ref name }) => {
-                    res.push_str(name);
-                    res.push_str(" ");
-                },
-                _ => (),
-            }
-        }
-        res
-    }
-
-    pub fn write_lp<T: Into<String>>(&self, file_name: T) -> std::io::Result<()> {
-        use std::fs::File;
-        use std::io::prelude::*;
-
-        let mut buffer = try!(File::create(file_name.into()));
-
-        try!(buffer.write("\\ ".as_bytes()));
-        try!(buffer.write(self.name.as_bytes()));
-        try!(buffer.write("\n\n".as_bytes()));
-
-        // Write objectives
-        match self.objective_type {
-            LpObjective::Maximize => { try!(buffer.write(b"Maximize\n  ")); },
-            LpObjective::Minimize => { try!(buffer.write(b"Minimize\n  ")); },
-        }
-        let obj_str = self.objective_string();
-        try!(buffer.write(obj_str.as_bytes()));
-
-        // Write constraints
-        let cstr_str = self.constraints_string();
-        if cstr_str.len() > 0 {
-            try!(buffer.write(b"\n\nSubject To\n"));
-            try!(buffer.write(cstr_str.as_bytes()));
-        }
-
-        // Write bounds for Integer and Continuous
-        let bound_str = self.bounds_string();
-        if bound_str.len() > 0 {
-            try!(buffer.write(b"\nBounds\n"));
-            try!(buffer.write(bound_str.as_bytes()));
-        }
-
-        // Write Integer vars
-        let generals_str = self.integers_string();
-        if generals_str.len() > 0 {
-            try!(buffer.write(b"\nGenerals\n  "));
-            try!(buffer.write(generals_str.as_bytes()));
-            try!(buffer.write(b"\n"));
-        }
-
-        // Write Binaries vars
-        let binaries_str = self.binaries_string();
-        if binaries_str.len() > 0 {
-            try!(buffer.write(b"\nBinary\n  "));
-            try!(buffer.write(binaries_str.as_bytes()));
-            try!(buffer.write(b"\n"));
-        }
-
-        try!(buffer.write(b"\nEnd"));
-
-        Ok(())
-    }
-    */
 }
 
 pub trait LpFileFormat {
     fn to_lp_file_format(&self) -> String;
+    fn write_lp(&self, file_model: &str) -> std::io::Result<()>  {
+        let mut buffer = try!(File::create(file_model));
+        try!(buffer.write(self.to_lp_file_format().as_bytes()));
+        Ok(())
+    }
 }
-
 
 impl LpFileFormat for LpProblem {
     fn to_lp_file_format(&self) -> String {
@@ -392,8 +251,6 @@ impl LpFileFormat for LpProblem {
         buffer
     }
 }
-
-
 
 impl Problem for LpProblem {
 

@@ -18,17 +18,11 @@ pub enum Status {
     NotSolved,
 }
 
-// TODO: Let only run_solver which run, read and send the solution
 pub trait SolverTrait {
     fn run_solver(&self, problem: &LpProblem) -> Result<(Status, HashMap<String,f32>), String>;
 }
 
 pub trait LinearSolverTrait : SolverTrait {
-    fn write_lp(&self, problem: &LpProblem, file_model: &str) -> std::io::Result<()>  {
-        let mut buffer = try!(File::create(file_model));
-        try!(buffer.write(problem.to_lp_file_format().as_bytes()));
-        Ok(())
-    }
 }
 
 pub struct GurobiSolver {
@@ -149,7 +143,7 @@ impl SolverTrait for GurobiSolver {
         use std::io::prelude::*;
         let file_model = "test.lp";
 
-        match self.write_lp(problem, file_model) {
+        match problem.write_lp(file_model) {
             Ok(_) => {
                 match Command::new(&self.command_name).arg(format!("ResultFile={}", self.temp_solution_file)).arg(file_model).output() {
                     Ok(r) => {
@@ -180,7 +174,7 @@ impl SolverTrait for CbcSolver {
         use std::io::prelude::*;
         let file_model = "test.lp";
 
-        match self.write_lp(problem, file_model) {
+        match problem.write_lp(file_model) {
             Ok(_) => {
                 match Command::new(&self.command_name).arg(format!("ResultFile={}", self.temp_solution_file)).arg(file_model).output() {
                     Ok(r) => {
