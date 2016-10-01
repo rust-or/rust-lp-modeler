@@ -409,22 +409,7 @@ impl Problem for LpProblem {
     fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String> {
 
         let file_model = "test.lp";
-
-        match self.write_lp(file_model) {
-            Ok(_) => {
-                // Sometimes, we have to read on stdin to know the status
-                let status = try!(s.run_solver(file_model));
-
-                // Otherwise, the status is written on the output file
-                let (status_read, res) = try!(s.read_solution());
-                let _ = fs::remove_file(file_model);
-                match status {
-                    Some(s) => Ok((s, res)),
-                    _ => Ok((status_read, res))
-                }
-            },
-            Err(e) => Err(e.to_string())
-        }
+        s.run_solver(self)
     }
 }
 

@@ -2,6 +2,7 @@ use variables::*;
 use variables::LpExpression::*;
 use std::rc::Rc;
 use operations::LpOperations;
+use problem::LpFileFormat;
 
 
 #[test]
@@ -15,29 +16,29 @@ fn expressions_creation() {
 }
 
 #[test]
-fn expressions_to_string() {
+fn expressions_to_lp_file_format() {
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
     let ref c = LpInteger::new("c");
 
-    assert_eq!((a + 2*b + c).to_string(), "a + 2 b + c");
-    assert_eq!((a + b*2 + c).to_string(), "a + 2 b + c");
-    assert_eq!((a + b*2 + 3 * 2 * c).to_string(), "a + 2 b + 6 c");
-    assert_eq!((a + 2).to_string(), "a + 2");
-    assert_eq!((2*a + 2*b -4*c).to_string(), "2 a + 2 b - 4 c");
-    assert_eq!((-2*a).to_string(), "-2 a");
+    assert_eq!((a + 2*b + c).to_lp_file_format(), "a + 2 b + c");
+    assert_eq!((a + b*2 + c).to_lp_file_format(), "a + 2 b + c");
+    assert_eq!((a + b*2 + 3 * 2 * c).to_lp_file_format(), "a + 2 b + 6 c");
+    assert_eq!((a + 2).to_lp_file_format(), "a + 2");
+    assert_eq!((2*a + 2*b -4*c).to_lp_file_format(), "2 a + 2 b - 4 c");
+    assert_eq!((-2*a).to_lp_file_format(), "-2 a");
 }
 
 
 #[test]
-fn constraints_to_string() {
+fn constraints_to_lp_file_format() {
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
     let ref c = LpInteger::new("c");
 
-    assert_eq!((a+b).equal(10).to_string(), "a + b = 10");
-    assert_eq!((2*a + b).ge(10).to_string(), "2 a + b >= 10");
-    assert_eq!((2*a + b + 20).ge(c).to_string(), "2 a + b - c >= -20");
-    assert_eq!((-a).ge(10).to_string(), "-a >= 10");
-    assert_eq!((2*a - 20 + b).ge(-c).to_string(), "2 a + b + c >= 20");
+    assert_eq!((a+b).equal(10).to_lp_file_format(), "a + b = 10");
+    assert_eq!((2*a + b).ge(10).to_lp_file_format(), "2 a + b >= 10");
+    assert_eq!((2*a + b + 20).ge(c).to_lp_file_format(), "2 a + b - c >= -20");
+    assert_eq!((-a).ge(10).to_lp_file_format(), "-a >= 10");
+    assert_eq!((2*a - 20 + b).ge(-c).to_lp_file_format(), "2 a + b + c >= 20");
 }
