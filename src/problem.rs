@@ -26,6 +26,12 @@ pub enum LpObjective {
     Maximize
 }
 
+pub trait Problem {
+    fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String>;
+    fn add_objective_expression(&mut self, expr: &LpExpression);
+    fn add_constraints(&mut self, expr: &LpConstraint);
+}
+
 /// Structure used for creating the model and solving a linear problem.
 ///
 /// # Examples:
@@ -53,12 +59,6 @@ pub struct LpProblem {
     obj_expr: Option<LpExpression>,
     constraints: Vec<LpConstraint>
 
-}
-
-pub trait Problem {
-    fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String>;
-    fn add_objective_expression(&mut self, expr: &LpExpression);
-    fn add_constraints(&mut self, expr: &LpConstraint);
 }
 
 impl LpProblem {
@@ -96,7 +96,7 @@ impl LpProblem {
 
     fn objective_string(&self) -> String {
         if let Some(ref expr) = self.obj_expr {
-            expr.to_string()
+            expr.to_lp_file_format()
         } else {
             String::new()
         }
@@ -112,7 +112,7 @@ impl LpProblem {
             res.push_str(": ");
             index += 1;
 
-            res.push_str(&constraint.to_string());
+            res.push_str(&constraint.to_lp_file_format());
 
             res.push_str("\n");
         }
@@ -158,7 +158,7 @@ impl LpProblem {
         res
     }
 
-    fn generals_string(&self) -> String {
+    fn integers_string(&self) -> String {
         let mut res = String::new();
         for (_, v) in self.variables() {
             match v {
@@ -219,7 +219,7 @@ impl LpProblem {
         }
 
         // Write Integer vars
-        let generals_str = self.generals_string();
+        let generals_str = self.integers_string();
         if generals_str.len() > 0 {
             try!(buffer.write(b"\nGenerals\n  "));
             try!(buffer.write(generals_str.as_bytes()));
@@ -239,6 +239,159 @@ impl LpProblem {
         Ok(())
     }
 }
+
+pub trait LpFileFormat {
+    fn to_lp_file_format(&self) -> String;
+}
+
+
+impl LpFileFormat for LpProblem {
+    fn to_lp_file_format(&self) -> String {
+
+        let objective_string = || {
+            if let Some(ref expr) = self.obj_expr {
+                expr.to_lp_file_format()
+            } else {
+                String::new()
+            }
+        };
+
+        let constraints_string = || {
+            let mut res = String::new();
+            let mut cstrs = self.constraints.iter();
+            let mut index = 1;
+            while let Some(ref constraint) = cstrs.next() {
+                res.push_str("  c");
+                res.push_str(&index.to_string());
+                res.push_str(": ");
+                index += 1;
+
+                res.push_str(&constraint.to_lp_file_format());
+
+                res.push_str("\n");
+            }
+            res
+        };
+
+        let bounds_string = || {
+            let mut res = String::new();
+            for (_, v) in self.variables() {
+                match v {
+                    &ConsInt(LpInteger { ref name, lower_bound, upper_bound })
+                    | &ConsCont(LpContinuous { ref name, lower_bound, upper_bound }) => {
+                        if let Some(l) = lower_bound {
+                            res.push_str("  ");
+                            res.push_str(&l.to_string());
+                            res.push_str(" <= ");
+                            res.push_str(&name);
+                            if let Some(u) = upper_bound {
+                                res.push_str(" <= ");
+                                res.push_str(&u.to_string());
+                            }
+                            res.push_str("\n");
+                        } else if let Some(u) = upper_bound {
+                            res.push_str("  ");
+                            res.push_str(&name);
+                            res.push_str(" <= ");
+                            res.push_str(&u.to_string());
+                            res.push_str("\n");
+                        } else {
+                            match v {
+                                &ConsCont(LpContinuous { .. }) => {
+                                    res.push_str("  ");
+                                    res.push_str(&name);
+                                    res.push_str(" free\n");
+                                }, // TODO: IntegerVar => -INF to INF
+                                _ => ()
+                            }
+                        }
+                    },
+                    _ => (),
+                }
+            }
+            res
+        };
+
+        let integers_string = || {
+            let mut res = String::new();
+            for (_, v) in self.variables() {
+                match v {
+                    &ConsInt(LpInteger { ref name, .. }) => {
+                        res.push_str(name);
+                        res.push_str(" ");
+                    },
+                    _ => (),
+                }
+            }
+            res
+        };
+
+        let binaries_string = || {
+            let mut res = String::new();
+            for (_, v) in self.variables() {
+                match v {
+                    &ConsBin(LpBinary { ref name }) => {
+                        res.push_str(name);
+                        res.push_str(" ");
+                    },
+                    _ => (),
+                }
+            }
+            res
+        };
+
+
+        let mut buffer = String::new();
+
+        buffer.push_str("\\ ");
+        buffer.push_str(&self.name);
+        buffer.push_str("\n\n");
+
+        // Write objectives
+        match self.objective_type {
+            LpObjective::Maximize => { buffer.push_str("Maximize\n  "); },
+            LpObjective::Minimize => { buffer.push_str("Minimize\n  "); },
+        }
+        let obj_str = objective_string();
+        buffer.push_str(&obj_str);
+
+        // Write constraints
+        let cstr_str = constraints_string();
+        if cstr_str.len() > 0 {
+            buffer.push_str("\n\nSubject To\n");
+            buffer.push_str(&cstr_str);
+        }
+
+        // Write bounds for Integer and Continuous
+        let bound_str = bounds_string();
+        if bound_str.len() > 0 {
+            buffer.push_str("\nBounds\n");
+            buffer.push_str(&bound_str);
+        }
+
+        // Write Integer vars
+        let generals_str = integers_string();
+        if generals_str.len() > 0 {
+            buffer.push_str("\nGenerals\n  ");
+            buffer.push_str(&generals_str);
+            buffer.push_str("\n");
+        }
+
+        // Write Binaries vars
+        let binaries_str = binaries_string();
+        if binaries_str.len() > 0 {
+            buffer.push_str("\nBinary\n  ");
+            buffer.push_str(&binaries_str);
+            buffer.push_str("\n");
+        }
+
+        buffer.push_str("\nEnd");
+
+        buffer
+    }
+}
+
+
 
 impl Problem for LpProblem {
 

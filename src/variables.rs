@@ -4,6 +4,7 @@ use self::LpExpression::*;
 use std::convert::Into;
 use std::rc::Rc;
 use variables::Constraint::*;
+use problem::LpFileFormat;
 
 
 
@@ -156,23 +157,23 @@ impl LpExpression {
     }
 }
 
-impl ToString for LpExpression {
-    fn to_string(&self) -> String {
+impl LpFileFormat for LpExpression {
+    fn to_lp_file_format(&self) -> String {
 
         fn dfs(expr: &LpExpression, acc: &String) -> String {
             match expr {
                 &MulExpr(ref e1, ref e2) => {
                     match **e1 {
-                        LitVal(v) if v == 1.0 => e2.to_string(),
-                        LitVal(v) if v == -1.0 => "-".to_string() + &e2.to_string(),
-                        _ => e1.to_string() + " " + &e2.to_string()
+                        LitVal(v) if v == 1.0 => e2.to_lp_file_format(),
+                        LitVal(v) if v == -1.0 => "-".to_string() + &e2.to_lp_file_format(),
+                        _ => e1.to_lp_file_format() + " " + &e2.to_lp_file_format()
                     }
                 },
                 &AddExpr(ref e1, ref e2) => {
-                    e1.to_string() + " + " + &e2.to_string()
+                    e1.to_lp_file_format() + " + " + &e2.to_lp_file_format()
                 },
                 &SubExpr(ref e1, ref e2) => {
-                    e1.to_string() + " - " + &e2.to_string()
+                    e1.to_lp_file_format() + " - " + &e2.to_lp_file_format()
                 },
                 &ConsBin(LpBinary {name: ref n, .. }) => {
                     acc.clone() + n
@@ -294,16 +295,16 @@ impl LpConstraint {
     }
 }
 
-impl ToString for LpConstraint {
-    fn to_string(&self) -> String {
+impl LpFileFormat for LpConstraint {
+    fn to_lp_file_format(&self) -> String {
         let mut res = String::new();
-        res.push_str(&self.0.to_string());
+        res.push_str(&self.0.to_lp_file_format());
         match self.1 {
             GreaterOrEqual => res.push_str(" >= "),
             LessOrEqual => res.push_str(" <= "),
             Equal => res.push_str(" = "),
         }
-        res.push_str(&self.2.to_string());
+        res.push_str(&self.2.to_lp_file_format());
         res
     }
 }
