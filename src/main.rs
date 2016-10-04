@@ -26,7 +26,10 @@ fn main() {
     // let solver = GurobiSolver
     // solver <<= BaseDirectory("/opt/gurobi1.2/...")
     // solver <<= Config().arg("-thread 2").arg("...")
-    let _ = problem.write_lp("toto.lp");
+    // let _ = problem.write_lp("toto.lp");
+
+    // let solver = GurobiSolver::new();
+    // solver.run(problem);
 
     match problem.solve(GurobiSolver::new()) {
         Ok((status, res)) => {

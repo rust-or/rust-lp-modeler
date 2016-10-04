@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use std::process::Command;
 use std::collections::HashMap;
 use std::io::BufReader;
-use problem::{LpProblem, LpObjective};
+use problem::{LpProblem, LpObjective, Problem};
 use problem::{LpFileFormat};
 use std::fs::File;
 
@@ -19,7 +19,7 @@ pub enum Status {
 }
 
 pub trait SolverTrait {
-    fn run_solver(&self, problem: &LpProblem) -> Result<(Status, HashMap<String,f32>), String>;
+    fn run<P: Problem>(&self, problem: &P) -> Result<(Status, HashMap<String,f32>), String>;
 }
 
 pub trait LinearSolverTrait : SolverTrait {
@@ -137,7 +137,7 @@ impl CbcSolver {
 
 impl LinearSolverTrait for GurobiSolver {}
 impl SolverTrait for GurobiSolver {
-    fn run_solver(&self, problem: &LpProblem) -> Result<(Status, HashMap<String,f32>), String> {
+    fn run<P: Problem>(&self, problem: &P) -> Result<(Status, HashMap<String,f32>), String> {
 
         use std::fs::File;
         use std::io::prelude::*;
@@ -168,7 +168,7 @@ impl SolverTrait for GurobiSolver {
 
 impl LinearSolverTrait for CbcSolver {}
 impl SolverTrait for CbcSolver {
-    fn run_solver(&self, problem: &LpProblem) -> Result<(Status, HashMap<String,f32>), String> {
+    fn run<P: Problem>(&self, problem: &P) -> Result<(Status, HashMap<String,f32>), String> {
 
         use std::fs::File;
         use std::io::prelude::*;

@@ -267,7 +267,7 @@ impl Problem for LpProblem {
 
     /// Solve the LP model
     fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String> {
-        s.run_solver(self)
+        s.run(self)
     }
 }
 
