@@ -42,3 +42,34 @@ fn constraints_to_lp_file_format() {
     assert_eq!((-a).ge(10).to_lp_file_format(), "-a >= 10");
     assert_eq!((2*a - 20 + b).ge(-c).to_lp_file_format(), "2 a + b + c >= 20");
 }
+
+#[test]
+fn test_readme_example() {
+    use problem::{LpObjective, LpProblem};
+    use operations::{LpOperations};
+    use variables::LpInteger;
+    use solvers::{SolverTrait, CbcSolver};
+
+    let ref a = LpInteger::new("a");
+    let ref b = LpInteger::new("b");
+    let ref c = LpInteger::new("c");
+
+    let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
+    problem += 10.0 * a + 20.0 * b;
+
+    problem += (500*a + 1200*b + 1500*c).le(10000);
+    problem += (a + b*2 + c).le(10);
+    problem += (a).le(b);
+
+    let solver = CbcSolver::new();
+
+    match solver.run(&problem) {
+        Ok((status, res)) => {
+            println!("Status {:?}", status);
+            for (name, value) in res.iter() {
+                println!("value of {} = {}", name, value);
+            }
+        },
+        Err(msg) => println!("{}", msg),
+    }
+}
