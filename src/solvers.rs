@@ -19,10 +19,8 @@ pub enum Status {
 }
 
 pub trait SolverTrait {
-    fn run<P: Problem>(&self, problem: &P) -> Result<(Status, HashMap<String,f32>), String>;
-}
-
-pub trait LinearSolverTrait : SolverTrait {
+    type P: Problem;
+    fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String>;
 }
 
 pub struct GurobiSolver {
@@ -135,9 +133,9 @@ impl CbcSolver {
 }
 
 
-impl LinearSolverTrait for GurobiSolver {}
 impl SolverTrait for GurobiSolver {
-    fn run<P: Problem>(&self, problem: &P) -> Result<(Status, HashMap<String,f32>), String> {
+    type P = LpProblem;
+    fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String> {
 
         use std::fs::File;
         use std::io::prelude::*;
@@ -166,9 +164,9 @@ impl SolverTrait for GurobiSolver {
     }
 }
 
-impl LinearSolverTrait for CbcSolver {}
 impl SolverTrait for CbcSolver {
-    fn run<P: Problem>(&self, problem: &P) -> Result<(Status, HashMap<String,f32>), String> {
+    type P = LpProblem;
+    fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String> {
 
         use std::fs::File;
         use std::io::prelude::*;

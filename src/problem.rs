@@ -29,7 +29,6 @@ pub enum LpObjective {
 }
 
 pub trait Problem {
-    fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String>;
     fn add_objective_expression(&mut self, expr: &LpExpression);
     fn add_constraints(&mut self, expr: &LpConstraint);
 }
@@ -261,14 +260,11 @@ impl Problem for LpProblem {
             self.obj_expr = Some(expr.dfs_remove_constant());
         }
     }
+
     fn add_constraints(&mut self, expr: &LpConstraint) {
         self.constraints.push(expr.clone());
     }
 
-    /// Solve the LP model
-    fn solve<T: SolverTrait>(&self, s: T) -> Result<(Status, HashMap<String,f32>), String> {
-        s.run(self)
-    }
 }
 
 /*
