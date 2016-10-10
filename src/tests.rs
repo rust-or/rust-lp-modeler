@@ -72,7 +72,7 @@ fn test_readme_example() {
         Err(msg) => println!("{}", msg),
     }
 
-    let output = "\\ One Problem
+    let output1 = "\\ One Problem
 
 Maximize
   10 a + 20 b
@@ -81,9 +81,9 @@ Subject To
   c1: 500 a + 1200 b + 1500 c <= 10000
   c2: a - b <= 0
 
-Generals
-  a c b
-
-End";
-    assert_eq!(problem.to_lp_file_format(), output);
+".to_string();
+    let output2 = problem.to_lp_file_format();
+    let output2 = output2.split("Generals").collect::<Vec<&str>>();
+    let output2 = output2[0];
+    assert_eq!(output1, output2);
 }

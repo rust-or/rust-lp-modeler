@@ -64,7 +64,7 @@ Subject To
   c2: a - b <= 0
 
 Generals
-  a c b
+  a c b 
 
 End
 ```
