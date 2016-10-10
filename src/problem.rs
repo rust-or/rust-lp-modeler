@@ -1,10 +1,8 @@
 use std;
-use std::fs;
 use variables::*;
 use variables::LpExpression::*;
 use std::rc::Rc;
 use std::collections::HashMap;
-use solvers::*;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -41,17 +39,30 @@ pub trait Problem {
 /// use lp_modeler::problem::{LpObjective, Problem, LpProblem};
 /// use lp_modeler::operations::{LpOperations};
 /// use lp_modeler::variables::LpInteger;
-/// use lp_modeler::solvers::CbcSolver;
+/// use lp_modeler::solvers::{SolverTrait, CbcSolver};
 ///
 /// let ref a = LpInteger::new("a");
 /// let ref b = LpInteger::new("b");
+/// let ref c = LpInteger::new("c");
 ///
 /// let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
-/// problem += (a + b).le(100.0);
-/// problem += a.ge(b);
-/// problem += 2.0*a + 3.0*b;
+/// problem += 10.0 * a + 20.0 * b;
 ///
-/// problem.solve(CbcSolver::new());
+/// problem += (500*a + 1200*b + 1500*c).le(10000);
+/// problem += (a + b*2 + c).le(10);
+/// problem += (a).le(b);
+///
+/// let solver = CbcSolver::new();
+///
+/// match solver.run(&problem) {
+/// Ok((status, res)) => {
+///     println!("Status {:?}", status);
+///         for (name, value) in res.iter() {
+///             println!("value of {} = {}", name, value);
+///         }
+///     },
+///     Err(msg) => println!("{}", msg),
+/// }
 /// ```
 #[derive(Debug)]
 pub struct LpProblem {

@@ -1,10 +1,9 @@
-use std;
 use std::fs;
 use std::io::prelude::*;
 use std::process::Command;
 use std::collections::HashMap;
 use std::io::BufReader;
-use problem::{LpProblem, LpObjective, Problem};
+use problem::{LpProblem, Problem};
 use problem::{LpFileFormat};
 use std::fs::File;
 
@@ -137,8 +136,6 @@ impl SolverTrait for GurobiSolver {
     type P = LpProblem;
     fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String> {
 
-        use std::fs::File;
-        use std::io::prelude::*;
         let file_model = "test.lp";
 
         match problem.write_lp(file_model) {
@@ -168,8 +165,6 @@ impl SolverTrait for CbcSolver {
     type P = LpProblem;
     fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String> {
 
-        use std::fs::File;
-        use std::io::prelude::*;
         let file_model = "test.lp";
 
         match problem.write_lp(file_model) {
