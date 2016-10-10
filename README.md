@@ -4,7 +4,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/5i63bu7rn3m5d4l3?svg=true)](https://ci.appveyor.com/project/jcavat/rust-lp-modeler)
 
 A linear programming modeller written in Rust. This api helps to write LP model and 
-use solver such as CBC, Gurobi, lp\_solve, ...*
+use solver such as CBC, Gurobi, lp\_solve, ...
 
 This library is inspired by [coin-or PuLP](http://www.coin-or.org/PuLP/ "Coin-Or PuLP website") which provide
 such an API for python 2.x.
@@ -28,7 +28,6 @@ let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
 problem += 10.0 * a + 20.0 * b;
 
 problem += (500*a + 1200*b + 1500*c).le(10000);
-problem += (a + b*2 + c).le(10);
 problem += (a).le(b);
 
 let solver = CbcSolver::new();
@@ -44,9 +43,9 @@ Ok((status, res)) => {
 }
 ```
 
-This version are tested with coinor-cbc.
+This version are tested with Coinor-Cbc and Gurobi.
 
-It is already possible to export this model 
+It is possible to export the model 
 into the [lp file format](https://www.gurobi.com/documentation/6.5/refman/lp_format.html "lp file format on Gurobi website"). 
 ```
 problem.write_lp("problem.lp") 
@@ -65,7 +64,7 @@ Subject To
   c2: a - b <= 0
 
 Generals
-  b a 
+  a c b
 
 End
 ```

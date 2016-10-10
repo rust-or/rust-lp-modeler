@@ -58,7 +58,6 @@ fn test_readme_example() {
     problem += 10.0 * a + 20.0 * b;
 
     problem += (500*a + 1200*b + 1500*c).le(10000);
-    problem += (a + b*2 + c).le(10);
     problem += (a).le(b);
 
     let solver = CbcSolver::new();
@@ -72,4 +71,19 @@ fn test_readme_example() {
         },
         Err(msg) => println!("{}", msg),
     }
+
+    let output = "\\ One Problem
+
+Maximize
+  10 a + 20 b
+
+Subject To
+  c1: 500 a + 1200 b + 1500 c <= 10000
+  c2: a - b <= 0
+
+Generals
+  a c b
+
+End";
+    assert_eq!(problem.to_lp_file_format(), output);
 }
