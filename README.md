@@ -15,31 +15,33 @@ Dev in progress.
 
 This first alpha version provide this SDL to make a LP Model :
 ```rust
-
+use lp_modeler::problem::{LpObjective, Problem, LpProblem};
 use lp_modeler::operations::{LpOperations};
-use lp_modeler::problem::{LpProblem, LpObjective};
-use lp_modeler::variables::{LpVariable, LpType};
-use lp_modeler::solvers::*;
+use lp_modeler::variables::LpInteger;
+use lp_modeler::solvers::{SolverTrait, CbcSolver};
 
-let ref a = LpVariable::new("a", LpType::Integer);
-let ref b = LpVariable::new("b", LpType::Integer);
+let ref a = LpInteger::new("a");
+let ref b = LpInteger::new("b");
+let ref c = LpInteger::new("c");
 
 let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
+problem += 10.0 * a + 20.0 * b;
 
-problem += 10 * a + 20 * b; // Add the objective function (expression)
-problem += (500 * a + 1200 * b).le(10000); // Add a constraint expression . 500a + 1200b <= 10000
-problem += (a).le(b); // Add a constraint expression a <= b
+problem += (500*a + 1200*b + 1500*c).le(10000);
+problem += (a + b*2 + c).le(10);
+problem += (a).le(b);
 
-match problem.solve(GurobiSolver) {
-    Ok((status, res)) => {
-        println!("Status {:?}", status);
+let solver = CbcSolver::new();
+
+match solver.run(&problem) {
+Ok((status, res)) => {
+    println!("Status {:?}", status);
         for (name, value) in res.iter() {
             println!("value of {} = {}", name, value);
         }
     },
     Err(msg) => println!("{}", msg),
 }
-
 ```
 
 This version are tested with coinor-cbc.
