@@ -1,7 +1,7 @@
 extern crate lp_modeler;
 
 use lp_modeler::operations::LpOperations;
-use lp_modeler::problem::{Problem, LpProblem, LpObjective, LpFileFormat};
+use lp_modeler::problem::{LpProblem, LpObjective, LpFileFormat};
 use lp_modeler::solvers::*;
 use lp_modeler::variables::{LpInteger};
 
@@ -26,12 +26,12 @@ fn main() {
     // let solver = GurobiSolver
     // solver <<= BaseDirectory("/opt/gurobi1.2/...")
     // solver <<= Config().arg("-thread 2").arg("...")
-    // let _ = problem.write_lp("toto.lp");
 
-    // let solver = GurobiSolver::new();
-    // solver.run(problem);
+    let _ = problem.write_lp("toto.lp");
 
-    match problem.solve(GurobiSolver::new()) {
+    let solver = GurobiSolver::new();
+
+    match solver.run(&problem) {
         Ok((status, res)) => {
             println!("Status {:?}", status);
             for (name, value) in res.iter() {
