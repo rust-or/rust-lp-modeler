@@ -25,9 +25,13 @@ let ref b = LpInteger::new("b");
 let ref c = LpInteger::new("c");
 
 let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
+
+// Maximize 10*a + 20*b
 problem += 10.0 * a + 20.0 * b;
 
+// 500*a + 1200*b + 1500*c <= 10000
 problem += (500*a + 1200*b + 1500*c).le(10000);
+// a <= b
 problem += (a).le(b);
 
 let solver = CbcSolver::new();
