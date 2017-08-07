@@ -5,7 +5,7 @@ authors = ["Lp Modeler Team"]
 description = "A linear programming modeller written in Rust. This api helps to write LP model and use solver such as CBC, Gurobi, lp_solve, ..."
 repository = "https://github.com/jcavat/rust-lp-modeler"
 readme = "README.md"
-license = "The MIT License (MIT)"
+license = "MIT"
 keywords = ["linear-programming", "linear-models" ]
 
 exclude = [
