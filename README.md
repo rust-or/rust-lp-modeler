@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/jcavat/rust-lp-modeler.svg?branch=master)](https://travis-ci.org/jcavat/rust-lp-modeler)
 [![Build status](https://ci.appveyor.com/api/projects/status/5i63bu7rn3m5d4l3?svg=true)](https://ci.appveyor.com/project/jcavat/rust-lp-modeler)
 
-A linear programming modeller written in Rust. This api helps to write LP model and 
+A linear programming modeler written in Rust. This api helps to write LP model and 
 use solver such as CBC, Gurobi, lp\_solve, ...
 
 This library is inspired by [coin-or PuLP](http://www.coin-or.org/PuLP/ "Coin-Or PuLP website") which provide
@@ -13,7 +13,7 @@ such an API for python 2.x.
 Dev in progress.
 
 
-This first alpha version provide this SDL to make a LP Model :
+This first alpha version provide this DSL to make a LP Model :
 ```rust
 use lp_modeler::problem::{LpObjective, Problem, LpProblem};
 use lp_modeler::operations::{LpOperations};
@@ -64,7 +64,7 @@ Maximize
   10 a + 20 b
 
 Subject To
-  c1: 500 a + 1200 b <= 10000
+  c1: 500 a + 1200 b <= -10000
   c2: a - b <= 0
 
 Generals
