@@ -75,7 +75,7 @@ fn test_readme_example() {
     let output1 = "\\ One Problem
 
 Maximize
-  10 a + 20 b
+  obj: 10 a + 20 b
 
 Subject To
   c1: 500 a + 1200 b + 1500 c <= 10000

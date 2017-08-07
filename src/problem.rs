@@ -121,7 +121,7 @@ impl LpFileFormat for LpProblem {
 
         let objective_string = || {
             if let Some(ref expr) = self.obj_expr {
-                expr.to_lp_file_format()
+                format!("obj: {}", expr.to_lp_file_format())
             } else {
                 String::new()
             }
