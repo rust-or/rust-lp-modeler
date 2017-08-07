@@ -64,7 +64,7 @@ Maximize
   10 a + 20 b
 
 Subject To
-  c1: 500 a + 1200 b <= -10000
+  c1: 500 a + 1200 b <= 10000
   c2: a - b <= 0
 
 Generals
