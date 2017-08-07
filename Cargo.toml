@@ -1,6 +1,26 @@
 [package]
 name = "lp-modeler"
-version = "0.2.0-alpha"
+version = "0.3.0"
 authors = ["Joel Cavat<jcavat@gmail.com>"]
+description = "A linear programming modeller written in Rust. This api helps to write LP model and use solver such as CBC, Gurobi, lp_solve, ..."
+repository = "https://github.com/jcavat/rust-lp-modeler"
+readme = "README.md"
+license = "The MIT License (MIT)"
+keywords = ["linear-programming", "linear-models" ]
 
-[dependencies]
+exclude = [
+    "src/main.rs",
+    "*.yml",
+    "*.gitignore",
+    "*.log",
+    "*.iml",
+    ".lp",
+    "doc/*",
+    "Cargo.lock",
+]
+
+
+
+[badges]
+travis-ci = { repository = "jcavat/rust-lp-modeler" }
+appveyor = { repository = "jcavat/rust-lp-modeler" }
