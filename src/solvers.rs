@@ -169,7 +169,7 @@ impl SolverTrait for CbcSolver {
 
         match problem.write_lp(file_model) {
             Ok(_) => {
-                match Command::new(&self.command_name).arg(format!("ResultFile={}", self.temp_solution_file)).arg(file_model).output() {
+                match Command::new(&self.command_name).arg(file_model).arg("solve").arg("solution").arg(&self.temp_solution_file).output() {
                     Ok(r) => {
                         if r.status.success(){
                             self.read_solution()
