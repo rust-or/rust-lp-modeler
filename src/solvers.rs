@@ -51,6 +51,10 @@ impl GurobiSolver {
             if let Some(_) = buffer.split(" ").next() {
                 for line in file.lines() {
                     let l = line.unwrap();
+
+                    // Gurobi version 7 add comments on the header file
+                    if let Some('#') = l.chars().next() {continue}
+
                     let result_line: Vec<_> = l.split_whitespace().collect();
                     if result_line.len() == 2 {
                         match result_line[1].parse::<f32>() {
@@ -59,7 +63,7 @@ impl GurobiSolver {
                             },
                             Err(e) => return Err(format!("{}", e.to_string()))
                         }
-                    }else{
+                    } else {
                         return Err("Incorrect solution format".to_string())
                     }
                 }
