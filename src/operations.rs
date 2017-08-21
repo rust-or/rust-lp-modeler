@@ -186,4 +186,6 @@ macro_rules! numeric_all_ops_for_lpvars{
     }
 }
 numeric_all_ops_for_lpvars!(i32);
+numeric_all_ops_for_lpvars!(i64);
 numeric_all_ops_for_lpvars!(f32);
+numeric_all_ops_for_lpvars!(f64);
