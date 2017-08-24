@@ -84,10 +84,10 @@ with a solver supporting lp file format :
     * Cplex
     
 ## Limitation
-* Use with CBC for now
+* Use with CBC, Gurobi or GLPK for now
 
 ## Todo
-* Config for GLPK, lp_solve and CPLEX
+* Config for lp_solve and CPLEX
 
 ## Further work
 * it would be great to use some constraint for binary variable like 
