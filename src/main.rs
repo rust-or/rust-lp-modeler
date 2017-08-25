@@ -16,9 +16,12 @@ fn main() {
 
     problem += 10.0 * a + 20.0 * b;
 
-    problem += (500*a + 1200*b + 1500*c).le(10000);
-    problem += (a + b*2 + c).le(10);
-    problem += (a).le(b);
+    problem += (300*(a-b)).ge(100);
+    problem += (300*(-a+b)).le(100);
+    problem += (a+b).le(10);
+
+   // problem += ((a+b)*300).le(100);
+
 
     // Suboptimal instead of unfeasible
     // problem += (a+b).equal(10);

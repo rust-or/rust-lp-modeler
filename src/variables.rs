@@ -162,11 +162,26 @@ impl LpFileFormat for LpExpression {
 
         fn dfs(expr: &LpExpression, acc: &String) -> String {
             match expr {
-                &MulExpr(ref e1, ref e2) => {
-                    match **e1 {
-                        LitVal(v) if v == 1.0 => e2.to_lp_file_format(),
-                        LitVal(v) if v == -1.0 => "-".to_string() + &e2.to_lp_file_format(),
-                        _ => e1.to_lp_file_format() + " " + &e2.to_lp_file_format()
+                &MulExpr(ref rc_e1, ref rc_e2) => {
+                    let ref e1 = **rc_e1;
+                    let ref e2 = **rc_e2;
+
+                    match (e1, e2) {
+                        // DISTRIBUTIVITY
+                        // i*(a+b) = i*a+i*b
+                        // i*(a-b) = i*a-i*b
+                        (expr, &AddExpr(ref v1, ref v2)) => dfs(&AddExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))), acc),
+                        (expr, &SubExpr(ref v1, ref v2)) => dfs(&SubExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))), acc),
+
+                        // COMMUTATIVITY
+                        // a*(b*c) = (a*b)*c
+                        (expr, &MulExpr(ref v1, ref v2)) => dfs(&MulExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), v2.clone()), acc),
+
+                        (&LitVal(v1), &LitVal(v2)) => LitVal(v1 * v2).to_lp_file_format(),
+
+                        (&LitVal(v), _) if v == 1.0 => e2.to_lp_file_format(),
+                        (&LitVal(v), _)if v == -1.0 => "-".to_string() + &e2.to_lp_file_format(),
+                        (_, _) => e1.to_lp_file_format() + " " + &e2.to_lp_file_format()
                     }
                 },
                 &AddExpr(ref e1, ref e2) => {
