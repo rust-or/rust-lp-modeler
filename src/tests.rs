@@ -27,6 +27,12 @@ fn expressions_to_lp_file_format() {
     assert_eq!((a + 2).to_lp_file_format(), "a + 2");
     assert_eq!((2*a + 2*b -4*c).to_lp_file_format(), "2 a + 2 b - 4 c");
     assert_eq!((-2*a).to_lp_file_format(), "-2 a");
+
+    // Distributivity
+    assert_eq!( (2 * (2 + a)).to_lp_file_format(), "4 + 2 a");
+
+    assert_eq!( ((2+a) * (2+b)).to_lp_file_format(), "4 + 2 a + 2 b + b a" );
+
 }
 
 
