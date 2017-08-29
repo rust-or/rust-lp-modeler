@@ -19,6 +19,8 @@ fn main() {
     problem += (300*(a-b)).ge(100);
     problem += (300*(-a+b)).le(100);
     problem += (a+b).le(10);
+    let coucou = ((2+a) * (2+b)).to_lp_file_format();
+    println!("{}", coucou);
 
    // problem += ((a+b)*300).le(100);
 
