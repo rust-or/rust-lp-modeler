@@ -160,35 +160,57 @@ impl LpExpression {
 impl LpFileFormat for LpExpression {
     fn to_lp_file_format(&self) -> String {
 
-        fn dfs(expr: &LpExpression, acc: &String) -> String {
+        fn simplify(expr: &LpExpression, acc: &String) -> String {
             match expr {
                 &MulExpr(ref rc_e1, ref rc_e2) => {
                     let ref e1 = **rc_e1;
                     let ref e2 = **rc_e2;
 
+                    println!("-");
                     match (e1, e2) {
                         // DISTRIBUTIVITY
                         // i*(a+b) = i*a+i*b
                         // i*(a-b) = i*a-i*b
-                        (expr, &AddExpr(ref v1, ref v2)) => dfs(&AddExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))), acc),
-                        (expr, &SubExpr(ref v1, ref v2)) => dfs(&SubExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))), acc),
+                        (expr, &AddExpr(ref v1, ref v2)) => simplify(&AddExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))), acc),
+                        (&AddExpr(ref v1, ref v2), expr) => simplify(&AddExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))), acc),
+                        (expr, &SubExpr(ref v1, ref v2)) => simplify(&SubExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))), acc),
+
+                        // COMMUTATIVITY WITH CONSTANTS
+                        // c1*(c2*expr) = (c1*c2)*expr)
+                        (&LitVal(c1), &MulExpr(ref rc_e2, ref ex)) => {
+                            let ref e2 = **rc_e2;
+                            if let &LitVal(c2) = e2 {
+                                return simplify(&MulExpr(Rc::new(LitVal(c1 * c2)), ex.clone()), acc)
+                            } else {
+                                simplify(&expr.clone(), acc)
+                            }
+                        }
+                        // expr1*(c*expr) = c*(expr1*expr2)
 
                         // COMMUTATIVITY
                         // a*(b*c) = (a*b)*c
-                        (expr, &MulExpr(ref v1, ref v2)) => dfs(&MulExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), v2.clone()), acc),
+                        (expr, &MulExpr(ref v1, ref v2)) => simplify(&MulExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), v2.clone()), acc),
 
+                        // Simplify two literals
                         (&LitVal(v1), &LitVal(v2)) => LitVal(v1 * v2).to_lp_file_format(),
+
+                        // Place literal first
+                        (expr, &LitVal(c)) => {
+                            simplify(&MulExpr(Rc::new(LitVal(c)), Rc::new(expr.clone())), acc)
+                        },
 
                         (&LitVal(v), _) if v == 1.0 => e2.to_lp_file_format(),
                         (&LitVal(v), _)if v == -1.0 => "-".to_string() + &e2.to_lp_file_format(),
-                        (_, _) => e1.to_lp_file_format() + " " + &e2.to_lp_file_format()
+                        (_, _) => {
+                            simplify(e1, acc) + " " + &simplify(e2, acc)
+                        }
                     }
                 },
                 &AddExpr(ref e1, ref e2) => {
-                    e1.to_lp_file_format() + " + " + &e2.to_lp_file_format()
+                    simplify(e1, acc) + " + " + &simplify(e2, acc)
                 },
                 &SubExpr(ref e1, ref e2) => {
-                    e1.to_lp_file_format() + " - " + &e2.to_lp_file_format()
+                    simplify(e1, acc) + " - " + &simplify(e2, acc)
                 },
                 &ConsBin(LpBinary {name: ref n, .. }) => {
                     acc.clone() + n
@@ -219,7 +241,7 @@ impl LpFileFormat for LpExpression {
             }
             s
         }
-        formalize_signs(dfs(self, &String::new()))
+        formalize_signs(simplify(self, &String::new()))
     }
 }
 
