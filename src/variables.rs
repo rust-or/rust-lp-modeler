@@ -82,7 +82,11 @@ pub enum LpExpression {
     LitVal(f32),
     EmptyExpr
 }
-
+/*
+impl<'a> PartialEq for &'a LpExpression {
+    fn eq(&self, other: &String) -> bool { *self == *other }
+}
+*/
 impl LpExpression {
     pub fn dfs_remove_constant(&self) -> LpExpression {
         match self {
@@ -160,70 +164,99 @@ impl LpExpression {
 impl LpFileFormat for LpExpression {
     fn to_lp_file_format(&self) -> String {
 
-        fn simplify(expr: &LpExpression, acc: &String) -> String {
+        fn simplify(expr: &LpExpression) -> LpExpression {
             match expr {
                 &MulExpr(ref rc_e1, ref rc_e2) => {
                     let ref e1 = **rc_e1;
                     let ref e2 = **rc_e2;
 
+                    println!("..");
                     match (e1, e2) {
                         // DISTRIBUTIVITY
                         // i*(a+b) = i*a+i*b
                         // i*(a-b) = i*a-i*b
-                        (expr, &AddExpr(ref v1, ref v2)) => simplify(&AddExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))), acc),
-                        (&AddExpr(ref v1, ref v2), expr) => simplify(&AddExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))), acc),
-                        (expr, &SubExpr(ref v1, ref v2)) => simplify(&SubExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))), acc),
+                        (expr, &AddExpr(ref v1, ref v2)) => {
+                            println!("a");
+                            simplify(&AddExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))))
+                        },
+                        (&AddExpr(ref v1, ref v2), expr) => {
+                            println!("b");
+                            simplify(&AddExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))))
+                        },
+                        (expr, &SubExpr(ref v1, ref v2)) => {
+                            println!("c");
+                            simplify(&SubExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), Rc::new(MulExpr(Rc::new(expr.clone()), v2.clone()))))
+                        },
 
                         // COMMUTATIVITY WITH CONSTANTS
                         // c1*(c2*expr) = (c1*c2)*expr)
                         (&LitVal(c1), &MulExpr(ref rc_e2, ref ex)) => {
+                            println!("cc");
                             let ref e2 = **rc_e2;
                             if let &LitVal(c2) = e2 {
-                                return simplify(&MulExpr(Rc::new(LitVal(c1 * c2)), ex.clone()), acc)
+                                return simplify(&MulExpr(Rc::new(LitVal(c1 * c2)), ex.clone()))
                             } else {
-                                simplify(&expr.clone(), acc)
+                                simplify(&expr.clone())
                             }
                         }
                         // expr1*(c*expr) = c*(expr1*expr2)
 
                         // COMMUTATIVITY
                         // a*(b*c) = (a*b)*c
-                        (expr, &MulExpr(ref v1, ref v2)) => simplify(&MulExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), v2.clone()), acc),
+                        (expr, &MulExpr(ref v1, ref v2)) => {
+                            println!("d");
+                            simplify(&MulExpr(Rc::new(MulExpr(Rc::new(expr.clone()), v1.clone())), v2.clone()))
+                        },
 
                         // Simplify two literals
-                        (&LitVal(v1), &LitVal(v2)) => LitVal(v1 * v2).to_lp_file_format(),
+                        (&LitVal(v1), &LitVal(v2)) => {
+                            println!("e");
+                            LitVal(v1 * v2)
+                        },
 
                         // Place literal first
                         (expr, &LitVal(c)) => {
-                            simplify(&MulExpr(Rc::new(LitVal(c)), Rc::new(expr.clone())), acc)
+                            println!("g");
+                            simplify(&MulExpr(Rc::new(LitVal(c)), Rc::new(expr.clone())))
                         },
 
-                        (&LitVal(v), _) if v == 1.0 => e2.to_lp_file_format(),
-                        (&LitVal(v), _)if v == -1.0 => "-".to_string() + &e2.to_lp_file_format(),
+                        /*
+                        (&LitVal(v), _) if v == 1.0 => {
+                            println!("h");
+                            e2.to_lp_file_format()
+                        },
+                        (&LitVal(v), e)if v == -1.0 => {
+                            println!("i");
+                            "-".to_string() + &e2.to_lp_file_format()
+                        },
+                        */
                         (_, _) => {
-                            simplify(e1, acc) + " " + &simplify(e2, acc)
+                            println!("last");
+                            MulExpr(Rc::new(simplify(e1)), Rc::new(simplify(e2)))
                         }
                     }
                 },
                 &AddExpr(ref e1, ref e2) => {
-                    simplify(e1, acc) + " + " + &simplify(e2, acc)
+                    //simplify(e1, acc) + " + " + &simplify(e2, acc)
+                    println!("yep");
+                    AddExpr(Rc::new(simplify(e1)), Rc::new(simplify(e2)))
                 },
                 &SubExpr(ref e1, ref e2) => {
-                    simplify(e1, acc) + " - " + &simplify(e2, acc)
+                    SubExpr(Rc::new(simplify(e1)), Rc::new(simplify(e2)))
                 },
                 &ConsBin(LpBinary {name: ref n, .. }) => {
-                    acc.clone() + n
+                    expr.clone()
                 },
                 &ConsInt(LpInteger {name: ref n, .. }) => {
-                    acc.clone() + n
+                    expr.clone()
                 },
                 &ConsCont(LpContinuous {name: ref n, .. }) => {
-                    acc.clone() + n
+                    expr.clone()
                 },
                 &LitVal(n) => {
-                    acc.clone() + &n.to_string()
+                    expr.clone()
                 },
-                _ => acc.clone()
+                _ => expr.clone()
             }
         }
 
@@ -240,7 +273,44 @@ impl LpFileFormat for LpExpression {
             }
             s
         }
-        formalize_signs(simplify(self, &String::new()))
+
+        fn show(e: &LpExpression) -> String {
+            match e {
+                &LitVal(n) => n.to_string(),
+                &AddExpr(ref e1, ref e2) => "(".to_string() + &show(e1) + " + " + &show(e2) + ")",
+                &SubExpr(ref e1, ref e2) => "(".to_string() + &show(e1) + " - " + &show(e2) + ")",
+                &MulExpr(ref e1, ref e2) => "(".to_string() + &show(e1) + " * " + &show(e2) + ")",
+                &ConsBin(LpBinary {name: ref n, .. }) => {
+                    n.to_string()
+                },
+                &ConsInt(LpInteger {name: ref n, .. }) => {
+                    n.to_string()
+                },
+                &ConsCont(LpContinuous {name: ref n, .. }) => {
+                    n.to_string()
+                }
+                _ => "EmptyExpr!!".to_string()
+            }
+        }
+
+        let n = simplify(self);
+        if show(self) != show(&n) {
+            n.to_lp_file_format()
+        } else {
+            show(self)
+        }
+        /*
+        let mut s = &simplify(self);
+        let mut t = &EmptyExpr;
+        let mut c = "".to_string();
+        while *s != *t {
+            t = &s;
+            s = &simplify(&s.clone()).clone();
+            c = show(s);
+        }
+
+        c
+        */
     }
 }
 

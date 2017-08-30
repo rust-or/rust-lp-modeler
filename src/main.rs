@@ -14,13 +14,17 @@ fn main() {
 
     let mut problem = LpProblem::new("Problem", LpObjective::Maximize);
 
+    /*
     problem += 10.0 * a + 20.0 * b;
 
     problem += (300*(a-b)).ge(100);
     problem += (300*(-a+b)).le(100);
     problem += (a+b).le(10);
-    let coucou = ((2+a) * (2+b)).to_lp_file_format();
-    println!("{}", coucou);
+    */
+    let cacou = ((( 6 + 3*a) + 3*b ) * a );
+    let coucou = (3 * (2+a+b) * (2+a));
+    println!("{}", (coucou).to_lp_file_format());
+    println!("{}", cacou.to_lp_file_format());
 
    // problem += ((a+b)*300).le(100);
 
