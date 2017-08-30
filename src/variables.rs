@@ -166,7 +166,6 @@ impl LpFileFormat for LpExpression {
                     let ref e1 = **rc_e1;
                     let ref e2 = **rc_e2;
 
-                    println!("-");
                     match (e1, e2) {
                         // DISTRIBUTIVITY
                         // i*(a+b) = i*a+i*b
