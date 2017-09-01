@@ -23,10 +23,14 @@ fn main() {
     */
     let cacou = ((( 6 + 3*a) + 3*b ) * a );
     let coucou = (3 * (2+a+b) * (2+a));
-    println!("{}", (coucou).to_lp_file_format());
+    println!("{}", coucou.to_lp_file_format());
+    println!("{}", (coucou*15).to_lp_file_format());
+    println!("{}", (15*((3*a)*a)).to_lp_file_format());
     println!("{}", cacou.to_lp_file_format());
+    let test = (a * (2 + b) * 3);
+    println!("{}", (10 * test).to_lp_file_format());
 
-   // problem += ((a+b)*300).le(100);
+    problem += ((a+b)*300).le(100);
 
 
     // Suboptimal instead of unfeasible
