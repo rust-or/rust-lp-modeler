@@ -104,28 +104,33 @@ impl CbcSolver {
             let mut file = BufReader::new(f);
             let mut buffer = String::new();
             let _ = file.read_line(&mut buffer);
-            let mut status = Status::SubOptimal;
 
-            if let Some(status_line) = buffer.split(" ").next() {
-                if status_line.contains("Optimal") {
-                    status = Status::Optimal;
-                }
-                for line in file.lines() {
-                    let l = line.unwrap();
-                    let result_line: Vec<_> = l.split_whitespace().collect();
-                    if result_line.len() == 4 {
-                        match result_line[2].parse::<f32>() {
-                            Ok(n) => {
-                                vars_value.insert(result_line[1].to_string(), n);
-                            },
-                            Err(e) => return Err(format!("{}", e.to_string()))
-                        }
-                    } else {
-                        return Err("Incorrect solution format".to_string())
-                    }
+            let status = if let Some(status_line) = buffer.split_whitespace().next() {
+                match status_line.split_whitespace().next() {
+                    Some("Optimal") => Status::Optimal,
+                    // Infeasible status is either "Infeasible" or "Integer infeasible"
+                    Some("Infeasible") | Some("Integer") => Status::Infeasible,
+                    Some("Unbounded") => Status::Unbounded,
+                    // "Stopped" can be "on time", "on iterations", "on difficulties" or "on ctrl-c"
+                    Some("Stopped") => Status::SubOptimal,
+                    _ => Status::NotSolved
                 }
             } else {
                 return Err("Incorrect solution format".to_string())
+            };
+            for line in file.lines() {
+                let l = line.unwrap();
+                let result_line: Vec<_> = l.split_whitespace().collect();
+                if result_line.len() == 4 {
+                    match result_line[2].parse::<f32>() {
+                        Ok(n) => {
+                            vars_value.insert(result_line[1].to_string(), n);
+                        },
+                        Err(e) => return Err(e.to_string())
+                    }
+                } else {
+                    return Err("Incorrect solution format".to_string())
+                }
             }
             Ok((status, vars_value))
         }
