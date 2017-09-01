@@ -16,6 +16,20 @@ fn expressions_creation() {
 }
 
 #[test]
+fn distributivity() {
+
+    let ref a = LpInteger::new("a");
+    let ref b = LpInteger::new("b");
+    //let ref c = LpInteger::new("c");
+
+    let test = (a * (2 + b) * 3);
+    assert_eq!( (2 * (2 + a)).to_lp_file_format(), "4 + 2 a");
+    assert_eq!( ((2+a) * (2+b)).to_lp_file_format(), "4 + 2 a + 2 b + b a" );
+    assert_eq!( test.to_lp_file_format(), "6 a + 3 a b" );
+    assert_eq!( (10 * test).to_lp_file_format(), "60 a + 30 a b" );
+}
+
+#[test]
 fn expressions_to_lp_file_format() {
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
@@ -27,6 +41,7 @@ fn expressions_to_lp_file_format() {
     assert_eq!((a + 2).to_lp_file_format(), "a + 2");
     assert_eq!((2*a + 2*b -4*c).to_lp_file_format(), "2 a + 2 b - 4 c");
     assert_eq!((-2*a).to_lp_file_format(), "-2 a");
+
 }
 
 
