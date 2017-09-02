@@ -30,6 +30,17 @@ fn distributivity() {
 }
 
 #[test]
+fn associativity() {
+
+    let ref a = LpInteger::new("a");
+    let ref b = LpInteger::new("b");
+    let ref c = LpInteger::new("c");
+    assert_eq!( (a + (b + 2)).to_lp_file_format(), "a + b + 2" );
+    assert_eq!( (a + (b - 2)).to_lp_file_format(), "a + b - 2" );
+    assert_eq!( (a - (b + 2)).to_lp_file_format(), "a - b - 2" );
+}
+
+#[test]
 fn expressions_to_lp_file_format() {
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
