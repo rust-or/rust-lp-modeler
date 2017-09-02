@@ -20,13 +20,16 @@ fn distributivity() {
 
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
-    //let ref c = LpInteger::new("c");
+    let ref c = LpInteger::new("c");
 
-    let test = (a * (2 + b) * 3);
+    let test = a * (2 + b) * 3;
+    let test2 = test.clone();
     assert_eq!( (2 * (2 + a)).to_lp_file_format(), "4 + 2 a");
     assert_eq!( ((2+a) * (2+b)).to_lp_file_format(), "4 + 2 a + 2 b + b a" );
     assert_eq!( test.to_lp_file_format(), "6 a + 3 a b" );
     assert_eq!( (10 * test).to_lp_file_format(), "60 a + 30 a b" );
+    assert_eq!( ((c + 10) * test2).to_lp_file_format(), "6 c a + 3 c a b + 60 a + 30 a b" );
+
 }
 
 #[test]
@@ -35,9 +38,36 @@ fn associativity() {
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
     let ref c = LpInteger::new("c");
+
     assert_eq!( (a + (b + 2)).to_lp_file_format(), "a + b + 2" );
+    assert_eq!( ((a + b) + 2).to_lp_file_format(), "a + b + 2" );
+
     assert_eq!( (a + (b - 2)).to_lp_file_format(), "a + b - 2" );
+    assert_eq!( ((a + b) - 2).to_lp_file_format(), "a + b - 2" );
+
     assert_eq!( (a - (b + 2)).to_lp_file_format(), "a - b - 2" );
+    assert_eq!( ((a - b) + 2).to_lp_file_format(), "a - b + 2" );
+
+    assert_eq!( (a - (b - 2)).to_lp_file_format(), "a - b + 2" );
+    assert_eq!( ((a - b) - 2).to_lp_file_format(), "a - b - 2" );
+
+    assert_eq!( (a - (b - 2) + c).to_lp_file_format(), "a - b + 2 + c" );
+    assert_eq!( ((a - b) - 2 + c).to_lp_file_format(), "a - b - 2 + c" );
+}
+
+#[test]
+fn trivial_rules() {
+    let ref a = LpInteger::new("a");
+    let ref b = LpInteger::new("b");
+
+    assert_eq!( ((a+b) * 0).to_lp_file_format(), "0");
+    assert_eq!( ( 0 * (a+b)).to_lp_file_format(), "0");
+    // failed:
+//    assert_eq!( ((a+b) + 0).to_lp_file_format(), "a + b");
+    assert_eq!( (0 + (a+b)).to_lp_file_format(), "a + b");
+    // failed:
+//    assert_eq!( (2 + (a+b) + 3).to_lp_file_format(), "5 + a + b");
+
 }
 
 #[test]
