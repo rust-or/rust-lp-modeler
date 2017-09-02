@@ -332,7 +332,7 @@ impl LpFileFormat for LpExpression {
         if show(self, true) != show(&n, true) {
             n.to_lp_file_format()
         } else {
-            formalize_signs(show(self, true))
+            formalize_signs(show(self, false))
         }
     }
 }
