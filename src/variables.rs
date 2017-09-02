@@ -180,7 +180,6 @@ impl LpFileFormat for LpExpression {
                             simplify(&AddExpr(Rc::new(MulExpr(Rc::new(i.clone()), a.clone())), Rc::new(MulExpr(Rc::new(i.clone()), b.clone()))))
                         }
                         // i*(a-b) = i*a-i*b
-                        //TODO: (a-b)*i ??
                         (i, &SubExpr(ref a, ref b)) => {
                             simplify(&SubExpr(Rc::new(MulExpr(Rc::new(i.clone()), a.clone())), Rc::new(MulExpr(Rc::new(i.clone()), b.clone()))))
                         }
@@ -214,17 +213,52 @@ impl LpFileFormat for LpExpression {
                         (expr, &LitVal(c)) => {
                             simplify(&MulExpr(Rc::new(LitVal(c)), Rc::new(expr.clone())))
                         },
+
+                        // Trivial rule: 0 * x = 0
+                        (&LitVal(c), _) if c == 0.0 => LitVal(0.0),
+
                         (_, _) => {
                             MulExpr(Rc::new(simplify(left_expr)), Rc::new(simplify(right_expr)))
                         }
                     }
                 }
-                &AddExpr(ref e1, ref e2) => {
-                    //simplify(e1, acc) + " + " + &simplify(e2, acc)
-                    AddExpr(Rc::new(simplify(e1)), Rc::new(simplify(e2)))
+                &AddExpr(ref ref_left_expr, ref ref_right_expr) => {
+                    let ref left_expr = **ref_left_expr;
+                    let ref right_expr = **ref_right_expr;
+
+                    match (left_expr, right_expr) {
+                        // Trivial rule: 0 + x = x
+                        (&LitVal(c), _) if c == 0.0 => simplify(right_expr),
+
+                        // ASSOCIATIVITY
+                        // a + (b+c) = (a+b)+c
+                        (a, &AddExpr(ref b, ref c)) => simplify(&AddExpr(Rc::new(AddExpr(Rc::new(a.clone()),b.clone())), c.clone())),
+
+                        // a + (b-c) = (a+b) - c
+                        (a, &SubExpr(ref b, ref c)) => simplify(&SubExpr(Rc::new(AddExpr(Rc::new(a.clone()),b.clone())), c.clone())),
+
+
+
+                        // Simplify two literals
+                        (&LitVal(c1), &LitVal(c2)) => LitVal(c1 + c2),
+
+                        _ => AddExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                    }
+
                 },
-                &SubExpr(ref e1, ref e2) => {
-                    SubExpr(Rc::new(simplify(e1)), Rc::new(simplify(e2)))
+                &SubExpr(ref ref_left_expr, ref ref_right_expr) => {
+                    let ref left_expr = **ref_left_expr;
+                    let ref right_expr = **ref_right_expr;
+
+                    match (left_expr, right_expr) {
+                        // a - (b + c) = (a-b)-c
+                        (a, &AddExpr(ref b, ref c)) => simplify(&SubExpr(Rc::new(SubExpr(Rc::new(a.clone()),b.clone())),c.clone())),
+
+                        // a - (b - c) = (a-b)+c
+                        (a, &SubExpr(ref b, ref c)) => simplify(&AddExpr(Rc::new(SubExpr(Rc::new(a.clone()),b.clone())),c.clone())),
+
+                        _ => SubExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                    }
                 },
                 &ConsBin(LpBinary{..}) => {
                     expr.clone()
@@ -258,12 +292,12 @@ impl LpFileFormat for LpExpression {
 
         fn show(e: &LpExpression, with_parenthesis: bool) -> String {
             let str_left_mult = if with_parenthesis {"("} else {""};
-            let str_right_mult = if with_parenthesis {"("} else {""};
+            let str_right_mult = if with_parenthesis {")"} else {""};
             let str_op_mult = if with_parenthesis {" * "} else {" "};
             match e {
                 &LitVal(n) => n.to_string(),
-                &AddExpr(ref e1, ref e2) => show(e1, with_parenthesis) + " + " + &show(e2, with_parenthesis),
-                &SubExpr(ref e1, ref e2) => show(e1, with_parenthesis) + " - " + &show(e2, with_parenthesis),
+                &AddExpr(ref e1, ref e2) => str_left_mult.to_string() + &show(e1, with_parenthesis) + " + " + &show(e2, with_parenthesis) + str_right_mult,
+                &SubExpr(ref e1, ref e2) => str_left_mult.to_string() + &show(e1, with_parenthesis) + " - " + &show(e2, with_parenthesis) + str_right_mult,
                 &MulExpr(ref e1, ref e2) => {
                     let ref deref_e1 = **e1;
 
@@ -298,7 +332,7 @@ impl LpFileFormat for LpExpression {
         if show(self, true) != show(&n, true) {
             n.to_lp_file_format()
         } else {
-            formalize_signs(show(self, false))
+            formalize_signs(show(self, true))
         }
     }
 }

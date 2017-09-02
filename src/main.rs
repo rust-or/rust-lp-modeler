@@ -28,7 +28,13 @@ fn main() {
     println!("{}", (15*((3*a)*a)).to_lp_file_format());
     println!("{}", cacou.to_lp_file_format());
     let test = (a * (2 + b) * 3);
-    println!("{}", (10 * test).to_lp_file_format());
+    println!("{}", (0 * test).to_lp_file_format());
+    println!("{}", ((a-b)*2).to_lp_file_format());
+    println!("{}", (a-(b+2)).to_lp_file_format());
+    println!("{}", (a-(b-2)).to_lp_file_format());
+
+
+
 
     problem += ((a+b)*300).le(100);
 
