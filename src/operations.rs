@@ -183,6 +183,9 @@ macro_rules! numeric_all_ops_for_lpvars{
         numeric_operation_for_lpvars!($num_type, Mul, mul, MulExpr, LpInteger, ConsInt);
         numeric_operation_for_lpvars!($num_type, Mul, mul, MulExpr, LpBinary, ConsBin);
         numeric_operation_for_lpvars!($num_type, Mul, mul, MulExpr, LpContinuous, ConsCont);
+        numeric_operation_for_lpvars!($num_type, Sub, sub, SubExpr, LpInteger, ConsInt);
+        numeric_operation_for_lpvars!($num_type, Sub, sub, SubExpr, LpBinary, ConsBin);
+        numeric_operation_for_lpvars!($num_type, Sub, sub, SubExpr, LpContinuous, ConsCont);
     }
 }
 numeric_all_ops_for_lpvars!(i32);
