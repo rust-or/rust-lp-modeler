@@ -452,6 +452,7 @@ impl LpConstraint {
                 }
                 _ => (0.0,expr.clone())
             }
+
         }
 
         let &LpConstraint(ref lhs, ref op, ref rhs) = self;
@@ -461,6 +462,7 @@ impl LpConstraint {
             let ref lhs_expr = lhs - rhs;
             let constant = dfs_constant(lhs_expr, 0.0);
             let lhs_expr = lhs_expr.dfs_remove_constant();
+            // TODO: Will be better to use split_constant_and_expr
 //            let (constant, lhs_expr) = split_constant_and_expr(lhs_expr);
             LpConstraint(lhs_expr, op.clone(), LitVal(-constant))
         }
