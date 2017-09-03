@@ -237,10 +237,15 @@ impl LpFileFormat for LpExpression {
                         // a + (b-c) = (a+b) - c
                         (a, &SubExpr(ref b, ref c)) => simplify(&SubExpr(Rc::new(AddExpr(Rc::new(a.clone()),b.clone())), c.clone())),
 
-
-
                         // Simplify two literals
-                        (&LitVal(c1), &LitVal(c2)) => LitVal(c1 + c2),
+                        (&LitVal(c1), &LitVal(c2)) => {
+                            LitVal(c1 + c2)
+                        },
+
+                        // Place literal first
+                        (expr, &LitVal(c)) => {
+                            simplify(&AddExpr(Rc::new(LitVal(c)), Rc::new(simplify(expr))))
+                        },
 
                         _ => AddExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
                     }
@@ -256,6 +261,11 @@ impl LpFileFormat for LpExpression {
 
                         // a - (b - c) = (a-b)+c
                         (a, &SubExpr(ref b, ref c)) => simplify(&AddExpr(Rc::new(SubExpr(Rc::new(a.clone()),b.clone())),c.clone())),
+
+                        // Place literal first
+                        (expr, &LitVal(c)) => {
+                            simplify(&AddExpr(Rc::new(LitVal(-c)), Rc::new(expr.clone())))
+                        },
 
                         _ => SubExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
                     }
@@ -411,6 +421,38 @@ impl LpConstraint {
             }
         }
 
+        fn split_constant_and_expr(expr: &LpExpression) -> (f32, LpExpression) {
+            match expr {
+                &AddExpr(ref rc_e1, ref rc_e2) => {
+                    let ref e1 = **rc_e1;
+                    let ref e2 = **rc_e1;
+                    if let &LitVal(c) = e1 {
+                        (c, e2.clone())
+                    } else {
+                        (0.0,expr.clone())
+                    }
+                }
+                &SubExpr(ref rc_e1, ref rc_e2) => {
+                    let ref e1 = **rc_e1;
+                    let ref e2 = **rc_e1;
+                    if let &LitVal(c) = e1 {
+                        (c, e2.clone())
+                    } else {
+                       (0.0,expr.clone())
+                    }
+                }
+                &MulExpr(ref rc_e1, ref rc_e2) => {
+                    let ref e1 = **rc_e1;
+                    let ref e2 = **rc_e1;
+                    if let &LitVal(c) = e1 {
+                        (c, e2.clone())
+                    } else {
+                        (0.0,expr.clone())
+                    }
+                }
+                _ => (0.0,expr.clone())
+            }
+        }
 
         let &LpConstraint(ref lhs, ref op, ref rhs) = self;
         if let &LitVal(0.0) = rhs {
@@ -419,6 +461,7 @@ impl LpConstraint {
             let ref lhs_expr = lhs - rhs;
             let constant = dfs_constant(lhs_expr, 0.0);
             let lhs_expr = lhs_expr.dfs_remove_constant();
+//            let (constant, lhs_expr) = split_constant_and_expr(lhs_expr);
             LpConstraint(lhs_expr, op.clone(), LitVal(-constant))
         }
     }
