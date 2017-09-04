@@ -163,128 +163,6 @@ impl LpExpression {
 impl LpFileFormat for LpExpression {
     fn to_lp_file_format(&self) -> String {
 
-        fn simplify(expr: &LpExpression) -> LpExpression {
-            match expr {
-                &MulExpr(ref ref_left_expr, ref ref_right_expr) => {
-                    let ref left_expr = **ref_left_expr;
-                    let ref right_expr = **ref_right_expr;
-
-                    match (left_expr, right_expr) {
-                        // DISTRIBUTIVITY
-                        // i*(a+b) = i*a+i*b
-                        (i, &AddExpr(ref a, ref b)) => {
-                            simplify(&AddExpr(Rc::new(MulExpr(Rc::new(i.clone()), a.clone())), Rc::new(MulExpr(Rc::new(i.clone()), b.clone()))))
-                        }
-                        // (a+b)*i = i*a+i*b
-                        (&AddExpr(ref a, ref b), i) => {
-                            simplify(&AddExpr(Rc::new(MulExpr(Rc::new(i.clone()), a.clone())), Rc::new(MulExpr(Rc::new(i.clone()), b.clone()))))
-                        }
-                        // i*(a-b) = i*a-i*b
-                        (i, &SubExpr(ref a, ref b)) => {
-                            simplify(&SubExpr(Rc::new(MulExpr(Rc::new(i.clone()), a.clone())), Rc::new(MulExpr(Rc::new(i.clone()), b.clone()))))
-                        }
-
-                        // COMMUTATIVITY WITH CONSTANTS
-                        // c1*(c2*expr) = (c1*c2)*expr)
-                        (&LitVal(c1), &MulExpr(ref ref_c2, ref expr)) => {
-                            let ref cc2 = **ref_c2;
-                            if let &LitVal(c2) = cc2 {
-                                return simplify(&MulExpr(Rc::new(LitVal(c1 * c2)), expr.clone()))
-                            } else {
-                                //MulExpr(Rc::new(LitVal(c1)), Rc::new(simplify(ref_right_expr)))
-                                MulExpr(Rc::new(MulExpr(Rc::new(LitVal(c1)), Rc::new(cc2.clone()))), expr.clone())
-                            }
-                        }
-                        //TODO: (Pointless?)
-                        // expr1*(c*expr) = c*(expr1*expr2)
-
-                        // COMMUTATIVITY
-                        // a*(b*c) = (a*b)*c
-                        (expr, &MulExpr(ref ref_left_mul, ref ref_right_mul)) => {
-                            simplify(&MulExpr(Rc::new(MulExpr(Rc::new(expr.clone()), ref_left_mul.clone())), ref_right_mul.clone()))
-                        }
-
-                        // Simplify two literals
-                        (&LitVal(c1), &LitVal(c2)) => {
-                            LitVal(c1 * c2)
-                        }
-
-                        // Place literal first
-                        (expr, &LitVal(c)) => {
-                            simplify(&MulExpr(Rc::new(LitVal(c)), Rc::new(expr.clone())))
-                        },
-
-                        // Trivial rule: 0 * x = 0
-                        (&LitVal(c), _) if c == 0.0 => LitVal(0.0),
-
-                        (_, _) => {
-                            MulExpr(Rc::new(simplify(left_expr)), Rc::new(simplify(right_expr)))
-                        }
-                    }
-                }
-                &AddExpr(ref ref_left_expr, ref ref_right_expr) => {
-                    let ref left_expr = **ref_left_expr;
-                    let ref right_expr = **ref_right_expr;
-
-                    match (left_expr, right_expr) {
-                        // Trivial rule: 0 + x = x
-                        (&LitVal(c), _) if c == 0.0 => simplify(right_expr),
-
-                        // ASSOCIATIVITY
-                        // a + (b+c) = (a+b)+c
-                        (a, &AddExpr(ref b, ref c)) => simplify(&AddExpr(Rc::new(AddExpr(Rc::new(a.clone()),b.clone())), c.clone())),
-
-                        // a + (b-c) = (a+b) - c
-                        (a, &SubExpr(ref b, ref c)) => simplify(&SubExpr(Rc::new(AddExpr(Rc::new(a.clone()),b.clone())), c.clone())),
-
-                        // Simplify two literals
-                        (&LitVal(c1), &LitVal(c2)) => {
-                            LitVal(c1 + c2)
-                        },
-
-                        // Place literal first
-                        (expr, &LitVal(c)) => {
-                            simplify(&AddExpr(Rc::new(LitVal(c)), Rc::new(simplify(expr))))
-                        },
-
-                        _ => AddExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
-                    }
-
-                },
-                &SubExpr(ref ref_left_expr, ref ref_right_expr) => {
-                    let ref left_expr = **ref_left_expr;
-                    let ref right_expr = **ref_right_expr;
-
-                    match (left_expr, right_expr) {
-                        // a - (b + c) = (a-b)-c
-                        (a, &AddExpr(ref b, ref c)) => simplify(&SubExpr(Rc::new(SubExpr(Rc::new(a.clone()),b.clone())),c.clone())),
-
-                        // a - (b - c) = (a-b)+c
-                        (a, &SubExpr(ref b, ref c)) => simplify(&AddExpr(Rc::new(SubExpr(Rc::new(a.clone()),b.clone())),c.clone())),
-
-                        // Place literal first
-                        (expr, &LitVal(c)) => {
-                            simplify(&AddExpr(Rc::new(LitVal(-c)), Rc::new(expr.clone())))
-                        },
-
-                        _ => SubExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
-                    }
-                },
-                &ConsBin(LpBinary{..}) => {
-                    expr.clone()
-                },
-                &ConsInt(LpInteger{..}) => {
-                    expr.clone()
-                },
-                &ConsCont(LpContinuous{..}) => {
-                    expr.clone()
-                },
-                &LitVal(_) => {
-                    expr.clone()
-                },
-                _ => expr.clone()
-            }
-        }
 
         fn formalize_signs(s: String) -> String {
             let mut s = s.clone();
@@ -337,13 +215,17 @@ impl LpFileFormat for LpExpression {
             }
         }
 
+        /*
         let n = simplify(self);
         // Use parenthesis system because on expression with different syntax tree is not equals
-        if show(self, true) != show(&n, true) {
+        //if show(self, true) != show(&n, true) {
+        if self.clone() != n.clone() {
             n.to_lp_file_format()
         } else {
             formalize_signs(show(self, false))
         }
+        */
+        formalize_signs(show(&simplify(self), false))
     }
 }
 
@@ -425,48 +307,187 @@ impl LpConstraint {
             match expr {
                 &AddExpr(ref rc_e1, ref rc_e2) => {
                     let ref e1 = **rc_e1;
-                    let ref e2 = **rc_e1;
-                    if let &LitVal(c) = e1 {
-                        (c, e2.clone())
+                    let ref e2 = **rc_e2;
+                    println!("{} ; {}", e1.to_lp_file_format(), e2.to_lp_file_format());
+                    if let &LitVal(c) = e2 {
+                        (c, e1.clone())
                     } else {
                         (0.0,expr.clone())
                     }
                 }
                 &SubExpr(ref rc_e1, ref rc_e2) => {
                     let ref e1 = **rc_e1;
-                    let ref e2 = **rc_e1;
-                    if let &LitVal(c) = e1 {
-                        (c, e2.clone())
+                    let ref e2 = **rc_e2;
+                    if let &LitVal(c) = e2 {
+                        (-c, e1.clone())
                     } else {
                        (0.0,expr.clone())
                     }
                 }
-                &MulExpr(ref rc_e1, ref rc_e2) => {
-                    let ref e1 = **rc_e1;
-                    let ref e2 = **rc_e1;
-                    if let &LitVal(c) = e1 {
-                        (c, e2.clone())
-                    } else {
-                        (0.0,expr.clone())
-                    }
-                }
                 _ => (0.0,expr.clone())
             }
+
         }
 
         let &LpConstraint(ref lhs, ref op, ref rhs) = self;
         if let &LitVal(0.0) = rhs {
             self.clone()
         }else{
-            let ref lhs_expr = lhs - rhs;
+            let ref lhs_expr = simplify(&(lhs - rhs));
+            println!("{}", lhs_expr.to_lp_file_format());
+            /*
             let constant = dfs_constant(lhs_expr, 0.0);
             let lhs_expr = lhs_expr.dfs_remove_constant();
-//            let (constant, lhs_expr) = split_constant_and_expr(lhs_expr);
+            */
+            // TODO: Will be better to use split_constant_and_expr
+            let (constant, lhs_expr) = split_constant_and_expr(lhs_expr);
+            println!("{} {}", constant, lhs_expr.to_lp_file_format());
             LpConstraint(lhs_expr, op.clone(), LitVal(-constant))
         }
     }
 }
 
+fn simplify(expr: &LpExpression) -> LpExpression {
+    fn simpl(expr: &LpExpression) -> LpExpression {
+        match expr {
+            &MulExpr(ref ref_left_expr, ref ref_right_expr) => {
+                let ref left_expr = **ref_left_expr;
+                let ref right_expr = **ref_right_expr;
+
+                match (left_expr, right_expr) {
+                    // DISTRIBUTIVITY
+                    // i*(a+b) = i*a+i*b
+                    (i, &AddExpr(ref a, ref b)) => {
+                        simplify(&AddExpr(Rc::new(MulExpr(Rc::new(i.clone()), a.clone())), Rc::new(MulExpr(Rc::new(i.clone()), b.clone()))))
+                    }
+                    // (a+b)*i = i*a+i*b
+                    (&AddExpr(ref a, ref b), i) => {
+                        simplify(&AddExpr(Rc::new(MulExpr(Rc::new(i.clone()), a.clone())), Rc::new(MulExpr(Rc::new(i.clone()), b.clone()))))
+                    }
+                    // i*(a-b) = i*a-i*b
+                    (i, &SubExpr(ref a, ref b)) => {
+                        simplify(&SubExpr(Rc::new(MulExpr(Rc::new(i.clone()), a.clone())), Rc::new(MulExpr(Rc::new(i.clone()), b.clone()))))
+                    }
+
+                    // COMMUTATIVITY WITH CONSTANTS
+                    // c1*(c2*expr) = (c1*c2)*expr)
+                    (&LitVal(c1), &MulExpr(ref ref_c2, ref expr)) => {
+                        let ref cc2 = **ref_c2;
+                        if let &LitVal(c2) = cc2 {
+                            return simplify(&MulExpr(Rc::new(LitVal(c1 * c2)), expr.clone()))
+                        } else {
+                            //MulExpr(Rc::new(LitVal(c1)), Rc::new(simplify(ref_right_expr)))
+                            MulExpr(Rc::new(MulExpr(Rc::new(LitVal(c1)), Rc::new(cc2.clone()))), expr.clone())
+                        }
+                    }
+                    //TODO: (Pointless?)
+                    // expr1*(c*expr) = c*(expr1*expr2)
+
+                    // COMMUTATIVITY
+                    // a*(b*c) = (a*b)*c
+                    (expr, &MulExpr(ref ref_left_mul, ref ref_right_mul)) => {
+                        simplify(&MulExpr(Rc::new(MulExpr(Rc::new(expr.clone()), ref_left_mul.clone())), ref_right_mul.clone()))
+                    }
+
+                    // Simplify two literals
+                    (&LitVal(c1), &LitVal(c2)) => {
+                        LitVal(c1 * c2)
+                    }
+
+                    // Place literal first for *
+                    (expr, &LitVal(c)) => {
+                        simplify(&MulExpr(Rc::new(LitVal(c)), Rc::new(expr.clone())))
+                    },
+
+                    // Trivial rule: 0 * x = 0
+                    (&LitVal(c), _) if c == 0.0 => LitVal(0.0),
+
+                    (_, _) => {
+                        MulExpr(Rc::new(simplify(left_expr)), Rc::new(simplify(right_expr)))
+                    }
+                }
+            }
+            &AddExpr(ref ref_left_expr, ref ref_right_expr) => {
+                let ref left_expr = **ref_left_expr;
+                let ref right_expr = **ref_right_expr;
+
+                match (left_expr, right_expr) {
+                    // Trivial rule: 0 + x = x
+                    (&LitVal(c), _) if c == 0.0 => simplify(right_expr),
+
+                    // ASSOCIATIVITY
+                    // a + (b+c) = (a+b)+c
+                    (a, &AddExpr(ref b, ref c)) => simplify(&AddExpr(Rc::new(AddExpr(Rc::new(a.clone()), b.clone())), c.clone())),
+
+                    // a + (b-c) = (a+b) - c
+                    (a, &SubExpr(ref b, ref c)) => simplify(&SubExpr(Rc::new(AddExpr(Rc::new(a.clone()), b.clone())), c.clone())),
+
+                    // Simplify two literals
+                    (&LitVal(c1), &LitVal(c2)) => {
+                        LitVal(c1 + c2)
+                    },
+
+                    // Place literal at the end
+                    (&LitVal(c), expr) => {
+                        simplify(&AddExpr(Rc::new(simplify(expr)), Rc::new(LitVal(c))))
+                    },
+
+                    // Accumulate consts +/-
+                    // (expr+c1)+c2 = expr+(c1+c2)
+//        case Add(Add(expr, Cons(l1)), Cons(l2)) => Add(expr, Cons(l1 + l2)).simplify
+                    // (expr-c1)+c2 = expr+(c2-c1)
+                    // (c1-expr)+c2 = -expr+(c1+c2)
+
+
+
+
+                    _ => AddExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                }
+            },
+            &SubExpr(ref ref_left_expr, ref ref_right_expr) => {
+                let ref left_expr = **ref_left_expr;
+                let ref right_expr = **ref_right_expr;
+
+                match (left_expr, right_expr) {
+                    // a - (b + c) = (a-b)-c
+                    (a, &AddExpr(ref b, ref c)) => simplify(&SubExpr(Rc::new(SubExpr(Rc::new(a.clone()), b.clone())), c.clone())),
+
+                    // a - (b - c) = (a-b)+c
+                    (a, &SubExpr(ref b, ref c)) => simplify(&AddExpr(Rc::new(SubExpr(Rc::new(a.clone()), b.clone())), c.clone())),
+
+                    // Place literal at the end
+                    (&LitVal(c), expr) => {
+                        simplify(&AddExpr(Rc::new(-expr), Rc::new(LitVal(c))))
+                    },
+
+                    _ => SubExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                }
+            },
+            &ConsBin(LpBinary { .. }) => {
+                expr.clone()
+            },
+            &ConsInt(LpInteger { .. }) => {
+                expr.clone()
+            },
+            &ConsCont(LpContinuous { .. }) => {
+                expr.clone()
+            },
+            &LitVal(_) => {
+                expr.clone()
+            },
+            _ => expr.clone()
+        }
+    }
+
+    let n = simpl(expr);
+    // Use parenthesis system because on expression with different syntax tree is not equals
+    //if show(self, true) != show(&n, true) {
+    if expr.clone() != n.clone() {
+        simpl(&n)
+    } else {
+        n
+    }
+}
 impl LpFileFormat for LpConstraint {
     fn to_lp_file_format(&self) -> String {
         let mut res = String::new();
