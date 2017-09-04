@@ -80,6 +80,10 @@ fn trivial_rules() {
     assert_eq!( ((a+b) * 0).to_lp_file_format(), "0");
     assert_eq!( ( 0 * (a+b)).to_lp_file_format(), "0");
     assert_eq!( ((a+b) + 0).to_lp_file_format(), "a + b");
+    assert_eq!( (0 + (a+b) + 0).to_lp_file_format(), "a + b");
+    assert_eq!( (0 + (a+b)).to_lp_file_format(), "a + b");
+    assert_eq!( ((a+b) - 0).to_lp_file_format(), "a + b");
+    assert_eq!( (0 - (a+b)).to_lp_file_format(), "-a - b");
     assert_eq!( (0 + (a+b)).to_lp_file_format(), "a + b");
 
 }
