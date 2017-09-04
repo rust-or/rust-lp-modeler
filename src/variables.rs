@@ -160,9 +160,45 @@ impl LpExpression {
     }
 }
 
+fn show(e: &LpExpression, with_parenthesis: bool) -> String {
+    let str_left_mult = if with_parenthesis {"("} else {""};
+    let str_right_mult = if with_parenthesis {")"} else {""};
+    let str_op_mult = if with_parenthesis {" * "} else {" "};
+    match e {
+        &LitVal(n) => n.to_string(),
+        &AddExpr(ref e1, ref e2) => str_left_mult.to_string() + &show(e1, with_parenthesis) + " + " + &show(e2, with_parenthesis) + str_right_mult,
+        &SubExpr(ref e1, ref e2) => str_left_mult.to_string() + &show(e1, with_parenthesis) + " - " + &show(e2, with_parenthesis) + str_right_mult,
+        &MulExpr(ref e1, ref e2) => {
+            let ref deref_e1 = **e1;
+
+            match deref_e1 {
+                &LitVal(v) if v == 1.0 => {
+                    //e2.to_lp_file_format()
+                    str_left_mult.to_string() + &" ".to_string() + &show(e2, with_parenthesis) + str_right_mult
+                },
+                &LitVal(v) if v == -1.0 => {
+                    //"-".to_string() + &e2.to_lp_file_format()
+                    str_left_mult.to_string() + &"-".to_string() + &show(e2, with_parenthesis) + str_right_mult
+                },
+                _ => str_left_mult.to_string() +  &show(e1, with_parenthesis) + str_op_mult + &show(e2, with_parenthesis) + str_right_mult
+            }
+
+        },
+        &ConsBin(LpBinary {name: ref n, .. }) => {
+            n.to_string()
+        },
+        &ConsInt(LpInteger {name: ref n, .. }) => {
+            n.to_string()
+        },
+        &ConsCont(LpContinuous {name: ref n, .. }) => {
+            n.to_string()
+        }
+        _ => "EmptyExpr!!".to_string()
+    }
+}
+
 impl LpFileFormat for LpExpression {
     fn to_lp_file_format(&self) -> String {
-
 
         fn formalize_signs(s: String) -> String {
             let mut s = s.clone();
@@ -178,53 +214,6 @@ impl LpFileFormat for LpExpression {
             s
         }
 
-        fn show(e: &LpExpression, with_parenthesis: bool) -> String {
-            let str_left_mult = if with_parenthesis {"("} else {""};
-            let str_right_mult = if with_parenthesis {")"} else {""};
-            let str_op_mult = if with_parenthesis {" * "} else {" "};
-            match e {
-                &LitVal(n) => n.to_string(),
-                &AddExpr(ref e1, ref e2) => str_left_mult.to_string() + &show(e1, with_parenthesis) + " + " + &show(e2, with_parenthesis) + str_right_mult,
-                &SubExpr(ref e1, ref e2) => str_left_mult.to_string() + &show(e1, with_parenthesis) + " - " + &show(e2, with_parenthesis) + str_right_mult,
-                &MulExpr(ref e1, ref e2) => {
-                    let ref deref_e1 = **e1;
-
-                    match deref_e1 {
-                        &LitVal(v) if v == 1.0 => {
-                            //e2.to_lp_file_format()
-                            str_left_mult.to_string() + &" ".to_string() + &show(e2, with_parenthesis) + str_right_mult
-                        },
-                        &LitVal(v) if v == -1.0 => {
-                            //"-".to_string() + &e2.to_lp_file_format()
-                            str_left_mult.to_string() + &"-".to_string() + &show(e2, with_parenthesis) + str_right_mult
-                        },
-                        _ => str_left_mult.to_string() +  &show(e1, with_parenthesis) + str_op_mult + &show(e2, with_parenthesis) + str_right_mult
-                    }
-
-                },
-                &ConsBin(LpBinary {name: ref n, .. }) => {
-                    n.to_string()
-                },
-                &ConsInt(LpInteger {name: ref n, .. }) => {
-                    n.to_string()
-                },
-                &ConsCont(LpContinuous {name: ref n, .. }) => {
-                    n.to_string()
-                }
-                _ => "EmptyExpr!!".to_string()
-            }
-        }
-
-        /*
-        let n = simplify(self);
-        // Use parenthesis system because on expression with different syntax tree is not equals
-        //if show(self, true) != show(&n, true) {
-        if self.clone() != n.clone() {
-            n.to_lp_file_format()
-        } else {
-            formalize_signs(show(self, false))
-        }
-        */
         formalize_signs(show(&simplify(self), false))
     }
 }
@@ -308,7 +297,6 @@ impl LpConstraint {
                 &AddExpr(ref rc_e1, ref rc_e2) => {
                     let ref e1 = **rc_e1;
                     let ref e2 = **rc_e2;
-                    println!("{} ; {}", e1.to_lp_file_format(), e2.to_lp_file_format());
                     if let &LitVal(c) = e2 {
                         (c, e1.clone())
                     } else {
@@ -389,6 +377,10 @@ fn simplify(expr: &LpExpression) -> LpExpression {
                         simplify(&MulExpr(Rc::new(MulExpr(Rc::new(expr.clone()), ref_left_mul.clone())), ref_right_mul.clone()))
                     }
 
+                    // Trivial rule: 0 * x = 0
+                    (_, &LitVal(0.0)) => LitVal(0.0),
+                    (&LitVal(0.0), _) => LitVal(0.0),
+
                     // Simplify two literals
                     (&LitVal(c1), &LitVal(c2)) => {
                         LitVal(c1 * c2)
@@ -398,9 +390,6 @@ fn simplify(expr: &LpExpression) -> LpExpression {
                     (expr, &LitVal(c)) => {
                         simplify(&MulExpr(Rc::new(LitVal(c)), Rc::new(expr.clone())))
                     },
-
-                    // Trivial rule: 0 * x = 0
-                    (&LitVal(c), _) if c == 0.0 => LitVal(0.0),
 
                     (_, _) => {
                         MulExpr(Rc::new(simplify(left_expr)), Rc::new(simplify(right_expr)))
@@ -413,7 +402,7 @@ fn simplify(expr: &LpExpression) -> LpExpression {
 
                 match (left_expr, right_expr) {
                     // Trivial rule: 0 + x = x
-                    (&LitVal(c), _) if c == 0.0 => simplify(right_expr),
+                    (_, &LitVal(0.0)) => simplify(left_expr),
 
                     // ASSOCIATIVITY
                     // a + (b+c) = (a+b)+c
@@ -434,11 +423,54 @@ fn simplify(expr: &LpExpression) -> LpExpression {
 
                     // Accumulate consts +/-
                     // (expr+c1)+c2 = expr+(c1+c2)
-//        case Add(Add(expr, Cons(l1)), Cons(l2)) => Add(expr, Cons(l1 + l2)).simplify
+                    (&AddExpr(ref expr, ref rc1), &LitVal(c2)) => {
+                        match **rc1 {
+                            LitVal(c1) => simplify(&AddExpr(expr.clone(), Rc::new(LitVal(c1 + c2)))),
+                            _ => AddExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                        }
+                    },
                     // (expr-c1)+c2 = expr+(c2-c1)
                     // (c1-expr)+c2 = -expr+(c1+c2)
+                    (&SubExpr(ref rc1, ref rc2), &LitVal(c2)) => {
+                        let ref cc1 = **rc1;
+                        let ref cc2 = **rc2;
+                        match (cc1, cc2) {
+                            (_, &LitVal(c1)) => simplify(&AddExpr(rc1.clone(), Rc::new(LitVal(c1 - c2)))),
+                            (&LitVal(c1), _) => simplify(&AddExpr(Rc::new(SubExpr(Rc::new(LitVal(0.0)), rc2.clone())), Rc::new(LitVal(c1 + c2)))),
+                            _ => AddExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                        }
+                    },
 
+                    // Extract the const
+                    // (expr1+c)+expr2 = (expr1+expr2)+c
+                    (&AddExpr(ref expr1, ref rc), expr2) => {
+                        match **rc {
+                            LitVal(c1) => simplify(&AddExpr(Rc::new(AddExpr(expr1.clone(), Rc::new(expr2.clone()))), Rc::new(LitVal(c1)))),
+                            _ => AddExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                        }
+                    },
+                    // (expr1-c)+expr2 = (expr1+expr2)-c
+                    (&SubExpr(ref expr1, ref rc), expr2) => {
+                        match **rc {
+                            LitVal(c) => simplify(&SubExpr(Rc::new(AddExpr(expr1.clone(), Rc::new(expr2.clone()))), Rc::new(LitVal(c)))),
+                            _ => AddExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                        }
+                    },
 
+                    // Accumulate consts +/-
+                    // (expr+c1)+c2 = expr+(c1+c2) OK
+                    // (expr-c1)+c2 = expr+(c2-c1) OK
+                    // (c1-expr)+c2 = -expr+(c1+c2) OK
+
+                    // (expr-c1)-c2 = expr-(c1+c2) OK
+                    // (expr+c1)-c2 = expr+(c1-c2) OK
+                    // (c1-expr)-c2 = -expr+(c1-c2) OK
+
+                    // Extract the const
+                    // (expr1+c)+expr2 = (expr1+expr2)+c OK
+                    // (expr1-c)+expr2 = (expr1+expr2)-c OK
+                    // (expr1+c)-expr2 = (expr1-expr2)+c OK
+                    // (expr1-c)-expr2 = (expr1-expr2)-c OK
 
 
                     _ => AddExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
@@ -449,6 +481,9 @@ fn simplify(expr: &LpExpression) -> LpExpression {
                 let ref right_expr = **ref_right_expr;
 
                 match (left_expr, right_expr) {
+                    // Trivial rule: 0 + x = x
+                    (_, &LitVal(0.0)) => simplify(left_expr),
+
                     // a - (b + c) = (a-b)-c
                     (a, &AddExpr(ref b, ref c)) => simplify(&SubExpr(Rc::new(SubExpr(Rc::new(a.clone()), b.clone())), c.clone())),
 
@@ -458,6 +493,45 @@ fn simplify(expr: &LpExpression) -> LpExpression {
                     // Place literal at the end
                     (&LitVal(c), expr) => {
                         simplify(&AddExpr(Rc::new(-expr), Rc::new(LitVal(c))))
+                    },
+
+                    // Accumulate consts +/-
+                    // (expr-c1)-c2 = expr-(c1+c2)
+                    // (c1-expr)-c2 = -expr+(c1-c2)
+                    (&SubExpr(ref rc1, ref rc2), &LitVal(c2)) => {
+                        let ref cc1 = **rc1;
+                        let ref cc2 = **rc2;
+                        match (cc1, cc2) {
+                            (_, &LitVal(c1)) => simplify(&SubExpr(rc1.clone(), Rc::new(LitVal(c1 + c2)))),
+                            (&LitVal(c1), _) => simplify(&AddExpr(Rc::new(SubExpr(Rc::new(LitVal(0.0)), rc2.clone())), Rc::new(LitVal(c1 - c2)))),
+                            _ => SubExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                        }
+                    },
+
+                    // (expr+c1)-c2 = expr+(c1-c2)
+                    (&AddExpr(ref expr, ref rc1), &LitVal(c2)) => {
+                        match **rc1 {
+                            LitVal(c1) => simplify(&AddExpr(expr.clone(), Rc::new(LitVal(c1 - c2)))),
+                            _ => SubExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                        }
+                    },
+
+                    // Extract the const:
+                    // (expr1+c)-expr2 = (expr1-expr2)+c
+                    (&AddExpr(ref expr1, ref rc), expr2) => {
+                        match **rc {
+                            LitVal(c) => simplify(&AddExpr(Rc::new(SubExpr(expr1.clone(), Rc::new(expr2.clone()))), Rc::new(LitVal(c)))),
+                            _ => SubExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                        }
+                    },
+                    // (expr1-c)-expr2 = (expr1-expr2)-c
+                    (&SubExpr(ref expr1, ref rc), expr2) => {
+                        match **rc {
+                            LitVal(c) => {
+                                simplify(&SubExpr(Rc::new(SubExpr(expr1.clone(), Rc::new(expr2.clone()))), Rc::new(LitVal(c))))
+                            },
+                            _ => SubExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
+                        }
                     },
 
                     _ => SubExpr(Rc::new(simplify(ref_left_expr)), Rc::new(simplify(ref_right_expr)))
