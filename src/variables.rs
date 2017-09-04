@@ -322,14 +322,11 @@ impl LpConstraint {
             self.clone()
         }else{
             let ref lhs_expr = simplify(&(lhs - rhs));
-            println!("{}", lhs_expr.to_lp_file_format());
             /*
             let constant = dfs_constant(lhs_expr, 0.0);
             let lhs_expr = lhs_expr.dfs_remove_constant();
             */
-            // TODO: Will be better to use split_constant_and_expr
             let (constant, lhs_expr) = split_constant_and_expr(lhs_expr);
-            println!("{} {}", constant, lhs_expr.to_lp_file_format());
             LpConstraint(lhs_expr, op.clone(), LitVal(-constant))
         }
     }
