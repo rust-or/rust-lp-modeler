@@ -92,6 +92,8 @@ with a solver supporting lp file format :
 * Add distributive property (ex: `3 * (a + b + 2) = 3*a + 3*b + 6`)
 * Add trivial rules (ex: `3 * a * 0 = 0` or `3 + 0 = 3`)
 * Add commutative property to simplify some computations
+* Support for GLPK
+
 ### 0.3.0
 * Functional lib with simple algebra properties
 
