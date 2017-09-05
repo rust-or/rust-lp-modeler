@@ -85,6 +85,11 @@ with a solver supporting lp file format :
     
 ## Limitation
 * Use with CBC, Gurobi or GLPK for now
+* 'complex' algebra operations such as commutative and distributivity are under development
+
+## Contributors
+* Joel Cavat [(jcavat)](https://github.com/jcavat)
+* Thomas Vincent [(tvincent2)](https://github.com/tvincent2)
 
 ## Todo
 * Config for lp_solve and CPLEX
