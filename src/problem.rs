@@ -266,9 +266,11 @@ impl Problem for LpProblem {
 
     fn add_objective_expression(&mut self, expr: &LpExpression) {
         if let Some(e) = self.obj_expr.clone() {
-            self.obj_expr = Some(AddExpr(Rc::new(expr.clone()), Rc::new(e.clone())).dfs_remove_constant());
+            let (_, simpl_expr) = split_constant_and_expr(&simplify(&AddExpr(Rc::new(expr.clone()), Rc::new(e.clone()))));
+            self.obj_expr = Some(simpl_expr);
         } else {
-            self.obj_expr = Some(expr.dfs_remove_constant());
+            let (_, simpl_expr) = split_constant_and_expr(&simplify(expr));
+            self.obj_expr = Some(simpl_expr);
         }
     }
 
