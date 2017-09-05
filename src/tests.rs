@@ -79,6 +79,7 @@ fn trivial_rules() {
 
     assert_eq!( ((a+b) * 0).to_lp_file_format(), "0");
     assert_eq!( ( 0 * (a+b)).to_lp_file_format(), "0");
+    assert_eq!( (0 * a * b * 3).to_lp_file_format(), "0");
     assert_eq!( ((a+b) + 0).to_lp_file_format(), "a + b");
     assert_eq!( (0 + (a+b) + 0).to_lp_file_format(), "a + b");
     assert_eq!( (0 + (a+b)).to_lp_file_format(), "a + b");
@@ -108,6 +109,9 @@ fn expressions_to_lp_file_format() {
     assert_eq!((2*a + b + 20).ge(c).to_lp_file_format(), "2 a + b - c >= -20");
     assert_eq!((-a).ge(10).to_lp_file_format(), "-a >= 10");
     assert_eq!((2*a - 20 + b).ge(-c).to_lp_file_format(), "2 a + b + c >= 20");
+    assert_eq!((a + b + 10).ge(0).to_lp_file_format(), "a + b >= -10");
+    assert_eq!( (3*(a+b+10)).le(0).to_lp_file_format(), "3 a + 3 b <= -30");
+    assert_eq!( (3*(a+b+10)).le(a+b).to_lp_file_format(), "3 a + 3 b - a - b <= -30");
 }
 
 #[test]
