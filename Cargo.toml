@@ -24,3 +24,7 @@ exclude = [
 [badges]
 travis-ci = { repository = "jcavat/rust-lp-modeler" }
 appveyor = { repository = "jcavat/rust-lp-modeler" }
+
+[[bin]]
+doc = false
+name = "lp-modeler-bin"
