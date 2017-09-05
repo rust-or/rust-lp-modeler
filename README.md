@@ -13,7 +13,7 @@ such an API for python 2.x.
 Dev in progress.
 
 
-This first alpha version provide this DSL to make a LP Model :
+This version provide this DSL to make a LP Model :
 ```rust
 use lp_modeler::problem::{LpObjective, Problem, LpProblem};
 use lp_modeler::operations::{LpOperations};
@@ -86,6 +86,14 @@ with a solver supporting lp file format :
 ## Limitation
 * Use with CBC, Gurobi or GLPK for now
 * 'complex' algebra operations such as commutative and distributivity are under development
+
+## New features
+### 0.3.1
+* Add distributive property (ex: `3 * (a + b + 2) = 3*a + 3*b + 6`)
+* Add trivial rules (ex: `3 * a * 0 = 0` or `3 + 0 = 3`)
+* Add commutative property to simplify some computations
+### 0.3.0
+* Functional lib with simple algebra properties
 
 ## Contributors
 * Joel Cavat [(jcavat)](https://github.com/jcavat)
