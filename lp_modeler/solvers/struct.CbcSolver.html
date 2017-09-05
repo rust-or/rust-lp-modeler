@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `CbcSolver` struct in crate `lp_modeler`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, CbcSolver">
+
+    <title>lp_modeler::solvers::CbcSolver - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>lp_modeler</a>::<wbr><a href='index.html'>solvers</a></p><script>window.sidebarCurrent = {name: 'CbcSolver', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>lp_modeler</a>::<wbr><a href='index.html'>solvers</a>::<wbr><a class="struct" href=''>CbcSolver</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/lp_modeler/solvers.rs.html#31-35' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct CbcSolver { /* fields omitted */ }</pre><h2 id='methods'>Methods</h2><h3 class='impl'><span class='in-band'><code>impl <a class="struct" href="../../lp_modeler/solvers/struct.CbcSolver.html" title="struct lp_modeler::solvers::CbcSolver">CbcSolver</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/lp_modeler/solvers.rs.html#92-147' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.new' class="method"><span id='new.v' class='invisible'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class="struct" href="../../lp_modeler/solvers/struct.CbcSolver.html" title="struct lp_modeler::solvers::CbcSolver">CbcSolver</a></code></span></h4>
+<h4 id='method.command_name' class="method"><span id='command_name.v' class='invisible'><code>fn <a href='#method.command_name' class='fnname'>command_name</a>(&amp;self, command_name: <a class="struct" href="https://doc.rust-lang.org/nightly/collections/string/struct.String.html" title="struct collections::string::String">String</a>) -&gt; <a class="struct" href="../../lp_modeler/solvers/struct.CbcSolver.html" title="struct lp_modeler::solvers::CbcSolver">CbcSolver</a></code></span></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><span class='in-band'><code>impl <a class="trait" href="../../lp_modeler/solvers/trait.SolverTrait.html" title="trait lp_modeler::solvers::SolverTrait">SolverTrait</a> for <a class="struct" href="../../lp_modeler/solvers/struct.CbcSolver.html" title="struct lp_modeler::solvers::CbcSolver">CbcSolver</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/lp_modeler/solvers.rs.html#258-280' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='associatedtype.P' class="type"><span id='P.t' class='invisible'><code>type <a href='../../lp_modeler/solvers/trait.SolverTrait.html#associatedtype.P' class="type">P</a> = <a class="struct" href="../../lp_modeler/problem/struct.LpProblem.html" title="struct lp_modeler::problem::LpProblem">LpProblem</a></code></span></h4>
+<h4 id='method.run' class="method"><span id='run.v' class='invisible'><code>fn <a href='../../lp_modeler/solvers/trait.SolverTrait.html#tymethod.run' class='fnname'>run</a>(&amp;self,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; problem: &amp;Self::<a class="trait" href="../../lp_modeler/solvers/trait.SolverTrait.html" title="trait lp_modeler::solvers::SolverTrait">P</a>)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">(</a><a class="enum" href="../../lp_modeler/solvers/enum.Status.html" title="enum lp_modeler::solvers::Status">Status</a>, <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/collections/string/struct.String.html" title="struct collections::string::String">String</a>, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.f32.html">f32</a>&gt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.tuple.html">)</a>, <a class="struct" href="https://doc.rust-lang.org/nightly/collections/string/struct.String.html" title="struct collections::string::String">String</a>&gt;</code></span></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt>+</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "lp_modeler";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>
