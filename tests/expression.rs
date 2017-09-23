@@ -1,8 +1,10 @@
-use variables::*;
-use variables::LpExpression::*;
+extern crate lp_modeler;
+
+use lp_modeler::variables::*;
+use lp_modeler::variables::LpExpression::*;
 use std::rc::Rc;
-use operations::LpOperations;
-use problem::LpFileFormat;
+use lp_modeler::operations::LpOperations;
+use lp_modeler::problem::LpFileFormat;
 
 
 #[test]
@@ -116,10 +118,10 @@ fn expressions_to_lp_file_format() {
 
 #[test]
 fn test_readme_example() {
-    use problem::{LpObjective, LpProblem};
-    use operations::{LpOperations};
-    use variables::LpInteger;
-    use solvers::{SolverTrait, CbcSolver};
+    use lp_modeler::problem::{LpObjective, LpProblem};
+    use lp_modeler::operations::{LpOperations};
+    use lp_modeler::variables::LpInteger;
+    use lp_modeler::solvers::{SolverTrait, CbcSolver};
 
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
