@@ -96,8 +96,7 @@ impl CbcSolver {
     pub fn command_name(&self, command_name: String) -> CbcSolver {
         CbcSolver { name: self.name.clone(), command_name: command_name, temp_solution_file: self.temp_solution_file.clone() }
     }
-
-    fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
+    pub fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
         fn read_specific_solution(f: &File) -> Result<(Status, HashMap<String, f32>), String> {
             let mut vars_value: HashMap<_, _> = HashMap::new();
 
@@ -152,7 +151,7 @@ impl GlpkSolver {
     pub fn command_name(&self, command_name: String) -> GlpkSolver {
         GlpkSolver { name: self.name.clone(), command_name: command_name, temp_solution_file: self.temp_solution_file.clone() }
     }
-    fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
+    pub fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
         fn read_specific_solution(f: &File) -> Result<(Status, HashMap<String, f32>), String> {
             fn read_size(line: Option<Result<String, Error>>) -> Result<usize, String> {
                 match line {
