@@ -185,9 +185,9 @@ impl GlpkSolver {
                 Some(Ok(status_line)) => {
                     match &status_line[12..] {
                         "INTEGER OPTIMAL" | "OPTIMAL" => Status::Optimal,
-                        "INFEASIBLE (FINAL)" => Status::Infeasible,
-                        "INTEGER UNDEFINED" | "UNDEFINED" => Status::NotSolved,
-                        "UNBOUNDED" => Status::Unbounded,
+                        "INFEASIBLE (FINAL)" | "INTEGER EMPTY" => Status::Infeasible,
+                        "UNDEFINED" => Status::NotSolved,
+                        "INTEGER UNDEFINED" | "UNBOUNDED" => Status::Unbounded,
                         _ => return Err("Incorrect solution format".to_string())
                     }
                 },
