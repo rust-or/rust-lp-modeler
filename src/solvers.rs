@@ -96,8 +96,10 @@ impl CbcSolver {
     pub fn command_name(&self, command_name: String) -> CbcSolver {
         CbcSolver { name: self.name.clone(), command_name: command_name, temp_solution_file: self.temp_solution_file.clone() }
     }
-
-    fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
+    pub fn temp_solution_file(&self, temp_solution_file: String) -> CbcSolver {
+        CbcSolver { name: self.name.clone(), command_name: self.command_name.clone(), temp_solution_file: temp_solution_file }
+    }
+    pub fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
         fn read_specific_solution(f: &File) -> Result<(Status, HashMap<String, f32>), String> {
             let mut vars_value: HashMap<_, _> = HashMap::new();
 
@@ -152,7 +154,10 @@ impl GlpkSolver {
     pub fn command_name(&self, command_name: String) -> GlpkSolver {
         GlpkSolver { name: self.name.clone(), command_name: command_name, temp_solution_file: self.temp_solution_file.clone() }
     }
-    fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
+    pub fn temp_solution_file(&self, temp_solution_file: String) -> GlpkSolver {
+        GlpkSolver { name: self.name.clone(), command_name: self.command_name.clone(), temp_solution_file: temp_solution_file }
+    }
+    pub fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
         fn read_specific_solution(f: &File) -> Result<(Status, HashMap<String, f32>), String> {
             fn read_size(line: Option<Result<String, Error>>) -> Result<usize, String> {
                 match line {
@@ -185,9 +190,9 @@ impl GlpkSolver {
                 Some(Ok(status_line)) => {
                     match &status_line[12..] {
                         "INTEGER OPTIMAL" | "OPTIMAL" => Status::Optimal,
-                        "INFEASIBLE (FINAL)" => Status::Infeasible,
-                        "INTEGER UNDEFINED" | "UNDEFINED" => Status::NotSolved,
-                        "UNBOUNDED" => Status::Unbounded,
+                        "INFEASIBLE (FINAL)" | "INTEGER EMPTY" => Status::Infeasible,
+                        "UNDEFINED" => Status::NotSolved,
+                        "INTEGER UNDEFINED" | "UNBOUNDED" => Status::Unbounded,
                         _ => return Err("Incorrect solution format".to_string())
                     }
                 },
