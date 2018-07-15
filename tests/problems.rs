@@ -142,4 +142,10 @@ fn test_readme_example_2() {
             println!("{} = {}", var_name, int_var_value);
         }
     }
+
+    assert_eq!(solver_status, lp_modeler::solvers::Status::Optimal);
+    assert_eq!(obj_value, 230f32);
+    assert_eq!(*var_values.get("A_F").unwrap(), 1f32);
+    assert_eq!(*var_values.get("B_E").unwrap(), 1f32);
+    assert_eq!(*var_values.get("C_D").unwrap(), 1f32);
 }
