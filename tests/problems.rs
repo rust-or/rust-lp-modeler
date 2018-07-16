@@ -1,6 +1,5 @@
 extern crate lp_modeler;
 
-use std::process;
 use std::collections::HashMap;
 
 use lp_modeler::variables::*;
@@ -79,7 +78,7 @@ fn test_readme_example_2() {
 
     // Define Objective Function
     let mut obj_vec: Vec<LpExpression> = Vec::new();
-    for (&(m, w), var) in &vars{
+    for (&(&m, &w), var) in &vars{
         let obj_coef = scores.get(&(m, w)).unwrap();
         obj_vec.push(*obj_coef * var);
     }
@@ -125,7 +124,7 @@ fn test_readme_example_2() {
 
     // Compute final objective function value
     let mut obj_value = 0f32;
-    for (&(m, w), var) in &vars{
+    for (&(&m, &w), var) in &vars{
         let obj_coef = scores.get(&(m, w)).unwrap();
         let var_value = var_values.get(&var.name).unwrap();
         
