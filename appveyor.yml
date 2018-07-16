@@ -6,11 +6,10 @@ environment:
 install:
   - ps: Start-FileDownload "https://static.rust-lang.org/dist/rust-nightly-${env:TARGET}.exe"
   - rust-nightly-%TARGET%.exe /VERYSILENT /NORESTART /DIR="C:\Program Files (x86)\Rust"
-  - ps: Start-FileDownload "https://bintray.com/coin-or/download/download_file?file_path=Cbc-2.9-win32-msvc14.zip"
-  - mkdir C:\Cbc-2.9
-  - mv .\Cbc-2.9-win32-msvc14.zip C:\Cbc-2.9\
-  - 7z x C:\Cbc-2.9\Cbc-2.9-win32-msvc14.zip
-  - SET PATH=%PATH%;C:\Cbc-2.9\bin
+  - mkdir C:\Cbc
+  - ps: Start-FileDownload "https://bintray.com/coin-or/download/download_file?file_path=Cbc-2.9-win32-msvc14.zip" -FileName "C:\Cbc\Cbc-2.9.zip"
+  - 7z x C:\Cbc\Cbc-2.9.zip -o"C:\Cbc\"
+  - SET PATH=%PATH%;C:\Cbc\bin
   - SET PATH=%PATH%;C:\Program Files (x86)\Rust\bin
   - SET PATH=%PATH%;C:\MinGW\bin
   - rustc -V
