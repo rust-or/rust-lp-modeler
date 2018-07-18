@@ -20,7 +20,7 @@ fn test_readme_example_1() {
     problem += (500*a + 1200*b + 1500*c).le(10000);
     problem += (a).le(b);
 
-    let solver = CbcSolver::new();
+    let solver = CbcSolver::new().temp_solution_file(format!("{}.sol", problem.name));
 
     match solver.run(&problem) {
         Ok((status, res)) => {
@@ -115,7 +115,7 @@ fn test_readme_example_2() {
     // }
 
     // Run Solver
-    let solver = CbcSolver::new();
+    let solver = CbcSolver::new().temp_solution_file(format!("{}.sol", problem.name));
     let result = solver.run(&problem);
 
     // Terminate if error, or assign status & variable values
