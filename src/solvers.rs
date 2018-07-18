@@ -235,7 +235,7 @@ impl SolverTrait for GurobiSolver {
     type P = LpProblem;
     fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String> {
 
-        let file_model = "test.lp";
+        let file_model = &format!("{}.lp", problem.name);
 
         match problem.write_lp(file_model) {
             Ok(_) => {
@@ -264,7 +264,7 @@ impl SolverTrait for CbcSolver {
     type P = LpProblem;
     fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String> {
 
-        let file_model = "test.lp";
+        let file_model = &format!("{}.lp", problem.name);
 
         match problem.write_lp(file_model) {
             Ok(_) => {
@@ -288,7 +288,7 @@ impl SolverTrait for GlpkSolver {
     type P = LpProblem;
     fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String> {
 
-        let file_model:&str = "test.lp";
+        let file_model = &format!("{}.lp", problem.name);
 
         match problem.write_lp(file_model) {
             Ok(_) => {

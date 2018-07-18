@@ -66,7 +66,7 @@ pub trait Problem {
 /// ```
 #[derive(Debug)]
 pub struct LpProblem {
-    name: &'static str,
+    pub name: &'static str,
     objective_type: LpObjective,
     obj_expr: Option<LpExpression>,
     constraints: Vec<LpConstraint>
