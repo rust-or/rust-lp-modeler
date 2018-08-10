@@ -1,3 +1,6 @@
+extern crate uuid;
+use self::uuid::Uuid;
+
 use std::fs;
 use std::io::prelude::*;
 use std::process::Command;
@@ -7,7 +10,6 @@ use problem::{LpProblem, Problem};
 use problem::{LpFileFormat};
 use std::fs::File;
 use std::io::Error;
-
 
 #[derive(Debug, PartialEq)]
 pub enum Status {
@@ -41,7 +43,7 @@ pub struct GlpkSolver {
 
 impl GurobiSolver {
     pub fn new() -> GurobiSolver {
-        GurobiSolver { name: "Gurobi".to_string(), command_name: "gurobi_cl".to_string(), temp_solution_file: "sol.sol".to_string() }
+        GurobiSolver { name: "Gurobi".to_string(), command_name: "gurobi_cl".to_string(), temp_solution_file: format!("{}.sol", Uuid::new_v4().to_string()) }
     }
     pub fn command_name(&self, command_name: String) -> GurobiSolver {
         GurobiSolver { name: self.name.clone(), command_name: command_name, temp_solution_file: self.temp_solution_file.clone() }
@@ -91,7 +93,7 @@ impl GurobiSolver {
 }
 impl CbcSolver {
     pub fn new() -> CbcSolver {
-        CbcSolver { name: "Cbc".to_string(), command_name: "cbc".to_string(), temp_solution_file: "sol.sol".to_string() }
+        CbcSolver { name: "Cbc".to_string(), command_name: "cbc".to_string(), temp_solution_file: format!("{}.sol", Uuid::new_v4().to_string()) }
     }
     pub fn command_name(&self, command_name: String) -> CbcSolver {
         CbcSolver { name: self.name.clone(), command_name: command_name, temp_solution_file: self.temp_solution_file.clone() }
@@ -149,7 +151,7 @@ impl CbcSolver {
 }
 impl GlpkSolver {
     pub fn new() -> GlpkSolver {
-        GlpkSolver { name: "Glpk".to_string(), command_name: "glpsol".to_string(), temp_solution_file: "sol.sol".to_string() }
+        GlpkSolver { name: "Glpk".to_string(), command_name: "glpsol".to_string(), temp_solution_file: format!("{}.sol", Uuid::new_v4().to_string()) }
     }
     pub fn command_name(&self, command_name: String) -> GlpkSolver {
         GlpkSolver { name: self.name.clone(), command_name: command_name, temp_solution_file: self.temp_solution_file.clone() }
@@ -235,7 +237,7 @@ impl SolverTrait for GurobiSolver {
     type P = LpProblem;
     fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String> {
 
-        let file_model = &format!("{}.lp", problem.name);
+        let file_model = &format!("{}.lp", problem.unique_name);
 
         match problem.write_lp(file_model) {
             Ok(_) => {
@@ -264,7 +266,7 @@ impl SolverTrait for CbcSolver {
     type P = LpProblem;
     fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String> {
 
-        let file_model = &format!("{}.lp", problem.name);
+        let file_model = &format!("{}.lp", problem.unique_name);
 
         match problem.write_lp(file_model) {
             Ok(_) => {
@@ -288,7 +290,7 @@ impl SolverTrait for GlpkSolver {
     type P = LpProblem;
     fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String,f32>), String> {
 
-        let file_model = &format!("{}.lp", problem.name);
+        let file_model = &format!("{}.lp", problem.unique_name);
 
         match problem.write_lp(file_model) {
             Ok(_) => {
