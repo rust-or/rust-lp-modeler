@@ -241,7 +241,7 @@ impl SolverTrait for GurobiSolver {
 
         match problem.write_lp(file_model) {
             Ok(_) => {
-                match Command::new(&self.command_name).arg(format!("ResultFile={}", self.temp_solution_file)).arg(file_model).output() {
+                let result = match Command::new(&self.command_name).arg(format!("ResultFile={}", self.temp_solution_file)).arg(file_model).output() {
                     Ok(r) => {
                         let mut status = Status::SubOptimal;
                         if String::from_utf8(r.stdout).expect("").contains("Optimal solution found") {
@@ -255,7 +255,10 @@ impl SolverTrait for GurobiSolver {
                         }
                     },
                     Err(_) => Err(format!("Error running the {} solver", self.name)),
-                }
+                };
+                let _ = fs::remove_file(&file_model);
+
+                result
             },
             Err(e) => Err(e.to_string()),
         }
@@ -270,7 +273,7 @@ impl SolverTrait for CbcSolver {
 
         match problem.write_lp(file_model) {
             Ok(_) => {
-                match Command::new(&self.command_name).arg(file_model).arg("solve").arg("solution").arg(&self.temp_solution_file).output() {
+                let result = match Command::new(&self.command_name).arg(file_model).arg("solve").arg("solution").arg(&self.temp_solution_file).output() {
                     Ok(r) => {
                         if r.status.success(){
                             self.read_solution()
@@ -279,7 +282,10 @@ impl SolverTrait for CbcSolver {
                         }
                     },
                     Err(_) => Err(format!("Error running the {} solver", self.name)),
-                }
+                };
+                let _ = fs::remove_file(&file_model);
+
+                result
             },
             Err(e) => Err(e.to_string()),
         }
@@ -294,7 +300,7 @@ impl SolverTrait for GlpkSolver {
 
         match problem.write_lp(file_model) {
             Ok(_) => {
-                match Command::new(&self.command_name).arg("--lp").arg(file_model).arg("-o").arg(&self.temp_solution_file).output() {
+                let result = match Command::new(&self.command_name).arg("--lp").arg(file_model).arg("-o").arg(&self.temp_solution_file).output() {
                     Ok(r) => {
                         if r.status.success() {
                             self.read_solution()
@@ -303,7 +309,10 @@ impl SolverTrait for GlpkSolver {
                         }
                     },
                     Err(_) => Err(format!("Error running the {} solver", self.name)),
-                }
+                };
+                let _ = fs::remove_file(&file_model);
+
+                result
             },
             Err(e) => Err(e.to_string()),
         }
