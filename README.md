@@ -100,6 +100,7 @@ with a solver supporting lp file format :
 ## Contributors
 * Joel Cavat [(jcavat)](https://github.com/jcavat)
 * Thomas Vincent [(tvincent2)](https://github.com/tvincent2)
+* Antony Phillips [(aphi)](https://github.com/aphi)
 
 ## Todo
 * Config for lp_solve and CPLEX
