@@ -1,3 +1,5 @@
+extern crate uuid;
+
 use std;
 use variables::*;
 use variables::LpExpression::*;
@@ -10,6 +12,8 @@ use std::io::prelude::*;
 use std::ops::{AddAssign};
 
 //use std::collections::HashMap;
+
+use self::uuid::Uuid;
 
 /// Enum helping to specify the objective function of the linear problem.
 ///
@@ -67,6 +71,7 @@ pub trait Problem {
 #[derive(Debug)]
 pub struct LpProblem {
     pub name: &'static str,
+    pub unique_name: String,
     objective_type: LpObjective,
     obj_expr: Option<LpExpression>,
     constraints: Vec<LpConstraint>
@@ -76,7 +81,8 @@ pub struct LpProblem {
 impl LpProblem {
     /// Create a new problem
     pub fn new(name: &'static str, objective: LpObjective) -> LpProblem {
-        LpProblem { name: name, objective_type: objective, obj_expr: None, constraints: Vec::new() }
+        let unique_name = format!("{}_{}", name, Uuid::new_v4());
+        LpProblem { name: name, unique_name: unique_name, objective_type: objective, obj_expr: None, constraints: Vec::new() }
     }
 
     // TODO: Call once and pass into parameter
