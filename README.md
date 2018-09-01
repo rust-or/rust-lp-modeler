@@ -10,13 +10,11 @@ An optimization problem (e.g. an integer or linear programme) can be formulated 
 This project is inspired by [COIN-OR PuLP](http://www.coin-or.org/PuLP/ "Coin-Or PuLP website") which provides
 such a library for Python.
 
-## Usage Examples
+## Usage
 
-These examples present a formulation (in LP model format), and demonstrate the Rust code required to generate this formulation.
+These examples present a formulation (in LP model format), and demonstrate the Rust code required to generate this formulation. Code can be found in [tests/problems.rs](tests/problems.rs).
 
-Examples can be found in /tests/problems.rs as test_readme_example_1() and test_readme_example_2().
-
-### Example 1 - A simple model
+### Example 1 - Simple model
 
 #### Formulation
 ```
@@ -83,6 +81,8 @@ problem.write_lp("problem.lp")
 
 #### Formulation
 
+This more complex formulation programmatically generates the expressions for the objective and constraints.
+
 We wish to maximise the quality of the pairing between a group of men and women, based on their mutual compatibility score. Each man must be assigned to exactly one woman, and vice versa.
 
 ###### Compatibility Score Matrix
@@ -97,111 +97,104 @@ This problem is formulated as an [Assignment Problem](https://en.wikipedia.org/w
 
 #### Rust code
 ```rust
-    extern crate lp_modeler;
-    #[macro_use] extern crate maplit;
+extern crate lp_modeler;
+#[macro_use] extern crate maplit;
 
-    use std::collections::HashMap;
+use std::collections::HashMap;
 
-    use lp_modeler::variables::*;
-    use lp_modeler::variables::LpExpression::*;
-    use lp_modeler::operations::LpOperations;
-    use lp_modeler::problem::{LpObjective, LpProblem, LpFileFormat};
-    use lp_modeler::solvers::{SolverTrait, CbcSolver};
+use lp_modeler::variables::*;
+use lp_modeler::variables::LpExpression::*;
+use lp_modeler::operations::LpOperations;
+use lp_modeler::problem::{LpObjective, LpProblem, LpFileFormat};
+use lp_modeler::solvers::{SolverTrait, CbcSolver};
 
-    // Problem Data
-    let men = vec!["A", "B", "C"];
-    let women = vec!["D", "E", "F"];
-    let compat_scores = hashmap!{
-        ("A", "D") => 50.0,
-        ("A", "E") => 75.0,
-        ("A", "F") => 75.0,
-        ("B", "D") => 60.0,
-        ("B", "E") => 95.0,
-        ("B", "F") => 80.0,
-        ("C", "D") => 60.0,
-        ("C", "E") => 70.0,
-        ("C", "F") => 80.0,
-    };
+// Problem Data
+let men = vec!["A", "B", "C"];
+let women = vec!["D", "E", "F"];
+let compat_scores = hashmap!{
+    ("A", "D") => 50.0,
+    ("A", "E") => 75.0,
+    ("A", "F") => 75.0,
+    ("B", "D") => 60.0,
+    ("B", "E") => 95.0,
+    ("B", "F") => 80.0,
+    ("C", "D") => 60.0,
+    ("C", "E") => 70.0,
+    ("C", "F") => 80.0,
+};
 
-    // Define Problem
-    let mut problem = LpProblem::new("Matchmaking", LpObjective::Maximize);
+// Define Problem
+let mut problem = LpProblem::new("Matchmaking", LpObjective::Maximize);
 
-    // Define Variables
-    let mut vars = HashMap::new();
-    for m in &men{
-        for w in &women{
-            vars.insert((m, w), LpBinary::new(&format!("{}_{}", m, w)));
-        }
-    }
-
-    // Define Objective Function
-    let mut obj_vec: Vec<LpExpression> = Vec::new();
-    for (&(&m, &w), var) in &vars{
-        let obj_coef = compat_scores.get(&(m, w)).unwrap();
-        obj_vec.push(*obj_coef * var);
-    }
-    problem += lp_sum(&obj_vec);
-
-    // Define Constraints
-    // Constraint 1: Each man must be assigned to exactly one woman
-    for m in &men{
-        let mut constr_vec = Vec::new();
-
-        for w in &women{
-            constr_vec.push(1.0 * vars.get(&(m, w)).unwrap());
-        }
-
-        problem += lp_sum(&constr_vec).equal(1);
-    }
-
-    // Constraint 2: Each woman must be assigned to exactly one man
+// Define Variables
+let mut vars = HashMap::new();
+for m in &men{
     for w in &women{
-        let mut constr_vec = Vec::new();
+        vars.insert((m, w), LpBinary::new(&format!("{}_{}", m, w)));
+    }
+}
 
-        for m in &men{
-            constr_vec.push(1.0 * vars.get(&(m, w)).unwrap());
-        }
+// Define Objective Function
+let mut obj_vec: Vec<LpExpression> = Vec::new();
+for (&(&m, &w), var) in &vars{
+    let obj_coef = compat_scores.get(&(m, w)).unwrap();
+    obj_vec.push(*obj_coef * var);
+}
+problem += lp_sum(&obj_vec);
 
-        problem += lp_sum(&constr_vec).equal(1);
+// Define Constraints
+// Constraint 1: Each man must be assigned to exactly one woman
+for m in &men{
+    let mut constr_vec = Vec::new();
+
+    for w in &women{
+        constr_vec.push(1.0 * vars.get(&(m, w)).unwrap());
     }
 
-    // Optionally write to file
-    // let result = problem.write_lp("problem.lp");
-    // match result{
-    //     Ok(_) => println!("Written to file"),
-    //     Err(msg) => println!("{}", msg)
-    // }
+    problem += lp_sum(&constr_vec).equal(1);
+}
 
-    // Run Solver
-    let solver = CbcSolver::new();
-    let result = solver.run(&problem);
+// Constraint 2: Each woman must be assigned to exactly one man
+for w in &women{
+    let mut constr_vec = Vec::new();
 
-    // Terminate if error, or assign status & variable values
-    assert!(result.is_ok(), result.unwrap_err());
-    let (solver_status, var_values) = result.unwrap();
-
-    // Compute final objective function value
-    let mut obj_value = 0f32;
-    for (&(&m, &w), var) in &vars{
-        let obj_coef = compat_scores.get(&(m, w)).unwrap();
-        let var_value = var_values.get(&var.name).unwrap();
-        
-        obj_value += obj_coef * var_value;
+    for m in &men{
+        constr_vec.push(1.0 * vars.get(&(m, w)).unwrap());
     }
 
-    // Print output
-    println!("Status: {:?}", solver_status);
-    println!("Objective Value: {}", obj_value);
-    // println!("{:?}", var_values);
-    for (var_name, var_value) in &var_values{
-        let int_var_value = *var_value as u32;
-        if int_var_value == 1{
-            println!("{} = {}", var_name, int_var_value);
-        }
+    problem += lp_sum(&constr_vec).equal(1);
+}
+
+// Run Solver
+let solver = CbcSolver::new();
+let result = solver.run(&problem);
+
+// Terminate if error, or assign status & variable values
+assert!(result.is_ok(), result.unwrap_err());
+let (solver_status, var_values) = result.unwrap();
+
+// Compute final objective function value
+let mut obj_value = 0f32;
+for (&(&m, &w), var) in &vars{
+    let obj_coef = compat_scores.get(&(m, w)).unwrap();
+    let var_value = var_values.get(&var.name).unwrap();
+    
+    obj_value += obj_coef * var_value;
+}
+
+// Print output
+println!("Status: {:?}", solver_status);
+println!("Objective Value: {}", obj_value);
+// println!("{:?}", var_values);
+for (var_name, var_value) in &var_values{
+    let int_var_value = *var_value as u32;
+    if int_var_value == 1{
+        println!("{} = {}", var_name, int_var_value);
     }
+}
 ```
 
-This code computes the objective function value and processes the output to print:
+This code computes the objective function value and processes the output to print the chosen pairing of men and women:
 ```
 Status: Optimal
 Objective Value: 230
