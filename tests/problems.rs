@@ -1,4 +1,5 @@
 extern crate lp_modeler;
+#[macro_use] extern crate maplit;
 
 use std::collections::HashMap;
 
@@ -53,17 +54,17 @@ fn test_readme_example_2() {
     // Problem Data
     let men = vec!["A", "B", "C"];
     let women = vec!["D", "E", "F"];
-    let scores: HashMap<(&'static str, &'static str), f32> = [
-        (("A", "D"), 50.0),
-        (("A", "E"), 75.0),
-        (("A", "F"), 75.0),
-        (("B", "D"), 60.0),
-        (("B", "E"), 95.0),
-        (("B", "F"), 80.0),
-        (("C", "D"), 60.0),
-        (("C", "E"), 70.0),
-        (("C", "F"), 80.0),
-        ].iter().cloned().collect();
+    let compat_scores = hashmap!{
+        ("A", "D") => 50.0,
+        ("A", "E") => 75.0,
+        ("A", "F") => 75.0,
+        ("B", "D") => 60.0,
+        ("B", "E") => 95.0,
+        ("B", "F") => 80.0,
+        ("C", "D") => 60.0,
+        ("C", "E") => 70.0,
+        ("C", "F") => 80.0,
+    };
 
     // Define Problem
     let mut problem = LpProblem::new("Matchmaking", LpObjective::Maximize);
@@ -79,7 +80,7 @@ fn test_readme_example_2() {
     // Define Objective Function
     let mut obj_vec: Vec<LpExpression> = Vec::new();
     for (&(&m, &w), var) in &vars{
-        let obj_coef = scores.get(&(m, w)).unwrap();
+        let obj_coef = compat_scores.get(&(m, w)).unwrap();
         obj_vec.push(*obj_coef * var);
     }
     problem += lp_sum(&obj_vec);
@@ -125,7 +126,7 @@ fn test_readme_example_2() {
     // Compute final objective function value
     let mut obj_value = 0f32;
     for (&(&m, &w), var) in &vars{
-        let obj_coef = scores.get(&(m, w)).unwrap();
+        let obj_coef = compat_scores.get(&(m, w)).unwrap();
         let var_value = var_values.get(&var.name).unwrap();
         
         obj_value += obj_coef * var_value;

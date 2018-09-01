@@ -1,7 +1,7 @@
 [package]
 name = "lp-modeler"
 version = "0.3.1"
-authors = ["Joel Cavat, Thomas Vincent"]
+authors = ["Joel Cavat, Thomas Vincent, Antony Phillips"]
 description = "A linear programming modeller written in Rust. This api helps to write LP model and use solver such as CBC, Gurobi, lp_solve, ..."
 repository = "https://github.com/jcavat/rust-lp-modeler"
 readme = "README.md"
@@ -27,3 +27,4 @@ appveyor = { repository = "jcavat/rust-lp-modeler" }
 
 [dependencies]
 uuid = { version = "0.6", features = ["v4"] }
+maplit = "1.0.1"
