@@ -27,3 +27,4 @@ appveyor = { repository = "jcavat/rust-lp-modeler" }
 
 [dependencies]
 uuid = { version = "0.6", features = ["v4"] }
+maplit = "1.0.1"
