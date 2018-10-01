@@ -4,7 +4,6 @@ extern crate lp_modeler;
 use std::collections::HashMap;
 
 use lp_modeler::variables::*;
-use lp_modeler::variables::LpExpression::*;
 use lp_modeler::operations::LpOperations;
 use lp_modeler::problem::{LpObjective, LpProblem, LpFileFormat};
 use lp_modeler::solvers::{SolverTrait, CbcSolver};
