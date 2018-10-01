@@ -5,6 +5,7 @@ use std::convert::Into;
 use std::rc::Rc;
 use variables::Constraint::*;
 use problem::LpFileFormat;
+use util::is_zero;
 
 
 
@@ -373,8 +374,8 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
                     }
 
                     // Trivial rule: 0 * x = 0
-                    (_, &LitVal(0.0)) => LitVal(0.0),
-                    (&LitVal(0.0), _) => LitVal(0.0),
+                    (_, &LitVal(v)) if is_zero(v) => LitVal(0.0),
+                    (&LitVal(v), _) if is_zero(v) => LitVal(0.0),
 
                     // Simplify two literals
                     (&LitVal(c1), &LitVal(c2)) => {
@@ -397,7 +398,7 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
 
                 match (left_expr, right_expr) {
                     // Trivial rule: 0 + x = x
-                    (_, &LitVal(0.0)) => simplify(left_expr),
+                    (_, &LitVal(v)) if is_zero(v) => simplify(left_expr),
 
                     // ASSOCIATIVITY
                     // a + (b+c) = (a+b)+c
@@ -477,7 +478,7 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
 
                 match (left_expr, right_expr) {
                     // Trivial rule: 0 + x = x
-                    (_, &LitVal(0.0)) => simplify(left_expr),
+                    (_, &LitVal(v)) if is_zero(v) => simplify(left_expr),
 
                     // a - (b + c) = (a-b)-c
                     (a, &AddExpr(ref b, ref c)) => simplify(&SubExpr(Rc::new(SubExpr(Rc::new(a.clone()), b.clone())), c.clone())),
