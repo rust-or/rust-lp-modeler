@@ -10,7 +10,7 @@ fn main() {
 
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
-    let ref c = LpInteger::new("c");
+    let ref _c = LpInteger::new("c");
 
     let mut problem = LpProblem::new("Problem", LpObjective::Maximize);
 
@@ -21,13 +21,13 @@ fn main() {
     problem += (300*(-a+b)).le(100);
     problem += (a+b).le(10);
     */
-    let cacou = ((( 6 + 3*a) + 3*b ) * a );
-    let coucou = (3 * (2+a+b) * (2+a));
+    let cacou = (( 6 + 3*a) + 3*b ) * a;
+    let coucou = 3 * (2+a+b) * (2+a);
     println!("{}", coucou.to_lp_file_format());
     println!("{}", (coucou*15).to_lp_file_format());
     println!("{}", (15*((3*a)*a)).to_lp_file_format());
     println!("{}", cacou.to_lp_file_format());
-    let test = (a * (2 + b) * 3);
+    let test = a * (2 + b) * 3;
     println!("{}", (0 * test).to_lp_file_format());
     println!("{}", ((a-b)*2).to_lp_file_format());
     println!("{}", (a-(b+2)).to_lp_file_format());
