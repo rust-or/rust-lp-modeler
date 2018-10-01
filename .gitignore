@@ -5,3 +5,4 @@ target
 *.lp
 *.log
 
+.DS_Store
