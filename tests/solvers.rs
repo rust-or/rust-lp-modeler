@@ -76,3 +76,17 @@ fn glpk_unbounded() {
     let (status, _) = solver2.read_solution().unwrap();
     assert_eq!(status, Status::Unbounded);
 }
+
+#[test]
+fn glpk_empty_col_bounds() {
+    let _ = fs::copy(
+        "tests/solution_files/glpk_empty_col_bounds.sol",
+        "glpk_empty_col_bounds.sol",
+    );
+    let solver = GlpkSolver::new();
+    let solver2 = solver.temp_solution_file("glpk_empty_col_bounds.sol".to_string());
+    let (status, solution) = solver2.read_solution().unwrap();
+    assert_eq!(status, Status::Optimal);
+    assert_eq!(1.0, *solution.get("a").unwrap());
+    assert_eq!(0.0, *solution.get("b").unwrap());
+}

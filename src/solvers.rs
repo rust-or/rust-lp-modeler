@@ -225,18 +225,24 @@ impl GlpkSolver {
                     "INFEASIBLE (FINAL)" | "INTEGER EMPTY" => Status::Infeasible,
                     "UNDEFINED" => Status::NotSolved,
                     "INTEGER UNDEFINED" | "UNBOUNDED" => Status::Unbounded,
-                    _ => return Err("Incorrect solution format".to_string()),
+                    _ => {
+                        return Err("Incorrect solution format: Unknown solution status".to_string())
+                    }
                 },
-                _ => return Err("Incorrect solution format".to_string()),
+                _ => return Err("Incorrect solution format: No solution status found".to_string()),
             };
             let mut result_lines = iter.skip(row + 7);
             for _ in 0..col {
                 let line = match result_lines.next() {
                     Some(Ok(l)) => l,
-                    _ => return Err("Incorrect solution format".to_string()),
+                    _ => {
+                        return Err(
+                            "Incorrect solution format: Not all columns are present".to_string()
+                        )
+                    }
                 };
                 let result_line: Vec<_> = line.split_whitespace().collect();
-                if result_line.len() == 5 {
+                if result_line.len() >= 4 {
                     match result_line[3].parse::<f32>() {
                         Ok(n) => {
                             vars_value.insert(result_line[1].to_string(), n);
@@ -244,7 +250,10 @@ impl GlpkSolver {
                         Err(e) => return Err(e.to_string()),
                     }
                 } else {
-                    return Err("Incorrect solution format".to_string());
+                    return Err(
+                        "Incorrect solution format: Column specification has to few fields"
+                            .to_string(),
+                    );
                 }
             }
             Ok((status, vars_value))
