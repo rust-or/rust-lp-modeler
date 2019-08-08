@@ -217,6 +217,7 @@ A_F = 1
 * Joel Cavat [(jcavat)](https://github.com/jcavat)
 * Thomas Vincent [(tvincent2)](https://github.com/tvincent2)
 * Antony Phillips [(aphi)](https://github.com/aphi)
+* Florian B. [(Lesstat)](https://github.com/Lesstat)
 
 ## Further work
 * Config for lp_solve and CPLEX
