@@ -218,6 +218,7 @@ A_F = 1
 * Thomas Vincent [(tvincent2)](https://github.com/tvincent2)
 * Antony Phillips [(aphi)](https://github.com/aphi)
 * Florian B. [(Lesstat)](https://github.com/Lesstat)
+* Amila Welihinda [(amilajack)](https://github.com/amilajack)
 
 ## Further work
 * Config for lp_solve and CPLEX
