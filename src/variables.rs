@@ -411,7 +411,10 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
                         simplify(&MulExpr(Box::new(LitVal(c)), Box::new(expr.clone())))
                     }
 
-                    (_, _) => MulExpr(Box::new(simplify(left_expr)), Box::new(simplify(right_expr))),
+                    (_, _) => MulExpr(
+                        Box::new(simplify(left_expr)),
+                        Box::new(simplify(right_expr)),
+                    ),
                 }
             }
             &AddExpr(ref ref_left_expr, ref ref_right_expr) => {

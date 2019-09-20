@@ -14,9 +14,9 @@ fn main() {
 
     problem += 10.0 * a + 20.0 * b;
 
-    problem += (300*(a-b)).ge(100);
-    problem += (300*(-a+b)).le(100);
-    problem += (a+b).le(10);
+    problem += (300 * (a - b)).ge(100);
+    problem += (300 * (-a + b)).le(100);
+    problem += (a + b).le(10);
 
     let _ = problem.write_lp("toto.lp");
 

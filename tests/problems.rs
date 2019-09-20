@@ -55,7 +55,7 @@ fn test_readme_example_2() {
     // Problem Data
     let men = vec!["A", "B", "C"];
     let women = vec!["D", "E", "F"];
-    let compat_scores = hashmap!{
+    let compat_scores = hashmap! {
         ("A", "D") => 50.0,
         ("A", "E") => 75.0,
         ("A", "F") => 75.0,

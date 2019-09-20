@@ -4,13 +4,10 @@ use std;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
-use variables::LpExpression::*;
-use variables::*;
-
-//use variables::LpExpression::{AddExpr, MulExpr};
 use std::ops::AddAssign;
 
-//use std::collections::HashMap;
+use variables::LpExpression::*;
+use variables::*;
 
 use self::uuid::Uuid;
 
@@ -304,22 +301,6 @@ impl Problem for LpProblem {
         self.constraints.push(expr.clone());
     }
 }
-
-/*
-/// Add constraints
-impl AddAssign<LpConstraint> for LpProblem {
-    fn add_assign(&mut self, _rhs: LpConstraint) {
-        self.add_constraints(&_rhs);
-    }
-}
-
-/// Add an expression as an objective function
-impl<T> AddAssign<T> for LpProblem where T: Into<LpExpression>{
-    fn add_assign(&mut self, _rhs: T) {
-        self.add_objective_expression(&_rhs.into());
-    }
-}
-*/
 
 macro_rules! impl_addassign_for_generic_problem {
     ($problem: ty) => {
