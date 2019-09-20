@@ -8,7 +8,6 @@ use lp_modeler::variables::LpInteger;
 fn main() {
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
-    let ref _c = LpInteger::new("c");
 
     let mut problem = LpProblem::new("Problem", LpObjective::Maximize);
 

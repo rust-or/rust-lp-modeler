@@ -78,8 +78,8 @@ impl LpProblem {
     pub fn new(name: &'static str, objective: LpObjective) -> LpProblem {
         let unique_name = format!("{}_{}", name, Uuid::new_v4());
         LpProblem {
-            name: name,
-            unique_name: unique_name,
+            name,
+            unique_name,
             objective_type: objective,
             obj_expr: None,
             constraints: Vec::new(),
@@ -121,38 +121,32 @@ impl LpProblem {
 pub trait LpFileFormat {
     fn to_lp_file_format(&self) -> String;
     fn write_lp(&self, file_model: &str) -> std::io::Result<()> {
-        let mut buffer = try!(File::create(file_model));
-        try!(buffer.write(self.to_lp_file_format().as_bytes()));
+        let mut buffer = File::create(file_model)?;
+        buffer.write(self.to_lp_file_format().as_bytes())?;
         Ok(())
     }
 }
 
+fn objective_string(prob: &LpProblem) -> String {
+    match prob.obj_expr {
+        Some(ref expr) => format!("obj: {}", expr.to_lp_file_format()),
+        _ => String::new()
+    }
+}
+fn constraints_string(prob: &LpProblem) -> String {
+    let mut res = String::new();
+    let mut constraints = prob.constraints.iter();
+    let mut index = 1;
+    while let Some(ref constraint) = constraints.next() {
+        res.push_str(&format!("  c{}: {}\n", index.to_string(), &constraint.to_lp_file_format()));
+        index += 1;
+    }
+    res
+}
 impl LpFileFormat for LpProblem {
+
     fn to_lp_file_format(&self) -> String {
-        let objective_string = || {
-            if let Some(ref expr) = self.obj_expr {
-                format!("obj: {}", expr.to_lp_file_format())
-            } else {
-                String::new()
-            }
-        };
 
-        let constraints_string = || {
-            let mut res = String::new();
-            let mut cstrs = self.constraints.iter();
-            let mut index = 1;
-            while let Some(ref constraint) = cstrs.next() {
-                res.push_str("  c");
-                res.push_str(&index.to_string());
-                res.push_str(": ");
-                index += 1;
-
-                res.push_str(&constraint.to_lp_file_format());
-
-                res.push_str("\n");
-            }
-            res
-        };
 
         let bounds_string = || {
             let mut res = String::new();
@@ -244,11 +238,11 @@ impl LpFileFormat for LpProblem {
                 buffer.push_str("Minimize\n  ");
             }
         }
-        let obj_str = objective_string();
+        let obj_str = objective_string(self);
         buffer.push_str(&obj_str);
 
         // Write constraints
-        let cstr_str = constraints_string();
+        let cstr_str = constraints_string(self);
         if cstr_str.len() > 0 {
             buffer.push_str("\n\nSubject To\n");
             buffer.push_str(&cstr_str);
