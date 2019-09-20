@@ -1,13 +1,11 @@
 extern crate lp_modeler;
 
 use lp_modeler::operations::LpOperations;
-use lp_modeler::problem::{LpProblem, LpObjective, LpFileFormat};
+use lp_modeler::problem::{LpFileFormat, LpObjective, LpProblem};
 use lp_modeler::solvers::*;
-use lp_modeler::variables::{LpInteger};
+use lp_modeler::variables::LpInteger;
 
 fn main() {
-
-
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
     let ref _c = LpInteger::new("c");
@@ -16,28 +14,24 @@ fn main() {
 
     /*
     problem += 10.0 * a + 20.0 * b;
-
+    
     problem += (300*(a-b)).ge(100);
     problem += (300*(-a+b)).le(100);
     problem += (a+b).le(10);
     */
-    let cacou = (( 6 + 3*a) + 3*b ) * a;
-    let coucou = 3 * (2+a+b) * (2+a);
+    let cacou = ((6 + 3 * a) + 3 * b) * a;
+    let coucou = 3 * (2 + a + b) * (2 + a);
     println!("{}", coucou.to_lp_file_format());
-    println!("{}", (coucou*15).to_lp_file_format());
-    println!("{}", (15*((3*a)*a)).to_lp_file_format());
+    println!("{}", (coucou * 15).to_lp_file_format());
+    println!("{}", (15 * ((3 * a) * a)).to_lp_file_format());
     println!("{}", cacou.to_lp_file_format());
     let test = a * (2 + b) * 3;
     println!("{}", (0 * test).to_lp_file_format());
-    println!("{}", ((a-b)*2).to_lp_file_format());
-    println!("{}", (a-(b+2)).to_lp_file_format());
-    println!("{}", (a-(b-2)).to_lp_file_format());
+    println!("{}", ((a - b) * 2).to_lp_file_format());
+    println!("{}", (a - (b + 2)).to_lp_file_format());
+    println!("{}", (a - (b - 2)).to_lp_file_format());
 
-
-
-
-    problem += ((a+b)*300).le(100);
-
+    problem += ((a + b) * 300).le(100);
 
     // Suboptimal instead of unfeasible
     // problem += (a+b).equal(10);
@@ -56,8 +50,7 @@ fn main() {
             for (name, value) in res.iter() {
                 println!("value of {} = {}", name, value);
             }
-        },
+        }
         Err(msg) => println!("{}", msg),
     }
-
 }

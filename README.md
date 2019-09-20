@@ -24,7 +24,7 @@ Maximize
   10 a + 20 b
 
 Subject To
-  c1: 500 a + 1200 b <= 10000
+  c1: 500 a + 1200 b + 1500 c <= 10000
   c2: a - b <= 0
 
 Generals
@@ -217,6 +217,8 @@ A_F = 1
 * Joel Cavat [(jcavat)](https://github.com/jcavat)
 * Thomas Vincent [(tvincent2)](https://github.com/tvincent2)
 * Antony Phillips [(aphi)](https://github.com/aphi)
+* Florian B. [(Lesstat)](https://github.com/Lesstat)
+* Amila Welihinda [(amilajack)](https://github.com/amilajack)
 
 ## Further work
 * Config for lp_solve and CPLEX
