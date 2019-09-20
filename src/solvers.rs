@@ -284,11 +284,12 @@ impl SolverTrait for GurobiSolver {
                 {
                     Ok(r) => {
                         let mut status = Status::SubOptimal;
-                        if String::from_utf8(r.stdout)
-                            .expect("")
-                            .contains("Optimal solution found")
+                        let result = String::from_utf8(r.stdout).expect("");
+                        if result.contains("Optimal solution found")
                         {
                             status = Status::Optimal;
+                        } else if result.contains("infeasible") {
+                            status = Status::Infeasible;
                         }
                         if r.status.success() {
                             let (_, res) = try!(self.read_solution());
