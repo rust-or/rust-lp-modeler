@@ -143,11 +143,10 @@ fn constraints_string(prob: &LpProblem) -> String {
     }
     res
 }
+
 impl LpFileFormat for LpProblem {
 
     fn to_lp_file_format(&self) -> String {
-
-
         let bounds_string = || {
             let mut res = String::new();
             for (_, v) in self.variables() {
@@ -163,27 +162,17 @@ impl LpFileFormat for LpProblem {
                         upper_bound,
                     }) => {
                         if let Some(l) = lower_bound {
-                            res.push_str("  ");
-                            res.push_str(&l.to_string());
-                            res.push_str(" <= ");
-                            res.push_str(&name);
+                            res.push_str(&format!("  {} <= {}", &l.to_string(), &name));
                             if let Some(u) = upper_bound {
-                                res.push_str(" <= ");
-                                res.push_str(&u.to_string());
+                                res.push_str(&format!(" <= {}", &u.to_string()));
                             }
                             res.push_str("\n");
                         } else if let Some(u) = upper_bound {
-                            res.push_str("  ");
-                            res.push_str(&name);
-                            res.push_str(" <= ");
-                            res.push_str(&u.to_string());
-                            res.push_str("\n");
+                            res.push_str(&format!("  {} <= {}\n", &name, &u.to_string()));
                         } else {
                             match v {
                                 &ConsCont(LpContinuous { .. }) => {
-                                    res.push_str("  ");
-                                    res.push_str(&name);
-                                    res.push_str(" free\n");
+                                    res.push_str(&format!("  {} free\n", &name));
                                 } // TODO: IntegerVar => -INF to INF
                                 _ => (),
                             }
