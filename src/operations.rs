@@ -1,5 +1,4 @@
 use std::ops::{Add, Mul, Neg, Sub};
-use std::rc::Rc;
 use variables::LpExpression::*;
 use variables::{Constraint, LpBinary, LpConstraint, LpContinuous, LpExpression, LpInteger};
 
@@ -53,7 +52,7 @@ macro_rules! operations_for_expr {
         {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
-                $expr_type(Rc::new(self.clone()), Rc::new(_rhs.into()))
+                $expr_type(Box::new(self.clone()), Box::new(_rhs.into()))
             }
         }
         impl<'a, T> $trait_name<T> for &'a LpExpression
@@ -62,7 +61,7 @@ macro_rules! operations_for_expr {
         {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
-                $expr_type(Rc::new(self.clone()), Rc::new(_rhs.into()))
+                $expr_type(Box::new(self.clone()), Box::new(_rhs.into()))
             }
         }
     };
@@ -81,7 +80,7 @@ macro_rules! lpvars_operation_for_intoexpr {
         {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
-                $expr_type(Rc::new($cons_type(self.clone())), Rc::new(_rhs.into())).normalize()
+                $expr_type(Box::new($cons_type(self.clone())), Box::new(_rhs.into())).normalize()
             }
         }
         impl<'a, T> $trait_name<T> for &'a $lp_type
@@ -90,7 +89,7 @@ macro_rules! lpvars_operation_for_intoexpr {
         {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
-                $expr_type(Rc::new($cons_type(self.clone())), Rc::new(_rhs.into())).normalize()
+                $expr_type(Box::new($cons_type(self.clone())), Box::new(_rhs.into())).normalize()
             }
         }
     };
@@ -105,13 +104,13 @@ macro_rules! numeric_operation_for_expr {
         impl $trait_name<LpExpression> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: LpExpression) -> LpExpression {
-                $type_expr(Rc::new(LitVal(self as f32)), Rc::new(_rhs))
+                $type_expr(Box::new(LitVal(self as f32)), Box::new(_rhs))
             }
         }
         impl<'a> $trait_name<&'a LpExpression> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: &'a LpExpression) -> LpExpression {
-                $type_expr(Rc::new(LitVal(self as f32)), Rc::new(_rhs.clone()))
+                $type_expr(Box::new(LitVal(self as f32)), Box::new(_rhs.clone()))
             }
         }
     };
@@ -168,7 +167,7 @@ where
 impl<'a> Neg for &'a LpExpression {
     type Output = LpExpression;
     fn neg(self) -> LpExpression {
-        MulExpr(Rc::new(LitVal(-1.0)), Rc::new(self.clone()))
+        MulExpr(Box::new(LitVal(-1.0)), Box::new(self.clone()))
     }
 }
 macro_rules! neg_operation_for_lpvars {
@@ -176,7 +175,7 @@ macro_rules! neg_operation_for_lpvars {
         impl<'a> Neg for &'a $lp_var_type {
             type Output = LpExpression;
             fn neg(self) -> LpExpression {
-                MulExpr(Rc::new(LitVal(-1.0)), Rc::new($constr_expr(self.clone())))
+                MulExpr(Box::new(LitVal(-1.0)), Box::new($constr_expr(self.clone())))
             }
         }
     };
@@ -191,15 +190,15 @@ macro_rules! numeric_operation_for_lpvars {
         impl $trait_name<$lp_type> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: $lp_type) -> LpExpression {
-                $type_expr(Rc::new(LitVal(self as f32)), Rc::new($cons_expr(_rhs)))
+                $type_expr(Box::new(LitVal(self as f32)), Box::new($cons_expr(_rhs)))
             }
         }
         impl<'a> $trait_name<&'a $lp_type> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: &'a $lp_type) -> LpExpression {
                 $type_expr(
-                    Rc::new(LitVal(self as f32)),
-                    Rc::new($cons_expr(_rhs.clone())),
+                    Box::new(LitVal(self as f32)),
+                    Box::new($cons_expr(_rhs.clone())),
                 )
             }
         }

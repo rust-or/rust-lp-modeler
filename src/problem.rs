@@ -4,7 +4,6 @@ use std;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
-use std::rc::Rc;
 use variables::LpExpression::*;
 use variables::*;
 
@@ -291,8 +290,8 @@ impl Problem for LpProblem {
     fn add_objective_expression(&mut self, expr: &LpExpression) {
         if let Some(e) = self.obj_expr.clone() {
             let (_, simpl_expr) = split_constant_and_expr(&simplify(&AddExpr(
-                Rc::new(expr.clone()),
-                Rc::new(e.clone()),
+                Box::new(expr.clone()),
+                Box::new(e.clone()),
             )));
             self.obj_expr = Some(simpl_expr);
         } else {
