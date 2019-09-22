@@ -203,7 +203,13 @@ C_D = 1
 A_F = 1
 ```
 
-## New features
+## Changelog
+
+### 0.3.2
+
+* Fix and improve error message for GLPK solution parsing
+* Format code with rust fmt
+
 ### 0.3.1
 * Add distributive property (ex: `3 * (a + b + 2) = 3*a + 3*b + 6`)
 * Add trivial rules (ex: `3 * a * 0 = 0` or `3 + 0 = 3`)
