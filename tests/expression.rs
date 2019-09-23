@@ -4,7 +4,6 @@ use lp_modeler::operations::LpOperations;
 use lp_modeler::problem::LpFileFormat;
 use lp_modeler::variables::LpExpression::*;
 use lp_modeler::variables::*;
-use std::rc::Rc;
 
 #[test]
 fn expressions_creation() {
@@ -13,7 +12,7 @@ fn expressions_creation() {
 
     assert_eq!(
         a + b,
-        AddExpr(Rc::new(ConsInt(a.clone())), Rc::new(ConsInt(b.clone())))
+        AddExpr(Box::new(ConsInt(a.clone())), Box::new(ConsInt(b.clone())))
     );
 }
 

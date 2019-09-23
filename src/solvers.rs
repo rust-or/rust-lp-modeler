@@ -111,7 +111,7 @@ impl CbcSolver {
     pub fn command_name(&self, command_name: String) -> CbcSolver {
         CbcSolver {
             name: self.name.clone(),
-            command_name: command_name,
+            command_name,
             temp_solution_file: self.temp_solution_file.clone(),
         }
     }
@@ -119,7 +119,7 @@ impl CbcSolver {
         CbcSolver {
             name: self.name.clone(),
             command_name: self.command_name.clone(),
-            temp_solution_file: temp_solution_file,
+            temp_solution_file,
         }
     }
     pub fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
@@ -284,14 +284,15 @@ impl SolverTrait for GurobiSolver {
                 {
                     Ok(r) => {
                         let mut status = Status::SubOptimal;
-                        if String::from_utf8(r.stdout)
-                            .expect("")
-                            .contains("Optimal solution found")
+                        let result = String::from_utf8(r.stdout).expect("");
+                        if result.contains("Optimal solution found")
                         {
                             status = Status::Optimal;
+                        } else if result.contains("infeasible") {
+                            status = Status::Infeasible;
                         }
                         if r.status.success() {
-                            let (_, res) = try!(self.read_solution());
+                            let (_, res) = self.read_solution()?;
                             Ok((status, res))
                         } else {
                             Err(r.status.to_string())
