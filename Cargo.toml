@@ -1,7 +1,7 @@
 [package]
 name = "lp-modeler"
-version = "0.3.2"
-authors = ["Joel Cavat, Thomas Vincent, Antony Phillips"]
+version = "0.3.3"
+authors = ["Joel Cavat <jcavat@gmail.com>"]
 description = "A linear programming modeller written in Rust. This api helps to write LP model and use solver such as CBC, Gurobi, lp_solve, ..."
 repository = "https://github.com/jcavat/rust-lp-modeler"
 readme = "README.md"
