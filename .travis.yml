@@ -16,6 +16,7 @@ install:
 - sudo apt-get install -qq coinor-cbc
 deploy:
   provider: cargo
+  condition: $TRAVIS_RUST_VERSION = stable
   on: 
     tags: true
   token:
