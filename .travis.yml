@@ -1,19 +1,21 @@
 language: rust
 rust:
-  - 1.22.0
-  - 1.28.0
-  - stable
-  - beta
-  - nightly
-
+- 1.22.0
+- 1.28.0
+- stable
+- beta
+- nightly
 matrix:
   allow_failures:
-    - rust: nightly
+  - rust: nightly
   fast_finish: true
-
 before_install:
-    - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
-    - sudo apt-get update -qq
-
+- sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
+- sudo apt-get update -qq
 install:
-    - sudo apt-get install -qq coinor-cbc
+- sudo apt-get install -qq coinor-cbc
+deploy:
+  on: 
+    tags: true
+  token:
+    secure: ZL0+bM44908IaHEB16yLVS3a+xkJZZGZSFwHkWpDA83WsknhJQ5n08e97AycuatRhZpMVYwYsr9OGPNhPuVOaGQ92XkJ52ZrHH4uY5pOY7FDeDZ2HxG+UVqZG4/mbsWDxZi/MV+8sCq2jEpHwBTxa1kbRKwTYJRPatnnshO9XPmSJ7ojpVOJJJL5B8SumKL8dPk4V6WNBk0hTiPOllwugKPJCLygwmZGJDzevRzQWme9ieptspmGHqip94vmFJ5hhlZkpZIm3YBG1oKsF2SQnPyvOu1ZVVjSm0x8DA/eLRw+9drDd4Avwkla/EIUmwHz6yP5HPUwVnxdzKrXfPxAM6khhauyNa/QIMgwgX5Yo0OrnefBOj3yL3oO66TtImF7UWT403VWzuAOeuSpLD2xTkqMOxg0CT8rbRcS8dJke30URtHkzq3UWTyZZ5+J84Dc+5R7S6nD+G0xu06N+nBpaevEVtaVIpUi4kSB7Leo3e+jE3KWjVufk56irFD70jlvzevvkAmct8sKkrSoSPttmKMY6KxOS5XpiUa8/z+Y6EeX5q/LQhVrJKX/+PBtRYA7pr2T4hltIIeXOUrqD9Ki8yk6nLiMIUP+QFwrMGkJmf4KKlJBh/s8HCRDq6USgc1N8Mjbn5nnv89UPSxUws3ddoWtJGMQ/FWd7IcF6IAPrJs=

@@ -205,10 +205,15 @@ A_F = 1
 
 ## Changelog
 
-### 0.3.2
+### 0.3.3
 
 * Fix and improve error message for GLPK solution parsing
 * Format code with rust fmt
+
+### 0.3.3
+
+* Add new examples in documentation
+* Improve 0.0 comparison
 
 ### 0.3.1
 * Add distributive property (ex: `3 * (a + b + 2) = 3*a + 3*b + 6`)
