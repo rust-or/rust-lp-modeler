@@ -1,9 +1,11 @@
 /// # Module variables
+///
 use self::LpExpression::*;
-use problem::LpFileFormat;
-use std::convert::Into;
+use dsl::LpFileFormat;
 use util::is_zero;
-use variables::Constraint::*;
+use dsl::Constraint::*;
+
+use std::convert::Into;
 
 pub trait BoundableLp: PartialEq + Clone {
     fn lower_bound(&self, lw: f32) -> Self;
@@ -515,9 +517,7 @@ impl LpFileFormat for LpConstraint {
 /// # Examples
 ///
 /// ```
-/// use lp_modeler::problem::{LpObjective, LpProblem};
-/// use lp_modeler::operations::LpOperations;
-/// use lp_modeler::variables::{LpBinary, lp_sum};
+/// use lp_modeler::dsl::*;
 ///
 /// let mut problem = LpProblem::new("My Problem", LpObjective::Maximize);
 /// let ref a = LpBinary::new("a");

@@ -1,9 +1,7 @@
 extern crate lp_modeler;
 
-use lp_modeler::operations::LpOperations;
-use lp_modeler::problem::{LpFileFormat, LpObjective, LpProblem};
 use lp_modeler::solvers::*;
-use lp_modeler::variables::*;
+use lp_modeler::dsl::*;
 
 fn main() {
     let ref a = LpInteger::new("a");

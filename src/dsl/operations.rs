@@ -1,6 +1,6 @@
 use std::ops::{Add, Mul, Neg, Sub};
-use variables::LpExpression::*;
-use variables::{Constraint, LpBinary, LpConstraint, LpContinuous, LpExpression, LpInteger};
+use dsl::LpExpression::*;
+use dsl::{Constraint, LpBinary, LpConstraint, LpContinuous, LpExpression, LpInteger};
 
 /// Operations trait for any type implementing Into<LpExpressions> trait
 pub trait LpOperations<T> where T: Into<LpExpression> {

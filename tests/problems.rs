@@ -4,10 +4,10 @@ extern crate maplit;
 
 use std::collections::HashMap;
 
-use lp_modeler::operations::LpOperations;
-use lp_modeler::problem::{LpFileFormat, LpObjective, LpProblem};
+use lp_modeler::dsl::LpOperations;
+use lp_modeler::dsl::{LpFileFormat, LpObjective, LpProblem};
 use lp_modeler::solvers::{CbcSolver, SolverTrait};
-use lp_modeler::variables::*;
+use lp_modeler::dsl::*;
 
 #[test]
 fn test_readme_example_1() {

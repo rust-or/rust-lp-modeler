@@ -6,17 +6,17 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::ops::AddAssign;
 
-use variables::LpExpression::*;
-use variables::*;
 
 use self::uuid::Uuid;
+use dsl::*;
+use dsl::LpExpression::*;
 
 /// Enum helping to specify the objective function of the linear problem.
 ///
 /// # Examples:
 ///
 /// ```
-/// use lp_modeler::problem::{LpObjective, LpProblem};
+/// use lp_modeler::dsl::{LpObjective, LpProblem};
 ///
 /// let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
 /// ```
@@ -36,9 +36,7 @@ pub trait Problem {
 /// # Examples:
 ///
 /// ```
-/// use lp_modeler::problem::{LpObjective, Problem, LpProblem};
-/// use lp_modeler::operations::{LpOperations};
-/// use lp_modeler::variables::LpInteger;
+/// use lp_modeler::dsl::*;
 /// use lp_modeler::solvers::{SolverTrait, CbcSolver};
 ///
 /// let ref a = LpInteger::new("a");

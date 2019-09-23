@@ -1,8 +1,9 @@
 extern crate uuid;
 use self::uuid::Uuid;
 
-use problem::LpFileFormat;
-use problem::{LpProblem, Problem};
+use dsl::LpFileFormat;
+use dsl::{LpProblem, Problem};
+
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
