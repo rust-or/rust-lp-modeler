@@ -127,13 +127,18 @@ pub trait LpFileFormat {
     }
 }
 
-fn objective_string(prob: &LpProblem) -> String {
+fn objective_lp_file_block(prob: &LpProblem) -> String {
+    // Write objectives
+    let obj_type = match prob.objective_type {
+        LpObjective::Maximize => "Maximize\n  ",
+        LpObjective::Minimize => "Minimize\n  "
+    };
     match prob.obj_expr {
-        Some(ref expr) => format!("obj: {}", expr.to_lp_file_format()),
+        Some(ref expr) => format!("{}obj: {}", obj_type, expr.to_lp_file_format()),
         _ => String::new()
     }
 }
-fn constraints_string(prob: &LpProblem) -> String {
+fn constraints_lp_file_block(prob: &LpProblem) -> String {
     let mut res = String::new();
     let mut constraints = prob.constraints.iter();
     let mut index = 1;
@@ -144,120 +149,98 @@ fn constraints_string(prob: &LpProblem) -> String {
     res
 }
 
+fn bounds_lp_file_block(prob: &LpProblem) -> String {
+    let mut res = String::new();
+    for (_, v) in prob.variables() {
+        match v {
+            &ConsInt(LpInteger {
+                         ref name,
+                         lower_bound,
+                         upper_bound,
+                     })
+            | &ConsCont(LpContinuous {
+                            ref name,
+                            lower_bound,
+                            upper_bound,
+                        }) => {
+                if let Some(l) = lower_bound {
+                    res.push_str(&format!("  {} <= {}", &l.to_string(), &name));
+                    if let Some(u) = upper_bound {
+                        res.push_str(&format!(" <= {}", &u.to_string()));
+                    }
+                    res.push_str("\n");
+                } else if let Some(u) = upper_bound {
+                    res.push_str(&format!("  {} <= {}\n", &name, &u.to_string()));
+                } else {
+                    match v {
+                        &ConsCont(LpContinuous { .. }) => {
+                            res.push_str(&format!("  {} free\n", &name));
+                        } // TODO: IntegerVar => -INF to INF
+                        _ => (),
+                    }
+                }
+            }
+            _ => (),
+        }
+    }
+    res
+}
+
+fn integers_lp_file_block(prob: &LpProblem) -> String {
+    let mut res = String::new();
+    for (_, v) in prob.variables() {
+        match v {
+            &ConsInt(LpInteger { ref name, .. }) => {
+                res.push_str(format!("{} ", name).as_str());
+            }
+            _ => (),
+        }
+    }
+    res
+}
+
+fn binaries_lp_file_block(prob: &LpProblem) -> String  {
+    let mut res = String::new();
+    for (_, v) in prob.variables() {
+        match v {
+            &ConsBin(LpBinary { ref name }) => {
+                res.push_str(format!("{} ", name).as_str());
+            }
+            _ => (),
+        }
+    }
+    res
+}
+
+
 impl LpFileFormat for LpProblem {
 
     fn to_lp_file_format(&self) -> String {
-        let bounds_string = || {
-            let mut res = String::new();
-            for (_, v) in self.variables() {
-                match v {
-                    &ConsInt(LpInteger {
-                        ref name,
-                        lower_bound,
-                        upper_bound,
-                    })
-                    | &ConsCont(LpContinuous {
-                        ref name,
-                        lower_bound,
-                        upper_bound,
-                    }) => {
-                        if let Some(l) = lower_bound {
-                            res.push_str(&format!("  {} <= {}", &l.to_string(), &name));
-                            if let Some(u) = upper_bound {
-                                res.push_str(&format!(" <= {}", &u.to_string()));
-                            }
-                            res.push_str("\n");
-                        } else if let Some(u) = upper_bound {
-                            res.push_str(&format!("  {} <= {}\n", &name, &u.to_string()));
-                        } else {
-                            match v {
-                                &ConsCont(LpContinuous { .. }) => {
-                                    res.push_str(&format!("  {} free\n", &name));
-                                } // TODO: IntegerVar => -INF to INF
-                                _ => (),
-                            }
-                        }
-                    }
-                    _ => (),
-                }
-            }
-            res
-        };
-
-        let integers_string = || {
-            let mut res = String::new();
-            for (_, v) in self.variables() {
-                match v {
-                    &ConsInt(LpInteger { ref name, .. }) => {
-                        res.push_str(name);
-                        res.push_str(" ");
-                    }
-                    _ => (),
-                }
-            }
-            res
-        };
-
-        let binaries_string = || {
-            let mut res = String::new();
-            for (_, v) in self.variables() {
-                match v {
-                    &ConsBin(LpBinary { ref name }) => {
-                        res.push_str(name);
-                        res.push_str(" ");
-                    }
-                    _ => (),
-                }
-            }
-            res
-        };
 
         let mut buffer = String::new();
 
-        buffer.push_str("\\ ");
-        buffer.push_str(&self.name);
-        buffer.push_str("\n\n");
+        buffer.push_str(format!("\\ {}\n\n", &self.name).as_str());
 
-        // Write objectives
-        match self.objective_type {
-            LpObjective::Maximize => {
-                buffer.push_str("Maximize\n  ");
-            }
-            LpObjective::Minimize => {
-                buffer.push_str("Minimize\n  ");
-            }
-        }
-        let obj_str = objective_string(self);
-        buffer.push_str(&obj_str);
+        buffer.push_str( &objective_lp_file_block(self) );
 
-        // Write constraints
-        let cstr_str = constraints_string(self);
-        if cstr_str.len() > 0 {
-            buffer.push_str("\n\nSubject To\n");
-            buffer.push_str(&cstr_str);
+        let constraints_block = constraints_lp_file_block(self);
+        if constraints_block.len() > 0 {
+            buffer.push_str(format!("\n\nSubject To\n{}", &constraints_block).as_str());
         }
 
-        // Write bounds for Integer and Continuous
-        let bound_str = bounds_string();
-        if bound_str.len() > 0 {
-            buffer.push_str("\nBounds\n");
-            buffer.push_str(&bound_str);
+        let bounds_block = bounds_lp_file_block(self);
+        if bounds_block.len() > 0 {
+            buffer.push_str(format!("\nBounds\n{}", &bounds_block).as_str());
         }
 
-        // Write Integer vars
-        let generals_str = integers_string();
-        if generals_str.len() > 0 {
-            buffer.push_str("\nGenerals\n  ");
-            buffer.push_str(&generals_str);
-            buffer.push_str("\n");
+        let integers_block = integers_lp_file_block(self);
+        if integers_block.len() > 0 {
+            buffer.push_str(format!("\nGenerals\n  {}\n", &integers_block).as_str());
         }
 
-        // Write Binaries vars
-        let binaries_str = binaries_string();
-        if binaries_str.len() > 0 {
-            buffer.push_str("\nBinary\n  ");
-            buffer.push_str(&binaries_str);
-            buffer.push_str("\n");
+        let binaries_block = binaries_lp_file_block(self);
+        if binaries_block.len() > 0 {
+            buffer.push_str(format!("\nBinary\n  {}\n", &binaries_block).as_str());
         }
 
         buffer.push_str("\nEnd");

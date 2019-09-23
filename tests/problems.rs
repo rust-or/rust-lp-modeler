@@ -43,11 +43,42 @@ Subject To
   c2: a - b <= 0
 
 "
-    .to_string();
+        .to_string();
     let output2 = problem.to_lp_file_format();
     let output2 = output2.split("Generals").collect::<Vec<&str>>();
     let output2 = output2[0];
     assert_eq!(output1, output2);
+}
+
+#[test]
+fn test_full_example() {
+    let ref a = LpInteger::new("a").lower_bound(1.0);
+    let ref b = LpInteger::new("b").upper_bound(10.0);
+    let ref c = LpInteger::new("c").lower_bound(2.0).upper_bound(8.5);
+    let ref d = LpBinary::new("d");
+    let ref e = LpContinuous::new("e");
+
+    let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
+    problem += a + b + c + d + e;
+
+    problem += (a + b + c + d + e).le(100.0);
+
+    let solver = CbcSolver::new();
+
+    match solver.run(&problem) {
+        Ok((status, res)) => {
+            println!("Status {:?}", status);
+            for (name, value) in res.iter() {
+                println!("value of {} = {}", name, value);
+            }
+        }
+        Err(msg) => println!("{}", msg),
+    }
+
+    let output1 = problem.to_lp_file_format();
+    for expr in vec!("e free", "1 <= a", "2 <= c <= 8.5", "b <= 10") {
+        assert!(output1.contains(expr), format!("{} is not present",expr));
+    }
 }
 
 #[test]

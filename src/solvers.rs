@@ -292,7 +292,7 @@ impl SolverTrait for GurobiSolver {
                             status = Status::Infeasible;
                         }
                         if r.status.success() {
-                            let (_, res) = try!(self.read_solution());
+                            let (_, res) = self.read_solution()?;
                             Ok((status, res))
                         } else {
                             Err(r.status.to_string())
