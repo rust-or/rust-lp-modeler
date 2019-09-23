@@ -94,16 +94,14 @@ impl LpExpression {
     /// Fix the numeric operand in a multiplication in an expression
     /// c * 4 must be considered as 4 c in a linear formulation lp file
     pub fn normalize(&self) -> LpExpression {
-        if let &MulExpr(ref rc_e1, ref rc_e2) = self {
-            let ref e1 = **rc_e1;
-            let ref e2 = **rc_e2;
-            if let &LitVal(..) = e1 {
+        if let MulExpr(e1, e2) = self {
+            if let LitVal(..) = **e1 {
                 return self.clone();
             } else {
-                if let &LitVal(..) = e2 {
-                    return MulExpr(rc_e2.clone(), rc_e1.clone());
+                if let LitVal(..) = **e2 {
+                    return MulExpr(Box::new(*e2.clone()), Box::new(*e1.clone()));
                 } else {
-                    return MulExpr(rc_e1.clone(), rc_e2.clone());
+                    return MulExpr(Box::new(*e1.clone()), Box::new(*e2.clone()));
                 }
             }
         }
@@ -211,20 +209,16 @@ impl LpConstraint {
 
 pub fn split_constant_and_expr(expr: &LpExpression) -> (f32, LpExpression) {
     match expr {
-        &AddExpr(ref rc_e1, ref rc_e2) => {
-            let ref e1 = **rc_e1;
-            let ref e2 = **rc_e2;
-            if let &LitVal(c) = e2 {
-                (c, e1.clone())
+        AddExpr(e1, e2) => {
+            if let LitVal(c) = **e2 {
+                (c, *e1.clone())
             } else {
                 (0.0, expr.clone())
             }
         }
-        &SubExpr(ref rc_e1, ref rc_e2) => {
-            let ref e1 = **rc_e1;
-            let ref e2 = **rc_e2;
-            if let &LitVal(c) = e2 {
-                (-c, e1.clone())
+        SubExpr(e1, e2) => {
+            if let LitVal(c) = **e2 {
+                (-c, *e1.clone())
             } else {
                 (0.0, expr.clone())
             }
@@ -236,9 +230,9 @@ pub fn split_constant_and_expr(expr: &LpExpression) -> (f32, LpExpression) {
 pub fn simplify(expr: &LpExpression) -> LpExpression {
     fn simpl(expr: &LpExpression) -> LpExpression {
         match expr {
-            &MulExpr(ref ref_left_expr, ref ref_right_expr) => {
-                let ref left_expr = **ref_left_expr;
-                let ref right_expr = **ref_right_expr;
+            MulExpr(ref left_expr, ref right_expr) => {
+                let ref left_expr = **left_expr;
+                let ref right_expr = **right_expr;
 
                 match (left_expr, right_expr) {
                     // DISTRIBUTIVITY
