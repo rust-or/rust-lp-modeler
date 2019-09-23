@@ -89,66 +89,8 @@ pub enum LpExpression {
     LitVal(f32),
     EmptyExpr,
 }
-/*
-impl<'a> PartialEq for &'a LpExpression {
-    fn eq(&self, other: &String) -> bool { *self == *other }
-}
-*/
+
 impl LpExpression {
-    /*
-    pub fn dfs_remove_constant(&self) -> LpExpression {
-        match self {
-            &MulExpr(ref rc_e1, ref rc_e2) => {
-                let ref e1 = **rc_e1;
-                let ref e2 = **rc_e2;
-                if let &LitVal(..) = e1 {
-                    if let &LitVal(..) = e2 {
-                        EmptyExpr
-                    }else{
-                        MulExpr(rc_e1.clone(), Box::new(e2.dfs_remove_constant()))
-                    }
-                }else{
-                    MulExpr(Box::new(e1.dfs_remove_constant()), Box::new(e2.dfs_remove_constant()))
-                }
-            },
-            &AddExpr(ref rc_e1, ref rc_e2) => {
-                let ref e1 = **rc_e1;
-                let ref e2 = **rc_e2;
-                if let &LitVal(..) = e1 {
-                    if let &LitVal(..) = e2 {
-                        EmptyExpr
-                    }else {
-                        e2.dfs_remove_constant()
-                    }
-                }else{
-                    if let &LitVal(..) = e2 {
-                        e1.dfs_remove_constant()
-                    }else {
-                        AddExpr(Box::new(e1.dfs_remove_constant()), Box::new(e2.dfs_remove_constant()))
-                    }
-                }
-            },
-            &SubExpr(ref rc_e1, ref rc_e2) => {
-                let ref e1 = **rc_e1;
-                let ref e2 = **rc_e2;
-                if let &LitVal(..) = e1 {
-                    if let &LitVal(..) = e2 {
-                        EmptyExpr
-                    }else {
-                        e2.dfs_remove_constant()
-                    }
-                }else{
-                    if let &LitVal(..) = e2 {
-                        e1.dfs_remove_constant()
-                    }else {
-                        SubExpr(Box::new(e1.dfs_remove_constant()), Box::new(e2.dfs_remove_constant()))
-                    }
-                }
-            },
-            _ => self.clone()
-        }
-    }
-    */
     /// Fix the numeric operand in a multiplication in an expression
     /// c * 4 must be considered as 4 c in a linear formulation lp file
     pub fn normalize(&self) -> LpExpression {
@@ -259,66 +201,7 @@ pub struct LpConstraint(pub LpExpression, pub Constraint, pub LpExpression);
 
 impl LpConstraint {
     pub fn generalize(&self) -> LpConstraint {
-        /*
         // TODO: Optimize tailrec
-        fn dfs_constant(expr: &LpExpression, acc: f32) -> f32 {
-            match expr {
-                &MulExpr(ref rc_e1, ref rc_e2) => {
-                    let ref e1 = **rc_e1;
-                    let ref e2 = **rc_e2;
-                    if let &LitVal(ref x) = e1 {
-                        if let &LitVal(ref y) = e2 {
-                            acc+x*y
-                        }else{
-                            dfs_constant(e2, acc)
-                        }
-                    }else{
-                        if let &LitVal(ref y) = e2 {
-                            dfs_constant(e1, acc+y)
-                        }else {
-                            dfs_constant(e2, acc) + dfs_constant(e1, 0.0)
-                        }
-                    }
-                },
-                &AddExpr(ref rc_e1, ref rc_e2) => {
-                    let ref e1 = **rc_e1;
-                    let ref e2 = **rc_e2;
-                    if let &LitVal(ref x) = e1 {
-                        if let &LitVal(ref y) = e2 {
-                            acc+x+y
-                        }else {
-                            dfs_constant(e2, acc+x)
-                        }
-                    }else{
-                        if let &LitVal(ref y) = e2 {
-                            dfs_constant(e1, acc+y)
-                        }else {
-                            dfs_constant(e2, acc) + dfs_constant(e1, 0.0)
-                        }
-                    }
-                },
-                &SubExpr(ref rc_e1, ref rc_e2) => {
-                    let ref e1 = **rc_e1;
-                    let ref e2 = **rc_e2;
-                    if let &LitVal(ref x) = e1 {
-                        if let &LitVal(ref y) = e2 {
-                            acc+x-y
-                        }else {
-                            dfs_constant(e2, acc+x)
-                        }
-                    }else{
-                        if let &LitVal(ref y) = e2 {
-                            dfs_constant(e1, acc-y)
-                        }else {
-                            dfs_constant(e1, acc) - dfs_constant(e2, 0.0)
-                        }
-                    }
-                },
-                _ => acc
-            }
-        }
-        */
-
         let &LpConstraint(ref lhs, ref op, ref rhs) = self;
         let ref lhs_expr = simplify(&(lhs - rhs));
         let (constant, lhs_expr) = split_constant_and_expr(lhs_expr);

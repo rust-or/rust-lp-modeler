@@ -111,7 +111,7 @@ impl CbcSolver {
     pub fn command_name(&self, command_name: String) -> CbcSolver {
         CbcSolver {
             name: self.name.clone(),
-            command_name: command_name,
+            command_name,
             temp_solution_file: self.temp_solution_file.clone(),
         }
     }
@@ -119,7 +119,7 @@ impl CbcSolver {
         CbcSolver {
             name: self.name.clone(),
             command_name: self.command_name.clone(),
-            temp_solution_file: temp_solution_file,
+            temp_solution_file,
         }
     }
     pub fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
