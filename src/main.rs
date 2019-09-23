@@ -3,7 +3,7 @@ extern crate lp_modeler;
 use lp_modeler::operations::LpOperations;
 use lp_modeler::problem::{LpFileFormat, LpObjective, LpProblem};
 use lp_modeler::solvers::*;
-use lp_modeler::variables::LpInteger;
+use lp_modeler::variables::*;
 
 fn main() {
     let ref a = LpInteger::new("a");

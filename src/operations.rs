@@ -3,10 +3,7 @@ use variables::LpExpression::*;
 use variables::{Constraint, LpBinary, LpConstraint, LpContinuous, LpExpression, LpInteger};
 
 /// Operations trait for any type implementing Into<LpExpressions> trait
-pub trait LpOperations<T>
-where
-    T: Into<LpExpression>,
-{
+pub trait LpOperations<T> where T: Into<LpExpression> {
     /// Less or equal binary syntax for LpExpression
     fn le(&self, lhs_expr: T) -> LpConstraint;
     /// Greater or equal binary syntax for LpExpression
@@ -134,10 +131,7 @@ impl<'a> Into<LpExpression> for &'a LpExpression {
 }
 
 /// Implementing LpOperations trait for any Into<LpExpression>
-impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U
-where
-    U: Into<LpExpression> + Clone,
-{
+impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
     fn le(&self, lhs_expr: T) -> LpConstraint {
         LpConstraint(
             self.clone().into(),
