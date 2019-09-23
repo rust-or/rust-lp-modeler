@@ -228,9 +228,9 @@ pub fn split_constant_and_expr(expr: &LpExpression) -> (f32, LpExpression) {
 }
 
 pub fn simplify(expr: &LpExpression) -> LpExpression {
-    fn simpl(expr: &LpExpression) -> LpExpression {
+    fn simplify_rec(expr: &LpExpression) -> LpExpression {
         match expr {
-            MulExpr(ref left_expr, ref right_expr) => {
+            MulExpr(left_expr, right_expr) => {
                 let ref left_expr = **left_expr;
                 let ref right_expr = **right_expr;
 
@@ -487,11 +487,11 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
         }
     }
 
-    let n = simpl(expr);
-    // Use parenthesis system because on expression with different syntax tree is not equals
+    let n = simplify_rec(expr);
+    // Use parenthesis system because one expression with different syntax tree is not equals
     //if show(self, true) != show(&n, true) {
-    if expr.clone() != n.clone() {
-        simpl(&n)
+    if *expr != n {
+        simplify_rec(&n)
     } else {
         n
     }
