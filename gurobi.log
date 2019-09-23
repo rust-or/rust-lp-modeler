@@ -1,0 +1,776 @@
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 20:07:44 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_dce7342a-20e4-44a5-a344-5d18fb71015f.lp
+Reading time = 0.00 seconds
+: 1 rows, 2 columns, 2 nonzeros
+Optimize a model with 1 rows, 2 columns and 2 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [3e+02, 3e+02]
+  Objective range  [0e+00, 0e+00]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+02, 1e+02]
+Found heuristic solution: objective -0.0000000
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: -0 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -0.000000000000e+00, best bound -0.000000000000e+00, gap 0.0000%
+
+Wrote result file 'dc8da219-a453-43e8-b9a8-c0e1d3cab5cc.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 20:09:13 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_c6afd227-6600-47bd-b522-c28d424c5573.lp
+Reading time = 0.00 seconds
+: 1 rows, 2 columns, 2 nonzeros
+Optimize a model with 1 rows, 2 columns and 2 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [3e+02, 3e+02]
+  Objective range  [0e+00, 0e+00]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+02, 1e+02]
+Found heuristic solution: objective -0.0000000
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: -0 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective -0.000000000000e+00, best bound -0.000000000000e+00, gap 0.0000%
+
+Wrote result file '186aa4a8-473d-4b1a-904f-48999a356388.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 20:09:24 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_49d361d4-d468-42f0-8eb5-81cdc3f3903c.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.01s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file '63aebbc0-390c-40eb-9fd5-6793d51fbeab.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 20:30:44 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_24b972cc-2ba6-4d06-a8a8-d1f03127d066.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file '4c3bca05-b1f3-472c-a9b2-d741b0df36bd.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 20:31:10 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_ca948050-6112-4f7c-9646-55b563666734.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file '563c5160-5d76-4318-a65e-cf1937ecb70b.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 20:32:01 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_3cdcaab1-ef0a-4466-9f2d-fc088a129e4d.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [2e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 250 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 2.500000000000e+02, best bound 2.500000000000e+02, gap 0.0000%
+
+Wrote result file '435b0c80-9dce-4352-8947-d9930993e8a2.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 20:32:09 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_f7b78c25-ece7-4a9c-b48b-78dbff79452e.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file 'e8d54b66-88b8-4131-b337-e20d42fc2f89.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 20:44:00 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_ac8b48e5-636c-47d4-9fdc-3e4171f9d78b.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file '2936bf54-8797-4547-b010-ee7b8c9ffefe.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:20:56 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_79f468d3-bfbf-44e6-b680-84953bafe180.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.02s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.02 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file '00de5837-18fc-4c5a-86d7-2282279c5bb1.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:27:01 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_3b6fd039-9072-44e4-93b7-afeb543b988f.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file '19f81de8-3926-4231-9021-6e29db7b5b31.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:27:29 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_e74d5739-3100-473b-9c79-08314182e779.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file 'cdbd7310-ee46-43e6-be29-6475f782bc75.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:27:43 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_cc1edbce-3f73-47f2-8ef6-f2c32c78dc98.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [2e+00, 2e+00]
+  RHS range        [1e+01, 1e+02]
+Found heuristic solution: objective 100.0000000
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 2: 140 100 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file 'e264d557-5913-4fd5-920e-9cee523064e5.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:28:01 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_bf53eeb6-0278-4015-99f0-e821382b3e83.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [2e+00, 5e+00]
+  RHS range        [1e+01, 1e+02]
+Found heuristic solution: objective 130.0000000
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 130 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.300000000000e+02, best bound 1.300000000000e+02, gap 0.0000%
+
+Wrote result file '9f72fa94-db66-42a5-8091-bfd5925da042.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:28:20 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_7b679b4d-89f6-4298-9a3c-b0e934e43255.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [2e+00, 5e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 0
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+
+Unable to retrieve attribute 'X'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:28:31 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_a663b13d-0cf9-49a5-bb9b-5dc66b7d9d15.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [5e+00, 5e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 0
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+
+Unable to retrieve attribute 'X'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:31:28 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_9357af88-4f2e-4256-8bf6-15277e528b57.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [5e+00, 5e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 0
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+
+Unable to retrieve attribute 'X'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:43:06 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_9911436d-724e-44e8-b543-981dd41ee324.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [5e+00, 5e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 0
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+
+Unable to retrieve attribute 'X'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:43:39 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file toto.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [5e+00, 5e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 0
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:44:44 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_c92200da-3e3c-4939-a470-44d3c44c824d.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [4e+00, 4e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file '068074c5-fdf3-4ab6-add3-2c02854a836a.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:45:25 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_3f0531d7-0d21-4753-8eb6-89804cc87968.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [5e+00, 5e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 0
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+
+Unable to retrieve attribute 'X'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:45:27 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file toto.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [5e+00, 5e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 0
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:50:42 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_16071aa7-b700-4bc7-b482-dac6a6fa28b9.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [5e+00, 5e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 0
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+
+Unable to retrieve attribute 'X'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:53:28 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_c097c5cd-9931-417b-844a-b207c590bf03.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file 'f65d5685-28b4-4115-99b0-153ec1631d87.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Fri Sep 20 21:53:35 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_2221fc89-2252-450f-9330-b8eeb086e871.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.00s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file '007698f0-0366-427f-9556-a9c2bc2ceba6.sol'
+
+
+Gurobi 8.0.1 (mac64) logging started Sun Sep 22 21:43:19 2019
+
+Academic license - for non-commercial use only
+
+Gurobi Optimizer version 8.0.1 build v8.0.1rc0 (mac64)
+Copyright (c) 2018, Gurobi Optimization, LLC
+
+Read LP format model from file Problem_6aa6a586-2f6a-477e-bdb7-0dd58daca481.lp
+Reading time = 0.00 seconds
+obj: 3 rows, 2 columns, 6 nonzeros
+Optimize a model with 3 rows, 2 columns and 6 nonzeros
+Variable types: 0 continuous, 2 integer (0 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 3e+02]
+  Objective range  [1e+01, 2e+01]
+  Bounds range     [0e+00, 0e+00]
+  RHS range        [1e+01, 1e+02]
+Presolve removed 3 rows and 2 columns
+Presolve time: 0.01s
+Presolve: All rows and columns removed
+
+Explored 0 nodes (0 simplex iterations) in 0.01 seconds
+Thread count was 1 (of 8 available processors)
+
+Solution count 1: 140 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 1.400000000000e+02, best bound 1.400000000000e+02, gap 0.0000%
+
+Wrote result file 'b9b4a45a-9db1-440c-9880-50133e012b48.sol'
+

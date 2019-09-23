@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CargoProjects">
+    <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="851a9b58-4502-48bc-b901-e264ac83a3c9" name="Default Changelist" comment="" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CodeStyleSettingsInfer">
+    <option name="done" value="true" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="WKbewcoo" />
+  </component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="1" />
+  </component>
+  <component name="ProjectId" id="1R6zvZr41eHuv3YoEl1Qy1b0hCM" />
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="/usr/local/bin/node" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="Application" factoryName="Application">
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="JUnit" factoryName="JUnit">
+      <option name="TEST_OBJECT" value="class" />
+      <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="TestNG">
+      <option name="TEST_OBJECT" value="CLASS" />
+      <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
+      <properties />
+      <listeners />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="RustProjectSettings">
+    <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
+  </component>
+  <component name="SbtLocalSettings">
+    <option name="projectSyncType">
+      <map>
+        <entry key="$PROJECT_DIR$/../../arca1" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../hepia/_bsc/quizz/quizz-http-serv" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../hepia/algrel-parser" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../hepia/githepia/githepia" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../hepia/scala-ml-neural" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../hepia/slick-stream-employees" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../hepia/xylo-template" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../hedi-data" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../post-json" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../scalinea" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../sandbox/akka-http-mongodb-cors" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../sandbox/akka-http-with-bearer-tokens" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../sandbox/breeze" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../sandbox/scalinea" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../sandbox/snipet-workflow" value="PREVIEW" />
+        <entry key="$PROJECT_DIR$/../../workspaceArca/vault-core-api" value="PREVIEW" />
+      </map>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="851a9b58-4502-48bc-b901-e264ac83a3c9" name="Default Changelist" comment="" />
+      <created>1569002564626</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1569002564626</updated>
+      <workItem from="1569002567702" duration="55000" />
+      <workItem from="1569002635766" duration="7291000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
