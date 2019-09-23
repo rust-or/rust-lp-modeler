@@ -15,6 +15,7 @@ before_install:
 install:
 - sudo apt-get install -qq coinor-cbc
 deploy:
+  provider: cargo
   on: 
     tags: true
   token:
