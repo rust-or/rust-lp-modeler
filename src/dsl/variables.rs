@@ -441,19 +441,10 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
 /// problem += lp_sum(v).equal(10.0);
 /// ```
 ///
-pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression
-where
-    T: Into<LpExpression> + Clone,
-{
-    let mut expr = expr.clone();
-    if let Some(e1) = expr.pop() {
-        if let Some(e2) = expr.pop() {
-            expr.push(e2);
-            AddExpr(Box::new(e1.into()), Box::new(lp_sum(&expr)))
-        } else {
-            e1.into()
-        }
+pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression where T: Into<LpExpression> + Clone {
+    if let Some(first) = expr.first() {
+        expr[1..].iter().fold(first.clone().into(), |a,b| AddExpr(Box::new(a), Box::new(b.clone().into())) )
     } else {
-        EmptyExpr
+        panic!("vector should have at least one element");
     }
 }

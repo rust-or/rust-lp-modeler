@@ -148,3 +148,32 @@ fn expressions_to_lp_file_format() {
         "3 a + 3 b - a - b <= -30"
     );
 }
+
+#[test]
+fn expression_with_lp_sum() {
+    let ref a = LpBinary::new("a");
+    let ref b = LpBinary::new("b");
+    let ref c = LpBinary::new("c");
+    let ref d = LpBinary::new("d");
+
+    let ref expr1 = vec!(a,b,c);
+    let ref expr2 = vec!(a,b,c,d);
+    let ref expr3 = vec!(a);
+    let ref empty: Vec<&LpBinary> = vec!();
+    assert_eq!(
+        lp_sum(expr1).equal(10.0).to_lp_file_format(),
+        "a + b + c = 10"
+    );
+    assert_eq!(
+        lp_sum(expr2).equal(10.0).to_lp_file_format(),
+        "a + b + c + d = 10"
+    );
+    assert_eq!(
+        lp_sum(expr3).le(5.5).to_lp_file_format(),
+        "a <= 5.5"
+    );
+    assert!(
+        std::panic::catch_unwind( || lp_sum(empty)).is_err(),
+        "should panic if empty vec"
+    );
+}
