@@ -17,7 +17,8 @@ fn main() {
 
     //let _ = problem.write_lp("toto.lp");
 
-    let solver = GurobiSolver::new();
+//    let solver = GurobiSolver::new();
+    let solver = CbcSolver::new();
 
     match solver.run(&problem) {
         Ok((status, res)) => {
