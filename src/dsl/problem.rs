@@ -1,9 +1,6 @@
 extern crate uuid;
 
-use std;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::prelude::*;
 use std::ops::AddAssign;
 
 
@@ -66,9 +63,9 @@ pub trait Problem {
 pub struct LpProblem {
     pub name: &'static str,
     pub unique_name: String,
-    objective_type: LpObjective,
-    obj_expr: Option<LpExpression>,
-    constraints: Vec<LpConstraint>,
+    pub objective_type: LpObjective,
+    pub obj_expr: Option<LpExpression>,
+    pub constraints: Vec<LpConstraint>,
 }
 
 impl LpProblem {
@@ -86,7 +83,7 @@ impl LpProblem {
 
     // TODO: Call once and pass into parameter
     // TODO: Check variables on the objective function
-    fn variables(&self) -> HashMap<String, &LpExpression> {
+    pub fn variables(&self) -> HashMap<String, &LpExpression> {
         fn var<'a>(expr: &'a LpExpression, lst: &mut Vec<(String, &'a LpExpression)>) {
             match expr {
                 &ConsBin(LpBinary { ref name, .. })
@@ -113,137 +110,6 @@ impl LpProblem {
         lst.iter()
             .map(|&(ref n, ref x)| (n.clone(), *x))
             .collect::<HashMap<String, &LpExpression>>()
-    }
-}
-
-pub trait LpFileFormat {
-    fn to_lp_file_format(&self) -> String;
-    fn write_lp(&self, file_model: &str) -> std::io::Result<()> {
-        let mut buffer = File::create(file_model)?;
-        buffer.write(self.to_lp_file_format().as_bytes())?;
-        Ok(())
-    }
-}
-
-fn objective_lp_file_block(prob: &LpProblem) -> String {
-    // Write objectives
-    let obj_type = match prob.objective_type {
-        LpObjective::Maximize => "Maximize\n  ",
-        LpObjective::Minimize => "Minimize\n  "
-    };
-    match prob.obj_expr {
-        Some(ref expr) => format!("{}obj: {}", obj_type, expr.to_lp_file_format()),
-        _ => String::new()
-    }
-}
-fn constraints_lp_file_block(prob: &LpProblem) -> String {
-    let mut res = String::new();
-    let mut constraints = prob.constraints.iter();
-    let mut index = 1;
-    while let Some(ref constraint) = constraints.next() {
-        res.push_str(&format!("  c{}: {}\n", index.to_string(), &constraint.to_lp_file_format()));
-        index += 1;
-    }
-    res
-}
-
-fn bounds_lp_file_block(prob: &LpProblem) -> String {
-    let mut res = String::new();
-    for (_, v) in prob.variables() {
-        match v {
-            &ConsInt(LpInteger {
-                         ref name,
-                         lower_bound,
-                         upper_bound,
-                     })
-            | &ConsCont(LpContinuous {
-                            ref name,
-                            lower_bound,
-                            upper_bound,
-                        }) => {
-                if let Some(l) = lower_bound {
-                    res.push_str(&format!("  {} <= {}", &l.to_string(), &name));
-                    if let Some(u) = upper_bound {
-                        res.push_str(&format!(" <= {}", &u.to_string()));
-                    }
-                    res.push_str("\n");
-                } else if let Some(u) = upper_bound {
-                    res.push_str(&format!("  {} <= {}\n", &name, &u.to_string()));
-                } else {
-                    match v {
-                        &ConsCont(LpContinuous { .. }) => {
-                            res.push_str(&format!("  {} free\n", &name));
-                        } // TODO: IntegerVar => -INF to INF
-                        _ => (),
-                    }
-                }
-            }
-            _ => (),
-        }
-    }
-    res
-}
-
-fn integers_lp_file_block(prob: &LpProblem) -> String {
-    let mut res = String::new();
-    for (_, v) in prob.variables() {
-        match v {
-            &ConsInt(LpInteger { ref name, .. }) => {
-                res.push_str(format!("{} ", name).as_str());
-            }
-            _ => (),
-        }
-    }
-    res
-}
-
-fn binaries_lp_file_block(prob: &LpProblem) -> String  {
-    let mut res = String::new();
-    for (_, v) in prob.variables() {
-        match v {
-            &ConsBin(LpBinary { ref name }) => {
-                res.push_str(format!("{} ", name).as_str());
-            }
-            _ => (),
-        }
-    }
-    res
-}
-
-
-impl LpFileFormat for LpProblem {
-
-    fn to_lp_file_format(&self) -> String {
-
-        let mut buffer = String::new();
-
-        buffer.push_str(format!("\\ {}\n\n", &self.name).as_str());
-
-        buffer.push_str( &objective_lp_file_block(self) );
-
-        let constraints_block = constraints_lp_file_block(self);
-        if constraints_block.len() > 0 {
-            buffer.push_str(format!("\n\nSubject To\n{}", &constraints_block).as_str());
-        }
-
-        let bounds_block = bounds_lp_file_block(self);
-        if bounds_block.len() > 0 {
-            buffer.push_str(format!("\nBounds\n{}", &bounds_block).as_str());
-        }
-
-        let integers_block = integers_lp_file_block(self);
-        if integers_block.len() > 0 {
-            buffer.push_str(format!("\nGenerals\n  {}\n", &integers_block).as_str());
-        }
-
-        let binaries_block = binaries_lp_file_block(self);
-        if binaries_block.len() > 0 {
-            buffer.push_str(format!("\nBinary\n  {}\n", &binaries_block).as_str());
-        }
-
-        buffer.push_str("\nEnd");
-
-        buffer
     }
 }
 

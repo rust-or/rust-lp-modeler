@@ -1,8 +1,8 @@
 extern crate uuid;
 use self::uuid::Uuid;
 
-use dsl::LpFileFormat;
 use dsl::{LpProblem, Problem};
+use format::lp_format::LpFileFormat;
 
 use std::collections::HashMap;
 use std::fs;
@@ -11,6 +11,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::io::Error;
 use std::process::Command;
+
 
 #[derive(Debug, PartialEq)]
 pub enum Status {

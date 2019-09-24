@@ -1,9 +1,9 @@
 extern crate lp_modeler;
 
-use lp_modeler::dsl::LpOperations;
-use lp_modeler::dsl::LpFileFormat;
-use lp_modeler::dsl::LpExpression::*;
 use lp_modeler::dsl::*;
+use lp_modeler::dsl::LpExpression::*;
+
+use lp_modeler::format::lp_format::LpFileFormat;
 
 #[test]
 fn expressions_creation() {

@@ -15,7 +15,7 @@ fn main() {
     problem += (300 * (-a + b)).le(100);
     problem += (a + b).le(10);
 
-    let _ = problem.write_lp("toto.lp");
+    //let _ = problem.write_lp("toto.lp");
 
     let solver = GurobiSolver::new();
 

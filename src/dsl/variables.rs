@@ -1,9 +1,7 @@
 /// # Module variables
 ///
 use self::LpExpression::*;
-use dsl::LpFileFormat;
 use util::is_zero;
-use dsl::Constraint::*;
 
 use std::convert::Into;
 
@@ -111,79 +109,7 @@ impl LpExpression {
     }
 }
 
-fn show(e: &LpExpression, with_parenthesis: bool) -> String {
-    let str_left_mult = if with_parenthesis { "(" } else { "" };
-    let str_right_mult = if with_parenthesis { ")" } else { "" };
-    let str_op_mult = if with_parenthesis { " * " } else { " " };
-    match e {
-        &LitVal(n) => n.to_string(),
-        &AddExpr(ref e1, ref e2) => {
-            str_left_mult.to_string()
-                + &show(e1, with_parenthesis)
-                + " + "
-                + &show(e2, with_parenthesis)
-                + str_right_mult
-        }
-        &SubExpr(ref e1, ref e2) => {
-            str_left_mult.to_string()
-                + &show(e1, with_parenthesis)
-                + " - "
-                + &show(e2, with_parenthesis)
-                + str_right_mult
-        }
-        &MulExpr(ref e1, ref e2) => {
-            let ref deref_e1 = **e1;
 
-            match deref_e1 {
-                &LitVal(v) if v == 1.0 => {
-                    //e2.to_lp_file_format()
-                    str_left_mult.to_string()
-                        + &" ".to_string()
-                        + &show(e2, with_parenthesis)
-                        + str_right_mult
-                }
-                &LitVal(v) if v == -1.0 => {
-                    //"-".to_string() + &e2.to_lp_file_format()
-                    str_left_mult.to_string()
-                        + &"-".to_string()
-                        + &show(e2, with_parenthesis)
-                        + str_right_mult
-                }
-                _ => {
-                    str_left_mult.to_string()
-                        + &show(e1, with_parenthesis)
-                        + str_op_mult
-                        + &show(e2, with_parenthesis)
-                        + str_right_mult
-                }
-            }
-        }
-        &ConsBin(LpBinary { name: ref n, .. }) => n.to_string(),
-        &ConsInt(LpInteger { name: ref n, .. }) => n.to_string(),
-        &ConsCont(LpContinuous { name: ref n, .. }) => n.to_string(),
-        _ => "EmptyExpr!!".to_string(),
-    }
-}
-
-impl LpFileFormat for LpExpression {
-    fn to_lp_file_format(&self) -> String {
-        fn formalize_signs(s: String) -> String {
-            let mut s = s.clone();
-            let mut t = "".to_string();
-            while s != t {
-                t = s.clone();
-                s = s.replace("+ +", "+ ");
-                s = s.replace("- +", "- ");
-                s = s.replace("+ -", "- ");
-                s = s.replace("- -", "+ ");
-                s = s.replace("  ", " ");
-            }
-            s
-        }
-
-        formalize_signs(show(&simplify(self), false))
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum Constraint {
@@ -496,19 +422,6 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
         simplify_rec(&n)
     } else {
         n
-    }
-}
-impl LpFileFormat for LpConstraint {
-    fn to_lp_file_format(&self) -> String {
-        let mut res = String::new();
-        res.push_str(&self.0.to_lp_file_format());
-        match self.1 {
-            GreaterOrEqual => res.push_str(" >= "),
-            LessOrEqual => res.push_str(" <= "),
-            Equal => res.push_str(" = "),
-        }
-        res.push_str(&self.2.to_lp_file_format());
-        res
     }
 }
 
