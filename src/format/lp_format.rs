@@ -1,10 +1,10 @@
-use dsl::*;
-use dsl::Constraint::*;
-use dsl::LpExpression::*;
-
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::Result;
+
+use dsl::*;
+use dsl::Constraint::*;
+use dsl::LpExpression::*;
 
 pub trait LpFileFormat {
     fn to_lp_file_format(&self) -> String;
