@@ -4,13 +4,50 @@ use dsl::LpExpression::*;
 
 use std::fs::File;
 use std::io::prelude::*;
+use std::io::Result;
 
 pub trait LpFileFormat {
     fn to_lp_file_format(&self) -> String;
-    fn write_lp(&self, file_model: &str) -> std::io::Result<()> {
+    fn write_lp(&self, file_model: &str) -> Result<()> {
         let mut buffer = File::create(file_model)?;
         buffer.write(self.to_lp_file_format().as_bytes())?;
         Ok(())
+    }
+}
+
+impl LpFileFormat for LpProblem {
+
+    fn to_lp_file_format(&self) -> String {
+
+        let mut buffer = String::new();
+
+        buffer.push_str(format!("\\ {}\n\n", &self.name).as_str());
+
+        buffer.push_str( &objective_lp_file_block(self) );
+
+        let constraints_block = constraints_lp_file_block(self);
+        if constraints_block.len() > 0 {
+            buffer.push_str(format!("\n\nSubject To\n{}", &constraints_block).as_str());
+        }
+
+        let bounds_block = bounds_lp_file_block(self);
+        if bounds_block.len() > 0 {
+            buffer.push_str(format!("\nBounds\n{}", &bounds_block).as_str());
+        }
+
+        let integers_block = integers_lp_file_block(self);
+        if integers_block.len() > 0 {
+            buffer.push_str(format!("\nGenerals\n  {}\n", &integers_block).as_str());
+        }
+
+        let binaries_block = binaries_lp_file_block(self);
+        if binaries_block.len() > 0 {
+            buffer.push_str(format!("\nBinary\n  {}\n", &binaries_block).as_str());
+        }
+
+        buffer.push_str("\nEnd");
+
+        buffer
     }
 }
 
@@ -97,43 +134,6 @@ fn binaries_lp_file_block(prob: &LpProblem) -> String  {
         }
     }
     res
-}
-
-
-impl LpFileFormat for LpProblem {
-
-    fn to_lp_file_format(&self) -> String {
-
-        let mut buffer = String::new();
-
-        buffer.push_str(format!("\\ {}\n\n", &self.name).as_str());
-
-        buffer.push_str( &objective_lp_file_block(self) );
-
-        let constraints_block = constraints_lp_file_block(self);
-        if constraints_block.len() > 0 {
-            buffer.push_str(format!("\n\nSubject To\n{}", &constraints_block).as_str());
-        }
-
-        let bounds_block = bounds_lp_file_block(self);
-        if bounds_block.len() > 0 {
-            buffer.push_str(format!("\nBounds\n{}", &bounds_block).as_str());
-        }
-
-        let integers_block = integers_lp_file_block(self);
-        if integers_block.len() > 0 {
-            buffer.push_str(format!("\nGenerals\n  {}\n", &integers_block).as_str());
-        }
-
-        let binaries_block = binaries_lp_file_block(self);
-        if binaries_block.len() > 0 {
-            buffer.push_str(format!("\nBinary\n  {}\n", &binaries_block).as_str());
-        }
-
-        buffer.push_str("\nEnd");
-
-        buffer
-    }
 }
 
 impl LpFileFormat for LpExpression {
