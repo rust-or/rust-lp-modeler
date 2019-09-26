@@ -36,20 +36,20 @@ fn main() {
     // Define Objective Function
     let mut obj_vec: Vec<LpExpression> = Vec::new();
     for (&(&m, &w), var) in &vars{
-        let obj_coef = compat_scores.get(&(m, w)).unwrap();
-        obj_vec.push(*obj_coef * var);
+        let &obj_coef = compat_scores.get(&(m, w)).unwrap();
+        obj_vec.push(obj_coef * var);
     }
     problem += lp_sum(&obj_vec);
 
     // Define Constraints
     // Constraint 1: Each man must be assigned to exactly one woman
     for m in &men{
-        problem += sum(&women, |w| 1.0 * vars.get(&(m,w)).unwrap() ).equal(1);
+        problem += sum(&women, |w| vars.get(&(m,w)).unwrap() ).equal(1);
     }
 
     // Constraint 2: Each woman must be assigned to exactly one man
     for w in &women{
-        problem += sum(&men, |m| 1.0 * vars.get(&(m,w)).unwrap() ).equal(1);
+        problem += sum(&men, |m| vars.get(&(m,w)).unwrap() ).equal(1);
     }
 
     // Run Solver

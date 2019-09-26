@@ -449,30 +449,7 @@ pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression where T: Into<LpExpression> + Cl
     }
 }
 
-//pub fn sum<T>(expr: &'static Vec<T>) -> impl Fn(Box<dyn Fn(&T) -> LpExpression>) -> LpExpression {
-//return move |f| lp_sum(&expr.iter().map(f).collect());
-/*
-pub fn sum<T>(expr: &Vec<T>) -> impl Fn(Fn(T) -> LpExpression) -> LpExpression {
-    let s = |f| lp_sum(&expr.iter().map(f).collect());
-    return s;
+pub fn sum<'a, T: 'a,U>(expr: &'a Vec<T>, f: impl Fn(&'a T) -> U) -> LpExpression where U: Into<LpExpression> + Clone {
+    return lp_sum(&expr.iter().map(|t| f(t.into())).collect());
 }
-*/
-
-/*
-pub fn sum<T>(expr: &'static Vec<T>) -> (impl Fn(Box<dyn Fn(&T) -> LpExpression>) -> LpExpression) {
-    return move |f| lp_sum(&expr.iter().map(f).collect());
-}
-*/
-pub fn sum<T>(expr: &Vec<T>, f: impl Fn(&T) -> LpExpression) -> LpExpression {
-    return lp_sum(&expr.iter().map(f).collect());
-}
-
-
-/*
-pub fn sum<T>(expr: &Vec<T>) -> Box<dyn Fn(fn(&T) -> LpExpression) -> LpExpression + '_> {
-    Box::new(move |f| lp_sum(&expr.iter().map(f).collect()))
-}
-
-problem += sum(&men)( |m| 1.0 * vars.get(&(m,w)).unwrap() ).equal(1);
-*/
 
