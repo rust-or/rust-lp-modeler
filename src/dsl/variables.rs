@@ -453,3 +453,58 @@ pub fn sum<'a, T: 'a,U>(expr: &'a Vec<T>, f: impl Fn(&'a T) -> U) -> LpExpressio
     return lp_sum(&expr.iter().map(|t| f(t.into())).collect());
 }
 
+pub trait SummableExp {
+    fn sum(&self) -> LpExpression;
+}
+
+/// make a complete expression or a constraint with a vector of expressions
+///
+/// # Examples
+///
+/// ```
+/// use lp_modeler::dsl::*;
+///
+/// let mut problem = LpProblem::new("My Problem", LpObjective::Maximize);
+/// let ref a = LpBinary::new("a");
+/// let ref b = LpBinary::new("b");
+/// let ref c = LpBinary::new("c");
+///
+/// problem += vec!(a,b,c).sum().equal(10.0);
+/// ```
+///
+impl<T> SummableExp for Vec<T> where T: Into<LpExpression> + Clone {
+    fn sum(&self) -> LpExpression {
+       lp_sum(self)
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

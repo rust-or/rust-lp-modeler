@@ -98,99 +98,88 @@ This problem is formulated as an [Assignment Problem](https://en.wikipedia.org/w
 #### Rust code
 ```rust
 extern crate lp_modeler;
-#[macro_use] extern crate maplit;
 
 use std::collections::HashMap;
 
-use lp_modeler::variables::*;
-use lp_modeler::variables::LpExpression::*;
-use lp_modeler::operations::LpOperations;
-use lp_modeler::problem::{LpObjective, LpProblem, LpFileFormat};
+use lp_modeler::dsl::*;
 use lp_modeler::solvers::{SolverTrait, CbcSolver};
 
-// Problem Data
-let men = vec!["A", "B", "C"];
-let women = vec!["D", "E", "F"];
-let compat_scores = hashmap!{
-    ("A", "D") => 50.0,
-    ("A", "E") => 75.0,
-    ("A", "F") => 75.0,
-    ("B", "D") => 60.0,
-    ("B", "E") => 95.0,
-    ("B", "F") => 80.0,
-    ("C", "D") => 60.0,
-    ("C", "E") => 70.0,
-    ("C", "F") => 80.0,
-};
+fn main() {
+    // Problem Data
+    let men = vec!["A", "B", "C"];
+    let women = vec!["D", "E", "F"];
+    let compatibility_score: HashMap<(&str, &str),f32> = vec![
+        (("A", "D"), 50.0),
+        (("A", "E"), 75.0),
+        (("A", "F"), 75.0),
+        (("B", "D"), 60.0),
+        (("B", "E"), 95.0),
+        (("B", "F"), 80.0),
+        (("C", "D"), 60.0),
+        (("C", "E"), 70.0),
+        (("C", "F"), 80.0),
+    ].into_iter().collect();
 
-// Define Problem
-let mut problem = LpProblem::new("Matchmaking", LpObjective::Maximize);
+    // Define Problem
+    let mut problem = LpProblem::new("Matchmaking", LpObjective::Maximize);
 
-// Define Variables
-let mut vars = HashMap::new();
-for m in &men{
-    for w in &women{
-        vars.insert((m, w), LpBinary::new(&format!("{}_{}", m, w)));
-    }
-}
+    // Define Variables
+    let vars: HashMap<(&str,&str), LpBinary> =
+        men.iter()
+            .flat_map(|&m| women.iter()
+            .map(move |&w| {
+                let key = (m,w);
+                let value = LpBinary::new(&format!("{}_{}", m,w));
+                (key, value)
+            }))
+            .collect();
 
-// Define Objective Function
-let mut obj_vec: Vec<LpExpression> = Vec::new();
-for (&(&m, &w), var) in &vars{
-    let obj_coef = compat_scores.get(&(m, w)).unwrap();
-    obj_vec.push(*obj_coef * var);
-}
-problem += lp_sum(&obj_vec);
+    // Define Objective Function
+    let obj_vec: Vec<LpExpression> = {
+       vars.iter().map( |(&(m,w), bin)| {
+           let &coef = compatibility_score.get(&(m, w)).unwrap();
+           coef * bin
+       } )
+    }.collect();
+    problem += obj_vec.sum();
 
-// Define Constraints
-// Constraint 1: Each man must be assigned to exactly one woman
-for m in &men{
-    let mut constr_vec = Vec::new();
-
-    for w in &women{
-        constr_vec.push(1.0 * vars.get(&(m, w)).unwrap());
-    }
-
-    problem += lp_sum(&constr_vec).equal(1);
-}
-
-// Constraint 2: Each woman must be assigned to exactly one man
-for w in &women{
-    let mut constr_vec = Vec::new();
-
-    for m in &men{
-        constr_vec.push(1.0 * vars.get(&(m, w)).unwrap());
+    // Define Constraints
+    // - constraint 1: Each man must be assigned to exactly one woman
+    for &m in &men{
+        problem += sum(&women, |&w| vars.get(&(m,w)).unwrap() ).equal(1);
     }
 
-    problem += lp_sum(&constr_vec).equal(1);
-}
-
-// Run Solver
-let solver = CbcSolver::new();
-let result = solver.run(&problem);
-
-// Terminate if error, or assign status & variable values
-assert!(result.is_ok(), result.unwrap_err());
-let (solver_status, var_values) = result.unwrap();
-
-// Compute final objective function value
-let mut obj_value = 0f32;
-for (&(&m, &w), var) in &vars{
-    let obj_coef = compat_scores.get(&(m, w)).unwrap();
-    let var_value = var_values.get(&var.name).unwrap();
-    
-    obj_value += obj_coef * var_value;
-}
-
-// Print output
-println!("Status: {:?}", solver_status);
-println!("Objective Value: {}", obj_value);
-// println!("{:?}", var_values);
-for (var_name, var_value) in &var_values{
-    let int_var_value = *var_value as u32;
-    if int_var_value == 1{
-        println!("{} = {}", var_name, int_var_value);
+    // - constraint 2: Each woman must be assigned to exactly one man
+    for &w in &women{
+        problem += sum(&men, |&m| vars.get(&(m,w)).unwrap() ).equal(1);
     }
+
+    // Run Solver
+    let solver = CbcSolver::new();
+    let result = solver.run(&problem);
+
+    // Compute final objective function value
+    // (terminate if error, or assign status & variable values)
+    assert!(result.is_ok(), result.unwrap_err());
+    let (solver_status, var_values) = result.unwrap();
+    let mut obj_value = 0f32;
+    for (&(m, w), var) in &vars{
+        let obj_coef = compatibility_score.get(&(m, w)).unwrap();
+        let var_value = var_values.get(&var.name).unwrap();
+
+        obj_value += obj_coef * var_value;
+    }
+
+    // Print output
+    println!("Status: {:?}", solver_status);
+    println!("Objective Value: {}", obj_value);
+    for (var_name, var_value) in &var_values{
+        let int_var_value = *var_value as u32;
+        if int_var_value == 1{
+            println!("{} = {}", var_name, int_var_value);
+        }
+    }
+
 }
 ```
 
@@ -204,6 +193,20 @@ A_F = 1
 ```
 
 ## Changelog
+
+### 0.4.0
+
+* Improve modules
+  * Remove maplit dependency
+  * All the features to write expressions and constraints are put into `dsl` module
+  * `use lp_modeler::dsl::*` is enough to write a system
+  * `use lp_modeler::solvers::*` is always used to choose a solver
+  * Add a `sum()` method for vector of `LpExpression`/`Into<LpExpression>` instead of `lp_sum()` function
+  * Add a `sum()` function used in the form:
+  
+  ```rust
+  problem += sum(&vars, |&v| v * 10.0) ).le(10.0);
+  ```
 
 ### 0.3.3
 
@@ -232,8 +235,9 @@ A_F = 1
 * Amila Welihinda [(amilajack)](https://github.com/amilajack)
 
 ## Further work
+
+* Parse and provide the objective value 
 * Config for lp_solve and CPLEX
-* 'complex' algebra operations such as commutative and distributivity
 * It would be great to use some constraint for binary variables such as 
     * a && b which is the constraint a + b = 2
     * a || b which is the constraint a + b >= 1

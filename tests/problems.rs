@@ -1,6 +1,4 @@
 extern crate lp_modeler;
-#[macro_use]
-extern crate maplit;
 
 use std::collections::HashMap;
 
@@ -85,17 +83,17 @@ fn test_readme_example_2() {
     // Problem Data
     let men = vec!["A", "B", "C"];
     let women = vec!["D", "E", "F"];
-    let compat_scores = hashmap! {
-        ("A", "D") => 50.0,
-        ("A", "E") => 75.0,
-        ("A", "F") => 75.0,
-        ("B", "D") => 60.0,
-        ("B", "E") => 95.0,
-        ("B", "F") => 80.0,
-        ("C", "D") => 60.0,
-        ("C", "E") => 70.0,
-        ("C", "F") => 80.0,
-    };
+    let compat_scores : HashMap<(&str,&str),f32> = vec![
+        (("A", "D"), 50.0),
+        (("A", "E"), 75.0),
+        (("A", "F"), 75.0),
+        (("B", "D"), 60.0),
+        (("B", "E"), 95.0),
+        (("B", "F"), 80.0),
+        (("C", "D"), 60.0),
+        (("C", "E"), 70.0),
+        (("C", "F"), 80.0),
+    ].into_iter().collect();
 
     // Define Problem
     let mut problem = LpProblem::new("Matchmaking", LpObjective::Maximize);
