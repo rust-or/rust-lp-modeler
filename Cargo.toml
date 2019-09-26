@@ -6,7 +6,7 @@ description = "A linear programming modeller written in Rust. This api helps to 
 repository = "https://github.com/jcavat/rust-lp-modeler"
 readme = "README.md"
 license = "MIT"
-keywords = ["linear-programming", "linear-models", "optimization", "solver", "sat", "resolver", "gurobi", "cbc coin-or", "glpk", "lp_solve" ]
+keywords = ["linear-programming", "linear-models", "optimization", "solver", "sat", "resolver", "gurobi", "cbc coin-or", "glpk", "lp_solve", "formulation" ]
 documentation = "https://jcavat.github.io/rust-lp-modeler"
 
 exclude = [

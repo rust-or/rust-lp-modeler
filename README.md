@@ -201,8 +201,8 @@ A_F = 1
   * All the features to write expressions and constraints are put into `dsl` module
   * `use lp_modeler::dsl::*` is enough to write a system
   * `use lp_modeler::solvers::*` is always used to choose a solver
-  * Add a `sum()` method for vector of `LpExpression`/`Into<LpExpression>` instead of `lp_sum()` function
-  * Add a `sum()` function used in the form:
+* Add a `sum()` method for vector of `LpExpression`/`Into<LpExpression>` instead of `lp_sum()` function
+* Add a `sum()` function used in the form:
   
   ```rust
   problem += sum(&vars, |&v| v * 10.0) ).le(10.0);
