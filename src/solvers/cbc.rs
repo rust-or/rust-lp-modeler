@@ -62,7 +62,10 @@ impl CbcSolver {
             };
             for line in file.lines() {
                 let l = line.unwrap();
-                let result_line: Vec<_> = l.split_whitespace().collect();
+                let mut result_line: Vec<_> = l.split_whitespace().collect();
+                if result_line[0] == "**" {
+                    result_line.remove(0);
+                };
                 if result_line.len() == 4 {
                     match result_line[2].parse::<f32>() {
                         Ok(n) => {
