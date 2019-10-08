@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/jcavat/rust-lp-modeler.svg?branch=master)](https://travis-ci.org/jcavat/rust-lp-modeler)
 [![Build status](https://ci.appveyor.com/api/projects/status/5i63bu7rn3m5d4l3?svg=true)](https://ci.appveyor.com/project/jcavat/rust-lp-modeler)
 
-This project provides a mathematical programming modeling library for the Rust language (v1.22+).
+This project provides a mathematical programming modeling library for the Rust language (v1.28+).
 
 An optimization problem (e.g. an integer or linear programme) can be formulated using familiar Rust syntax (see examples), and written into a universal [LP model format](https://www.gurobi.com/documentation/8.0/refman/lp_format.html). This can then be processed by a mixed integer programming solver. Presently supported solvers are; COIN-OR CBC, Gurobi and GLPK.
 
@@ -194,6 +194,10 @@ A_F = 1
 
 ## Changelog
 
+### 0.4.1
+
+* Fix failed cbc parsing on infeasible solution
+
 ### 0.4.0
 
 * Improve modules
@@ -228,11 +232,18 @@ A_F = 1
 * Functional lib with simple algebra properties
 
 ## Contributors
+
+### Main contributor
+
 * Joel Cavat [(jcavat)](https://github.com/jcavat)
+
+### All contributions :heart:
+
 * Thomas Vincent [(tvincent2)](https://github.com/tvincent2)
 * Antony Phillips [(aphi)](https://github.com/aphi)
 * Florian B. [(Lesstat)](https://github.com/Lesstat)
 * Amila Welihinda [(amilajack)](https://github.com/amilajack)
+* [(zappolowski)](https://github.com/zappolowski)
 
 ## Further work
 
