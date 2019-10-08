@@ -30,6 +30,30 @@ fn cbc_infeasible() {
 }
 
 #[test]
+// created from:
+// minimize
+//   obj: a + b
+// subject to
+//   c1: a + b <= 1
+//   c2: a + b >= 2
+// binaries
+//   a b
+// end
+fn cbc_infeasible_alternative_format() {
+    let _ = fs::copy(
+        "tests/solution_files/cbc_infeasible_alternative_format.sol",
+        "cbc_infeasible_alternative_format.sol",
+    );
+    let (status, mut variables) = CbcSolver::new()
+        .temp_solution_file("cbc_infeasible_alternative_format.sol".to_string())
+        .read_solution()
+        .unwrap();
+    assert_eq!(status, Status::Infeasible);
+    assert_eq!(variables.remove("a"), Some(2f32));
+    assert_eq!(variables.remove("b"), Some(0f32));
+}
+
+#[test]
 fn cbc_unbounded() {
     let _ = fs::copy(
         "tests/solution_files/cbc_unbounded.sol",
