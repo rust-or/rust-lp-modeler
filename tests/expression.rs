@@ -177,3 +177,17 @@ fn expression_with_lp_sum() {
         "should panic if empty vec"
     );
 }
+
+#[test]
+fn simplifications() {
+    let a = &LpInteger::new("a");
+
+    let expr1 = a - 2f32;
+    let expr2 = 1f32 - a;
+
+    let (c, _) = split_constant_and_expr(&simplify(&(&expr1 + &expr2)));
+    assert_eq!(c, -1f32);
+
+    let (c, _) = split_constant_and_expr(&simplify(&(&expr2 + &expr1)));
+    assert_eq!(c, -1f32);
+}

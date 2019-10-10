@@ -267,7 +267,7 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
                         let ref cc2 = **rc2;
                         match (cc1, cc2) {
                             (_, &LitVal(c1)) => {
-                                simplify(&AddExpr(rc1.clone(), Box::new(LitVal(c1 - c2))))
+                                simplify(&AddExpr(rc1.clone(), Box::new(LitVal(c2 - c1))))
                             }
                             (&LitVal(c1), _) => simplify(&AddExpr(
                                 Box::new(SubExpr(Box::new(LitVal(0.0)), rc2.clone())),
