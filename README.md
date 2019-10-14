@@ -194,6 +194,10 @@ A_F = 1
 
 ## Changelog
 
+### 0.4.2
+
+* Fix incorrect simplification of (expr-c1)+c2 
+
 ### 0.4.1
 
 * Fix failed cbc parsing on infeasible solution
