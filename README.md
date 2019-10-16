@@ -35,40 +35,40 @@ End
 
 #### Rust code
 ```rust
-use lp_modeler::problem::{LpObjective, Problem, LpProblem};
-use lp_modeler::operations::{LpOperations};
-use lp_modeler::variables::LpInteger;
-use lp_modeler::solvers::{SolverTrait, CbcSolver};
+use lp_modeler::solvers::{CbcSolver, SolverTrait};
+use lp_modeler::dsl::*;
 
-// Define problem variables
-let ref a = LpInteger::new("a");
-let ref b = LpInteger::new("b");
-let ref c = LpInteger::new("c");
+fn main() {
+    // Define problem variables
+    let ref a = LpInteger::new("a");
+    let ref b = LpInteger::new("b");
+    let ref c = LpInteger::new("c");
 
-// Define problem and objective sense
-let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
+    // Define problem and objective sense
+    let mut problem = LpProblem::new("One Problem", LpObjective::Maximize);
 
-// Objective Function: Maximize 10*a + 20*b
-problem += 10.0 * a + 20.0 * b;
+    // Objective Function: Maximize 10*a + 20*b
+    problem += 10.0 * a + 20.0 * b;
 
-// Constraint: 500*a + 1200*b + 1500*c <= 10000
-problem += (500*a + 1200*b + 1500*c).le(10000);
+    // Constraint: 500*a + 1200*b + 1500*c <= 10000
+    problem += (500*a + 1200*b + 1500*c).le(10000);
 
-// Constraint: a <= b
-problem += (a).le(b);
+    // Constraint: a <= b
+    problem += (a).le(b);
 
-// Specify solver
-let solver = CbcSolver::new();
+    // Specify solver
+    let solver = CbcSolver::new();
 
-// Run optimisation and process output hashmap
-match solver.run(&problem) {
-    Ok((status, var_values)) => {
-        println!("Status {:?}", status);
-        for (name, value) in var_values.iter() {
-            println!("value of {} = {}", name, value);
-        }
-    },
-    Err(msg) => println!("{}", msg),
+    // Run optimisation and process output hashmap
+    match solver.run(&problem) {
+        Ok((status, var_values)) => {
+            println!("Status {:?}", status);
+            for (name, value) in var_values.iter() {
+                println!("value of {} = {}", name, value);
+            }
+        },
+        Err(msg) => println!("{}", msg),
+    }
 }
 ```
 
