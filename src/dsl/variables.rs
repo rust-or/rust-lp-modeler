@@ -10,6 +10,9 @@ pub trait BoundableLp: PartialEq + Clone {
     fn upper_bound(&self, up: f32) -> Self;
 }
 
+// A binary variable is constrained to be either 1 or 0. Refer to the 
+// [LP format documentation](https://www.gurobi.com/documentation/8.0/refman/variables.html) 
+// for details. 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LpBinary {
     pub name: String,
