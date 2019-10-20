@@ -2,6 +2,7 @@
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 [![Build Status](https://travis-ci.org/jcavat/rust-lp-modeler.svg?branch=master)](https://travis-ci.org/jcavat/rust-lp-modeler)
 [![Build status](https://ci.appveyor.com/api/projects/status/5i63bu7rn3m5d4l3?svg=true)](https://ci.appveyor.com/project/jcavat/rust-lp-modeler)
+[![Gitter](https://badges.gitter.im/rust-lp-modeler/community.svg)](https://gitter.im/rust-lp-modeler/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 This project provides a mathematical programming modeling library for the Rust language (v1.28+).
 
@@ -248,6 +249,7 @@ A_F = 1
 * Florian B. [(Lesstat)](https://github.com/Lesstat)
 * Amila Welihinda [(amilajack)](https://github.com/amilajack)
 * [(zappolowski)](https://github.com/zappolowski)
+* Yisu Rem Wang [remysucre](https://github.com/remysucre)
 
 ## Further work
 
