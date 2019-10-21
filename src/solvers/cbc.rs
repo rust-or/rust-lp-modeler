@@ -60,14 +60,14 @@ impl CbcSolver {
             let mut buffer = String::new();
             let _ = file.read_line(&mut buffer);
 
-            let status = if let Some(status_line) = buffer.split_whitespace().next() {
-                match status_line.split_whitespace().next() {
-                    Some("Optimal") => Status::Optimal,
+            let status = if let Some(status) = buffer.split_whitespace().next() {
+                match status {
+                    "Optimal" => Status::Optimal,
                     // Infeasible status is either "Infeasible" or "Integer infeasible"
-                    Some("Infeasible") | Some("Integer") => Status::Infeasible,
-                    Some("Unbounded") => Status::Unbounded,
+                    "Infeasible" | "Integer" => Status::Infeasible,
+                    "Unbounded" => Status::Unbounded,
                     // "Stopped" can be "on time", "on iterations", "on difficulties" or "on ctrl-c"
-                    Some("Stopped") => Status::SubOptimal,
+                    "Stopped" => Status::SubOptimal,
                     _ => Status::NotSolved,
                 }
             } else {
