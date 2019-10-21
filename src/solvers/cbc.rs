@@ -27,7 +27,6 @@ impl CbcSolver {
             name: "Cbc".to_string(),
             command_name: "cbc".to_string(),
             temp_solution_file: format!("{}.sol", Uuid::new_v4().to_string()),
-            //params: Default::default(),
             threads: None,
             seconds: None,
         }
@@ -38,7 +37,6 @@ impl CbcSolver {
             name: self.name.clone(),
             command_name,
             temp_solution_file: self.temp_solution_file.clone(),
-            //params: self.params.clone(),
             threads: None,
             seconds: None,
         }
@@ -49,35 +47,10 @@ impl CbcSolver {
             name: self.name.clone(),
             command_name: self.command_name.clone(),
             temp_solution_file,
-            //params: self.params.clone(),
             threads: None,
             seconds: None,
         }
     }
-
-    /*
-    pub fn seconds(&self, seconds: f32) -> CbcSolver {
-        self.add_param("seconds".to_owned(), seconds.to_string())
-    }
-
-    pub fn threads(&self, threads: u32) -> CbcSolver {
-        self.add_param("threads".to_owned(), threads.to_string())
-    }
-
-    fn add_param(&self, name: String, value: String) -> CbcSolver {
-        let mut new_params = self.params.clone();
-        new_params.insert(name, value);
-
-        CbcSolver {
-            name: self.name.clone(),
-            command_name: self.command_name.clone(),
-            temp_solution_file: self.temp_solution_file.clone(),
-            params: new_params,
-            threads: None,
-            seconds: None,
-        }
-    }
-    */
 
     pub fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
         fn read_specific_solution(f: &File) -> Result<(Status, HashMap<String, f32>), String> {
@@ -162,11 +135,14 @@ impl SolverTrait for CbcSolver {
         problem.write_lp(&file_model).map_err(|e| e.to_string())?;
 
         let mut params: HashMap<String, String> = Default::default();
-        for (arg, possible_value) in vec![ ("seconds", self.max_seconds()), ("threads", self.nb_threads()) ] {
-            if let Some(value) = possible_value {
-                params.insert(arg.to_owned(), value.to_string());
-            }
+        let optional_params: Vec<Option<(String, u32)>> = vec![
+            self.max_seconds().map(|s| ("seconds".to_owned(), s )),
+            self.nb_threads().map(|t| ("threads".to_owned(), t)) ];
+
+        for (arg, value) in optional_params.iter().flatten() {
+            params.insert(arg.to_string(), value.to_string());
         }
+        params.iter().for_each( |(a,b)| println!("{},{}",a,b));
 
         let result = Command::new(&self.command_name)
             .arg(&file_model)

@@ -21,7 +21,7 @@ fn main() {
     //let _ = problem.write_lp("toto.lp");
 
 //    let solver = GurobiSolver::new();
-    let solver = CbcSolver::new().with_nb_threads(2).with_max_seconds(30);
+    let solver = CbcSolver::new().with_nb_threads(2);
 
     match solver.run(&problem) {
         Ok((status, res)) => {
