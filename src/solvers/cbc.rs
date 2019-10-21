@@ -95,7 +95,7 @@ impl CbcSolver {
 
         match File::open(&self.temp_solution_file) {
             Ok(f) => {
-                let res = try!(read_specific_solution(&f));
+                let res = read_specific_solution(&f)?;
                 let _ = fs::remove_file(&self.temp_solution_file);
                 Ok(res)
             }
