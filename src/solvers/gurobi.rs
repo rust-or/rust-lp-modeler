@@ -9,7 +9,7 @@ use std::process::Command;
 
 use dsl::LpProblem;
 use format::lp_format::*;
-use solvers::{Status, SolverTrait};
+use solvers::{Status, SolverTrait, SolverWithSolutionParsing};
 
 pub struct GurobiSolver {
     name: String,
@@ -32,48 +32,40 @@ impl GurobiSolver {
             temp_solution_file: self.temp_solution_file.clone(),
         }
     }
-    fn read_solution(&self) -> Result<(Status, HashMap<String, f32>), String> {
-        fn read_specific_solution(f: &File) -> Result<(Status, HashMap<String, f32>), String> {
-            let mut vars_value: HashMap<_, _> = HashMap::new();
-            let mut file = BufReader::new(f);
-            let mut buffer = String::new();
-            let _ = file.read_line(&mut buffer);
+}
 
-            if let Some(_) = buffer.split(" ").next() {
-                for line in file.lines() {
-                    let l = line.unwrap();
+impl SolverWithSolutionParsing for GurobiSolver {
+    fn read_specific_solution(&self, f: &File) -> Result<(Status, HashMap<String, f32>), String> {
+        let mut vars_value: HashMap<_, _> = HashMap::new();
+        let mut file = BufReader::new(f);
+        let mut buffer = String::new();
+        let _ = file.read_line(&mut buffer);
 
-                    // Gurobi version 7 add comments on the header file
-                    if let Some('#') = l.chars().next() {
-                        continue;
-                    }
+        if let Some(_) = buffer.split(" ").next() {
+            for line in file.lines() {
+                let l = line.unwrap();
 
-                    let result_line: Vec<_> = l.split_whitespace().collect();
-                    if result_line.len() == 2 {
-                        match result_line[1].parse::<f32>() {
-                            Ok(n) => {
-                                vars_value.insert(result_line[0].to_string(), n);
-                            }
-                            Err(e) => return Err(format!("{}", e.to_string())),
-                        }
-                    } else {
-                        return Err("Incorrect solution format".to_string());
-                    }
+                // Gurobi version 7 add comments on the header file
+                if let Some('#') = l.chars().next() {
+                    continue;
                 }
-            } else {
-                return Err("Incorrect solution format".to_string());
-            }
-            Ok((Status::Optimal, vars_value))
-        }
 
-        match File::open(&self.temp_solution_file) {
-            Ok(f) => {
-                let res = read_specific_solution(&f)?;
-                let _ = fs::remove_file(&self.temp_solution_file);
-                Ok(res)
+                let result_line: Vec<_> = l.split_whitespace().collect();
+                if result_line.len() == 2 {
+                    match result_line[1].parse::<f32>() {
+                        Ok(n) => {
+                            vars_value.insert(result_line[0].to_string(), n);
+                        }
+                        Err(e) => return Err(format!("{}", e.to_string())),
+                    }
+                } else {
+                    return Err("Incorrect solution format".to_string());
+                }
             }
-            Err(_) => return Err("Cannot open file".to_string()),
+        } else {
+            return Err("Incorrect solution format".to_string());
         }
+        Ok((Status::Optimal, vars_value))
     }
 }
 
@@ -99,7 +91,7 @@ impl SolverTrait for GurobiSolver {
                                 status = Status::Infeasible;
                             }
                             if r.status.success() {
-                                let (_, res) = self.read_solution()?;
+                                let (_, res) = self.read_solution(&self.temp_solution_file)?;
                                 Ok((status, res))
                             } else {
                                 Err(r.status.to_string())

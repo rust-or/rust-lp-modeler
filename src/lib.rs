@@ -1,3 +1,5 @@
+extern crate uuid;
+
 pub mod util;
 
 pub mod dsl {
