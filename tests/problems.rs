@@ -2,7 +2,7 @@ extern crate lp_modeler;
 
 use std::collections::HashMap;
 
-use lp_modeler::solvers::{CbcSolver, SolverTrait};
+use lp_modeler::solvers::{CbcSolver, SolverTrait, Solution};
 use lp_modeler::dsl::*;
 use lp_modeler::format::lp_format::LpFileFormat;
 
@@ -21,7 +21,7 @@ fn test_readme_example_1() {
     let solver = CbcSolver::new();
 
     match solver.run(&problem) {
-        Ok((status, res)) => {
+        Ok( Solution { status, results: res } ) => {
             println!("Status {:?}", status);
             for (name, value) in res.iter() {
                 println!("value of {} = {}", name, value);
@@ -63,7 +63,7 @@ fn test_full_example() {
     let solver = CbcSolver::new();
 
     match solver.run(&problem) {
-        Ok((status, res)) => {
+        Ok( Solution {status, results: res}) => {
             println!("Status {:?}", status);
             for (name, value) in res.iter() {
                 println!("value of {} = {}", name, value);
@@ -150,7 +150,7 @@ fn test_readme_example_2() {
 
     // Terminate if error, or assign status & variable values
     assert!(result.is_ok(), result.unwrap_err());
-    let (solver_status, var_values) = result.unwrap();
+    let Solution { status: solver_status, results: var_values } = result.unwrap();
 
     // Compute final objective function value
     let mut obj_value = 0f32;

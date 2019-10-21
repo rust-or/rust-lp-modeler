@@ -9,7 +9,7 @@ use std::process::Command;
 
 use dsl::LpProblem;
 use format::lp_format::*;
-use solvers::{Status, SolverTrait, SolverWithSolutionParsing};
+use solvers::{Status, SolverTrait, SolverWithSolutionParsing, Solution};
 
 pub struct GlpkSolver {
     name: String,
@@ -42,7 +42,7 @@ impl GlpkSolver {
 }
 
 impl SolverWithSolutionParsing for GlpkSolver {
-    fn read_specific_solution(&self, f: &File) -> Result<(Status, HashMap<String, f32>), String> {
+    fn read_specific_solution(&self, f: &File) -> Result<Solution, String> {
         fn read_size(line: Option<Result<String, Error>>) -> Result<usize, String> {
             match line {
                 Some(Ok(l)) => match l.split_whitespace().nth(1) {
@@ -105,13 +105,13 @@ impl SolverWithSolutionParsing for GlpkSolver {
                 );
             }
         }
-        Ok((status, vars_value))
+        Ok( Solution { status, results: vars_value } )
     }
 }
 
 impl SolverTrait for GlpkSolver {
     type P = LpProblem;
-    fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String, f32>), String> {
+    fn run(&self, problem: &Self::P) -> Result<Solution, String> {
         let file_model = &format!("{}.lp", problem.unique_name);
 
         match problem.write_lp(file_model) {

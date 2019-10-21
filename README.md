@@ -162,25 +162,24 @@ fn main() {
     // Compute final objective function value
     // (terminate if error, or assign status & variable values)
     assert!(result.is_ok(), result.unwrap_err());
-    let (solver_status, var_values) = result.unwrap();
+    let solution = result.unwrap();
     let mut obj_value = 0f32;
     for (&(m, w), var) in &vars{
         let obj_coef = compatibility_score.get(&(m, w)).unwrap();
-        let var_value = var_values.get(&var.name).unwrap();
+        let var_value = solution.results.get(&var.name).unwrap();
 
         obj_value += obj_coef * var_value;
     }
 
     // Print output
-    println!("Status: {:?}", solver_status);
+    println!("Status: {:?}", solution.status);
     println!("Objective Value: {}", obj_value);
-    for (var_name, var_value) in &var_values{
+    for (var_name, var_value) in &solution.results{
         let int_var_value = *var_value as u32;
         if int_var_value == 1{
             println!("{} = {}", var_name, int_var_value);
         }
     }
-
 }
 ```
 

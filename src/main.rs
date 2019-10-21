@@ -24,11 +24,12 @@ fn main() {
     let solver = CbcSolver::new().with_nb_threads(2);
 
     match solver.run(&problem) {
-        Ok((status, res)) => {
-            println!("Status {:?}", status);
-            for (name, value) in res.iter() {
+        Ok(solution) => {
+            println!("Status {:?}", solution.status);
+            for (name, value) in solution.results.iter() {
                 println!("value of {} = {}", name, value);
             }
+            println!("Value a: {}", solution.get_int(a) )
         }
         Err(msg) => println!("{}", msg),
     }

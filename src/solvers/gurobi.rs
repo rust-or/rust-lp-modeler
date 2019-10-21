@@ -9,7 +9,7 @@ use std::process::Command;
 
 use dsl::LpProblem;
 use format::lp_format::*;
-use solvers::{Status, SolverTrait, SolverWithSolutionParsing};
+use solvers::{Status, SolverTrait, SolverWithSolutionParsing, Solution};
 
 pub struct GurobiSolver {
     name: String,
@@ -35,7 +35,7 @@ impl GurobiSolver {
 }
 
 impl SolverWithSolutionParsing for GurobiSolver {
-    fn read_specific_solution(&self, f: &File) -> Result<(Status, HashMap<String, f32>), String> {
+    fn read_specific_solution(&self, f: &File) -> Result<Solution, String> {
         let mut vars_value: HashMap<_, _> = HashMap::new();
         let mut file = BufReader::new(f);
         let mut buffer = String::new();
@@ -65,13 +65,13 @@ impl SolverWithSolutionParsing for GurobiSolver {
         } else {
             return Err("Incorrect solution format".to_string());
         }
-        Ok((Status::Optimal, vars_value))
+        Ok( Solution { status: Status::Optimal, results: vars_value } )
     }
 }
 
 impl SolverTrait for GurobiSolver {
     type P = LpProblem;
-    fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String, f32>), String> {
+    fn run(&self, problem: &Self::P) -> Result<Solution, String> {
         let file_model = &format!("{}.lp", problem.unique_name);
 
         match problem.write_lp(file_model) {
@@ -87,12 +87,11 @@ impl SolverTrait for GurobiSolver {
                             if result.contains("Optimal solution found")
                             {
                                 status = Status::Optimal;
-                            } else if result.contains("infeasible") {
+                            } else if result.contains("infesible") {
                                 status = Status::Infeasible;
                             }
                             if r.status.success() {
-                                let (_, res) = self.read_solution(&self.temp_solution_file)?;
-                                Ok((status, res))
+                                self.read_solution(&self.temp_solution_file).map(|solution| Solution {status, ..solution.clone()} )
                             } else {
                                 Err(r.status.to_string())
                             }

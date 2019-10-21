@@ -34,7 +34,7 @@ pub trait Problem {
 ///
 /// ```
 /// use lp_modeler::dsl::*;
-/// use lp_modeler::solvers::{SolverTrait, CbcSolver};
+/// use lp_modeler::solvers::{SolverTrait, CbcSolver, Solution};
 ///
 /// let ref a = LpInteger::new("a");
 /// let ref b = LpInteger::new("b");
@@ -50,9 +50,9 @@ pub trait Problem {
 /// let solver = CbcSolver::new();
 ///
 /// match solver.run(&problem) {
-/// Ok((status, res)) => {
+/// Ok( Solution { status, results } ) => {
 ///     println!("Status {:?}", status);
-///         for (name, value) in res.iter() {
+///         for (name, value) in results.iter() {
 ///             println!("value of {} = {}", name, value);
 ///         }
 ///     },

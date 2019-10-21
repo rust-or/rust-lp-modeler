@@ -9,7 +9,7 @@ use std::process::Command;
 
 use dsl::LpProblem;
 use format::lp_format::*;
-use solvers::{Status, SolverTrait, WithMaxSeconds, WithNbThreads, SolverWithSolutionParsing};
+use solvers::{Status, SolverTrait, WithMaxSeconds, WithNbThreads, SolverWithSolutionParsing, Solution};
 
 #[derive(Debug, Clone)]
 pub struct CbcSolver {
@@ -54,7 +54,7 @@ impl CbcSolver {
 }
 
 impl SolverWithSolutionParsing for CbcSolver {
-    fn read_specific_solution(&self, f: &File) -> Result<(Status, HashMap<String, f32>), String> {
+    fn read_specific_solution(&self, f: &File) -> Result<Solution, String> {
         let mut vars_value: HashMap<_, _> = HashMap::new();
 
         let mut file = BufReader::new(f);
@@ -91,7 +91,7 @@ impl SolverWithSolutionParsing for CbcSolver {
                 return Err("Incorrect solution format".to_string());
             }
         }
-        Ok((status, vars_value))
+        Ok( Solution { status, results: vars_value } )
     }
 }
 
@@ -121,7 +121,7 @@ impl WithNbThreads<CbcSolver> for CbcSolver {
 impl SolverTrait for CbcSolver {
     type P = LpProblem;
 
-    fn run(&self, problem: &Self::P) -> Result<(Status, HashMap<String, f32>), String> {
+    fn run(&self, problem: &Self::P) -> Result<Solution, String> {
         let file_model = format!("{}.lp", problem.unique_name);
         problem.write_lp(&file_model).map_err(|e| e.to_string())?;
 
