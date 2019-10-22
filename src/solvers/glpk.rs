@@ -42,7 +42,7 @@ impl GlpkSolver {
 }
 
 impl SolverWithSolutionParsing for GlpkSolver {
-    fn read_specific_solution(&self, f: &File, _problem: Option<&LpProblem>) -> Result<Solution, String> {
+    fn read_specific_solution<'a>(&self, f: &File, problem: Option<&'a LpProblem>) -> Result<Solution<'a>, String> {
         fn read_size(line: Option<Result<String, Error>>) -> Result<usize, String> {
             match line {
                 Some(Ok(l)) => match l.split_whitespace().nth(1) {
@@ -105,13 +105,17 @@ impl SolverWithSolutionParsing for GlpkSolver {
                 );
             }
         }
-        Ok( Solution { status, results: vars_value } )
+        if let Some(p) = problem {
+            Ok( Solution::with_problem(status, vars_value, p) )
+        } else {
+            Ok( Solution::new(status, vars_value) )
+        }
     }
 }
 
 impl SolverTrait for GlpkSolver {
     type P = LpProblem;
-    fn run(&self, problem: &Self::P) -> Result<Solution, String> {
+    fn run<'a>(&self, problem: &'a Self::P) -> Result<Solution<'a>, String> {
         let file_model = &format!("{}.lp", problem.unique_name);
 
         match problem.write_lp(file_model) {

@@ -16,7 +16,6 @@ pub struct CbcSolver {
     name: String,
     command_name: String,
     temp_solution_file: String,
-    //params: HashMap<String, String>,
     threads: Option<u32>,
     seconds: Option<u32>,
 }
@@ -54,7 +53,7 @@ impl CbcSolver {
 }
 
 impl SolverWithSolutionParsing for CbcSolver {
-    fn read_specific_solution(&self, f: &File, problem: Option<&LpProblem>) -> Result<Solution, String> {
+    fn read_specific_solution<'a>(&self, f: &File, problem: Option<&'a LpProblem>) -> Result<Solution<'a>, String> {
         let mut vars_value: HashMap<_, _> = HashMap::new();
 
         // populate default values for all vars
@@ -100,7 +99,11 @@ impl SolverWithSolutionParsing for CbcSolver {
                 return Err("Incorrect solution format".to_string());
             }
         }
-        Ok( Solution { status, results: vars_value } )
+        if let Some(p) = problem {
+            Ok( Solution::with_problem(status, vars_value, p) )
+        } else {
+            Ok( Solution::new(status, vars_value) )
+        }
     }
 }
 
@@ -130,7 +133,7 @@ impl WithNbThreads<CbcSolver> for CbcSolver {
 impl SolverTrait for CbcSolver {
     type P = LpProblem;
 
-    fn run(&self, problem: &Self::P) -> Result<Solution, String> {
+    fn run<'a>(&self, problem: &'a Self::P) -> Result<Solution<'a>, String> {
         let file_model = format!("{}.lp", problem.unique_name);
         problem.write_lp(&file_model).map_err(|e| e.to_string())?;
 

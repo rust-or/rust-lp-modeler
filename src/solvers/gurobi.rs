@@ -35,7 +35,7 @@ impl GurobiSolver {
 }
 
 impl SolverWithSolutionParsing for GurobiSolver {
-    fn read_specific_solution(&self, f: &File, _problem: Option<&LpProblem>) -> Result<Solution, String> {
+    fn read_specific_solution<'a>(&self, f: &File, problem: Option<&'a LpProblem>) -> Result<Solution<'a>, String> {
         let mut vars_value: HashMap<_, _> = HashMap::new();
         let mut file = BufReader::new(f);
         let mut buffer = String::new();
@@ -65,13 +65,18 @@ impl SolverWithSolutionParsing for GurobiSolver {
         } else {
             return Err("Incorrect solution format".to_string());
         }
-        Ok( Solution { status: Status::Optimal, results: vars_value } )
+        // TODO/FIX: always optimal if no err...
+        if let Some(p) = problem {
+            Ok( Solution::with_problem(Status::Optimal, vars_value, p) )
+        } else {
+            Ok( Solution::new(Status::Optimal, vars_value) )
+        }
     }
 }
 
 impl SolverTrait for GurobiSolver {
     type P = LpProblem;
-    fn run(&self, problem: &Self::P) -> Result<Solution, String> {
+    fn run<'a>(&self, problem: &'a Self::P) -> Result<Solution<'a>, String> {
         let file_model = &format!("{}.lp", problem.unique_name);
 
         match problem.write_lp(file_model) {

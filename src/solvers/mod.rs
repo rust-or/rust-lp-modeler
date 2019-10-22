@@ -24,11 +24,26 @@ pub enum Status {
 }
 
 #[derive(Debug, Clone)]
-pub struct Solution {
+pub struct Solution<'a> {
     pub status: Status,
-    pub results: HashMap<String, f32>
+    pub results: HashMap<String, f32>,
+    problem: Option<&'a LpProblem>
 }
-impl Solution {
+impl Solution<'_> {
+    pub fn new<'a>(status: Status, results: HashMap<String, f32>) -> Solution<'a> {
+        Solution {
+            status,
+            results,
+            problem: None
+        }
+    }
+    pub fn with_problem(status: Status, results: HashMap<String, f32>, related_problem: &LpProblem) -> Solution {
+        Solution {
+            status,
+            results,
+            problem: Some(related_problem)
+        }
+    }
     fn check_possible_solution(&self) {
         match &self.status {
             Status::Unbounded | Status::NotSolved | Status::Infeasible => panic!("Solution must be optimal or suboptimal"),
@@ -58,11 +73,11 @@ impl Solution {
 
 pub trait SolverTrait {
     type P: Problem;
-    fn run(&self, problem: &Self::P) -> Result<Solution, String>;
+    fn run<'a>(&self, problem: &'a Self::P) -> Result<Solution<'a>, String>;
 }
 
 pub trait SolverWithSolutionParsing {
-    fn read_solution(&self, temp_solution_file: &String, problem: Option<&LpProblem>) -> Result<Solution, String> {
+    fn read_solution<'a>(&self, temp_solution_file: &String, problem: Option<&'a LpProblem>) -> Result<Solution<'a>, String> {
         match File::open( temp_solution_file ) {
             Ok(f) => {
                 let res = self.read_specific_solution(&f, problem)?;
@@ -72,7 +87,7 @@ pub trait SolverWithSolutionParsing {
             Err(_) => return Err("Cannot open file".to_string()),
         }
     }
-    fn read_specific_solution(&self, f: &File, problem: Option<&LpProblem>) -> Result<Solution, String>;
+    fn read_specific_solution<'a>(&self, f: &File, problem: Option<&'a LpProblem>) -> Result<Solution<'a>, String>;
 }
 
 pub trait WithMaxSeconds<T> {
