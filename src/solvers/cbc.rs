@@ -54,8 +54,17 @@ impl CbcSolver {
 }
 
 impl SolverWithSolutionParsing for CbcSolver {
-    fn read_specific_solution(&self, f: &File) -> Result<Solution, String> {
+    fn read_specific_solution(&self, f: &File, problem: Option<&LpProblem>) -> Result<Solution, String> {
         let mut vars_value: HashMap<_, _> = HashMap::new();
+
+        // populate default values for all vars
+        // CBC keeps only non-zero values from a number of variables
+        if let Some(p) = problem {
+            let variables = p.variables();
+            for (name, _) in variables {
+                vars_value.insert(name.clone(), 0.0);
+            }
+        }
 
         let mut file = BufReader::new(f);
         let mut buffer = String::new();
@@ -145,7 +154,7 @@ impl SolverTrait for CbcSolver {
             .map_err(|_| format!("Error running the {} solver", self.name))
             .and_then(|r| {
                 if r.status.success() {
-                    self.read_solution(&self.temp_solution_file)
+                    self.read_solution(&self.temp_solution_file, Some(problem))
                 } else {
                     Err(r.status.to_string())
                 }

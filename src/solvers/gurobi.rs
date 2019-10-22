@@ -35,7 +35,7 @@ impl GurobiSolver {
 }
 
 impl SolverWithSolutionParsing for GurobiSolver {
-    fn read_specific_solution(&self, f: &File) -> Result<Solution, String> {
+    fn read_specific_solution(&self, f: &File, _problem: Option<&LpProblem>) -> Result<Solution, String> {
         let mut vars_value: HashMap<_, _> = HashMap::new();
         let mut file = BufReader::new(f);
         let mut buffer = String::new();
@@ -91,7 +91,7 @@ impl SolverTrait for GurobiSolver {
                                 status = Status::Infeasible;
                             }
                             if r.status.success() {
-                                self.read_solution(&self.temp_solution_file).map(|solution| Solution {status, ..solution.clone()} )
+                                self.read_solution(&self.temp_solution_file, Some(problem)).map(|solution| Solution {status, ..solution.clone()} )
                             } else {
                                 Err(r.status.to_string())
                             }

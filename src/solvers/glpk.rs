@@ -42,7 +42,7 @@ impl GlpkSolver {
 }
 
 impl SolverWithSolutionParsing for GlpkSolver {
-    fn read_specific_solution(&self, f: &File) -> Result<Solution, String> {
+    fn read_specific_solution(&self, f: &File, _problem: Option<&LpProblem>) -> Result<Solution, String> {
         fn read_size(line: Option<Result<String, Error>>) -> Result<usize, String> {
             match line {
                 Some(Ok(l)) => match l.split_whitespace().nth(1) {
@@ -125,7 +125,7 @@ impl SolverTrait for GlpkSolver {
                     {
                         Ok(r) => {
                             if r.status.success() {
-                                self.read_solution(&self.temp_solution_file)
+                                self.read_solution(&self.temp_solution_file, Some(problem))
                             } else {
                                 Err(r.status.to_string())
                             }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use dsl::{Problem, LpContinuous, LpBinary, LpInteger};
+use dsl::{Problem, LpContinuous, LpBinary, LpInteger, LpProblem};
 
 pub mod cbc;
 pub use self::cbc::*;
@@ -62,17 +62,17 @@ pub trait SolverTrait {
 }
 
 pub trait SolverWithSolutionParsing {
-    fn read_solution(&self, temp_solution_file: &String) -> Result<Solution, String> {
+    fn read_solution(&self, temp_solution_file: &String, problem: Option<&LpProblem>) -> Result<Solution, String> {
         match File::open( temp_solution_file ) {
             Ok(f) => {
-                let res = self.read_specific_solution(&f)?;
+                let res = self.read_specific_solution(&f, problem)?;
                 let _ = fs::remove_file(temp_solution_file);
                 Ok(res)
             }
             Err(_) => return Err("Cannot open file".to_string()),
         }
     }
-    fn read_specific_solution(&self, f: &File) -> Result<Solution, String>;
+    fn read_specific_solution(&self, f: &File, problem: Option<&LpProblem>) -> Result<Solution, String>;
 }
 
 pub trait WithMaxSeconds<T> {
