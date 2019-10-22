@@ -50,9 +50,9 @@ pub trait Problem {
 /// let solver = CbcSolver::new();
 ///
 /// match solver.run(&problem) {
-/// Ok( Solution { status, results } ) => {
-///     println!("Status {:?}", status);
-///         for (name, value) in results.iter() {
+/// Ok( solution ) => {
+///     println!("Status {:?}", solution.status);
+///         for (name, value) in solution.results.iter() {
 ///             println!("value of {} = {}", name, value);
 ///         }
 ///     },

@@ -27,21 +27,21 @@ pub enum Status {
 pub struct Solution<'a> {
     pub status: Status,
     pub results: HashMap<String, f32>,
-    problem: Option<&'a LpProblem>
+    pub related_problem: Option<&'a LpProblem>
 }
 impl Solution<'_> {
     pub fn new<'a>(status: Status, results: HashMap<String, f32>) -> Solution<'a> {
         Solution {
             status,
             results,
-            problem: None
+            related_problem: None
         }
     }
-    pub fn with_problem(status: Status, results: HashMap<String, f32>, related_problem: &LpProblem) -> Solution {
+    pub fn with_problem(status: Status, results: HashMap<String, f32>, problem: &LpProblem) -> Solution {
         Solution {
             status,
             results,
-            problem: Some(related_problem)
+            related_problem: Some(problem)
         }
     }
     fn check_possible_solution(&self) {
