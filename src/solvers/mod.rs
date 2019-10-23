@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use dsl::{Problem, LpContinuous, LpBinary, LpInteger, LpProblem};
+use dsl::{Problem, LpContinuous, LpBinary, LpInteger, LpProblem, LpExpression};
 
 pub mod cbc;
 pub use self::cbc::*;
@@ -13,6 +13,7 @@ pub use self::glpk::*;
 use std::fs::File;
 use std::fs;
 use util::is_zero;
+use dsl::LpExpression::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Status {
@@ -68,6 +69,21 @@ impl Solution<'_> {
         let i = f as i32;
         assert!( is_zero( f-(i as f32)), format!("Value {} cannot be interpreted as integer.", f) );
         i
+    }
+    pub fn eval(&self) -> Option<f32> {
+        self.related_problem.and_then( |problem| problem.obj_expr.as_ref().map( |obj_expr| Self::eval_with(obj_expr, &self.results ) ))
+    }
+    fn eval_with(expr: &LpExpression, values: &HashMap<String, f32>) -> f32 {
+        match expr {
+            AddExpr(left, right) => Self::eval_with(left, values) + Self::eval_with(right, values),
+            ConsBin(LpBinary { name })
+            | ConsCont(LpContinuous { name, .. })
+            | ConsInt(LpInteger { name, .. }) => *values.get(name).unwrap_or(&0f32),
+            MulExpr(left, right) => Self::eval_with(left, values) * Self::eval_with(right, values),
+            SubExpr(left, right) => Self::eval_with(left, values) - Self::eval_with(right, values),
+            LitVal(n) => *n,
+            EmptyExpr => 0.0
+        }
     }
 }
 

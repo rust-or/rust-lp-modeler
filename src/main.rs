@@ -39,7 +39,11 @@ fn main() {
             for (name, value) in solution.results.iter() {
                 println!("value of {} = {}", name, value);
             }
-            println!("Value a: {}", solution.get_int(a) )
+            println!("Value a: {}", solution.get_int(a) );
+
+            if let Some(obj) = solution.eval() {
+                println!("Obj: {}", obj );
+            }
         }
         Err(msg) => println!("{}", msg),
     }
