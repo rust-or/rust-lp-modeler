@@ -3,6 +3,9 @@
 use self::LpExpression::*;
 use util::is_zero;
 
+use proc_macro2::{TokenStream};
+use quote::{quote, ToTokens};
+
 use std::convert::Into;
 
 pub trait BoundableLp: PartialEq + Clone {
@@ -10,9 +13,9 @@ pub trait BoundableLp: PartialEq + Clone {
     fn upper_bound(&self, up: f32) -> Self;
 }
 
-// A binary variable is constrained to be either 1 or 0. Refer to the 
-// [LP format documentation](https://www.gurobi.com/documentation/8.0/refman/variables.html) 
-// for details. 
+// A binary variable is constrained to be either 1 or 0. Refer to the
+// [LP format documentation](https://www.gurobi.com/documentation/8.0/refman/variables.html)
+// for details.
 #[derive(Debug, Clone, PartialEq)]
 pub struct LpBinary {
     pub name: String,
@@ -22,6 +25,17 @@ impl LpBinary {
         LpBinary {
             name: name.to_string(),
         }
+    }
+}
+
+impl ToTokens for LpBinary {
+    fn to_tokens(&self, stream: &mut TokenStream) {
+        let name = &self.name;
+        stream.extend(quote! {
+            LpBinary{
+                name: #name,
+            }
+        });
     }
 }
 
@@ -40,6 +54,26 @@ impl LpInteger {
         }
     }
 }
+impl ToTokens for LpInteger {
+    fn to_tokens(&self, stream: &mut TokenStream) {
+        let name = &self.name;
+        let lower_bound = match self.lower_bound {
+            Some(ref v) => quote!(Some(#v)),
+            None => quote!(None)
+        };
+        let upper_bound = match self.upper_bound {
+            Some(ref v) => quote!(Some(#v)),
+            None => quote!(None)
+        };
+        stream.extend(quote! {
+            LpInteger{
+                name: #name.to_string(),
+                lower_bound: #lower_bound,
+                upper_bound: #upper_bound
+            }
+        });
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LpContinuous {
@@ -54,6 +88,26 @@ impl LpContinuous {
             lower_bound: None,
             upper_bound: None,
         }
+    }
+}
+impl ToTokens for LpContinuous {
+    fn to_tokens(&self, stream: &mut TokenStream) {
+        let name = &self.name;
+        let lower_bound = match self.lower_bound {
+            Some(ref v) => quote!(Some(#v)),
+            None => quote!(None)
+        };
+        let upper_bound = match self.upper_bound {
+            Some(ref v) => quote!(Some(#v)),
+            None => quote!(None)
+        };
+        stream.extend(quote! {
+            LpContinuous{
+                name: #name.to_string(),
+                lower_bound: #lower_bound,
+                upper_bound: #upper_bound
+            }
+        });
     }
 }
 
@@ -112,7 +166,23 @@ impl LpExpression {
     }
 }
 
-
+impl ToTokens for LpExpression {
+    fn to_tokens(&self, stream: &mut TokenStream) {
+        use self::LpExpression::*;
+        stream.extend(
+            match self {
+                ConsInt(v) => quote!(LpExpression::ConsInt(#v)),
+                ConsBin(v) => quote!(LpExpression::ConsBin(#v)),
+                ConsCont(v) => quote!(LpExpression::ConsCont(#v)),
+                MulExpr(lhs, rhs) => quote!(LpExpression::MulExpr(Box::new(#lhs), Box::new(#rhs))),
+                AddExpr(lhs, rhs) => quote!(LpExpression::AddExpr(Box::new(#lhs), Box::new(#rhs))),
+                SubExpr(lhs, rhs) => quote!(LpExpression::SubExpr(Box::new(#lhs), Box::new(#rhs))),
+                LitVal(v) =>  quote!(LpExpression::LitVal(#v)),
+                EmptyExpr => quote!(LpExpression::EmptyExpr),
+            }
+        );
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum Constraint {
@@ -125,6 +195,17 @@ pub enum Constraint {
     Equal,
 }
 
+impl ToTokens for Constraint {
+    fn to_tokens(&self, stream: &mut TokenStream) {
+        stream.extend(
+        match self {
+            Constraint::GreaterOrEqual => quote!(Constraint::GreaterOrEqual),
+            Constraint::LessOrEqual => quote!(Constraint::LessOrEqual),
+            Constraint::Equal => quote!(Constraint::Equal),
+        });
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LpConstraint(pub LpExpression, pub Constraint, pub LpExpression);
 
@@ -135,6 +216,19 @@ impl LpConstraint {
         let ref lhs_expr = simplify(&(lhs - rhs));
         let (constant, lhs_expr) = split_constant_and_expr(lhs_expr);
         LpConstraint(lhs_expr, op.clone(), LitVal(-constant))
+    }
+}
+
+impl ToTokens for LpConstraint {
+    fn to_tokens(&self, stream: &mut TokenStream) {
+        let lhs = &self.0;
+        let constraint = &self.1;
+        let rhs = &self.2;
+        stream.extend(quote!(
+            LpConstraint(
+                #lhs, #constraint, #rhs
+            )
+        ));
     }
 }
 
@@ -480,34 +574,3 @@ impl<T> SummableExp for Vec<T> where T: Into<LpExpression> + Clone {
        lp_sum(self)
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
