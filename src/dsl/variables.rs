@@ -184,7 +184,7 @@ impl ToTokens for LpExpression {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Constraint {
     /* Not supported by solver format files (lp file or mps file) !
     Greater,
@@ -206,7 +206,7 @@ impl ToTokens for Constraint {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct LpConstraint(pub LpExpression, pub Constraint, pub LpExpression);
 
 impl LpConstraint {
