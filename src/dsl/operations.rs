@@ -91,9 +91,16 @@ macro_rules! lpvars_operation_for_intoexpr {
         }
     };
 }
+
+lpvars_operation_for_intoexpr!(Mul, mul, LpBinary, MulExpr, ConsBin);
+lpvars_operation_for_intoexpr!(Add, add, LpBinary, AddExpr, ConsBin);
+lpvars_operation_for_intoexpr!(Sub, sub, LpBinary, SubExpr, ConsBin);
 lpvars_operation_for_intoexpr!(Mul, mul, LpInteger, MulExpr, ConsInt);
 lpvars_operation_for_intoexpr!(Add, add, LpInteger, AddExpr, ConsInt);
 lpvars_operation_for_intoexpr!(Sub, sub, LpInteger, SubExpr, ConsInt);
+lpvars_operation_for_intoexpr!(Mul, mul, LpContinuous, MulExpr, ConsCont);
+lpvars_operation_for_intoexpr!(Add, add, LpContinuous, AddExpr, ConsCont);
+lpvars_operation_for_intoexpr!(Sub, sub, LpContinuous, SubExpr, ConsCont);
 
 /// Macro implementing binary operations for a numeric type
 macro_rules! numeric_operation_for_expr {
