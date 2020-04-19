@@ -35,6 +35,15 @@ fn distributivity() {
         ((c + 10) * test2).to_lp_file_format(),
         "6 c a + 3 c a b + 60 a + 30 a b"
     );
+
+    let ref x = LpContinuous::new("x");
+    let ref y = LpContinuous::new("y");
+    let ref z = LpContinuous::new("z");
+
+    let test3 = x * (y - z);
+    assert_eq!((3 * (3 - a)).to_lp_file_format(), "-3 a + 9");
+    assert_eq!(test3.to_lp_file_format(), "x y - x z");
+    assert_eq!((4 * test3).to_lp_file_format(), "4 x y - 4 x z");
 }
 
 #[test]
@@ -57,6 +66,11 @@ fn associativity() {
 
     assert_eq!((a - (b - 2) + c).to_lp_file_format(), "a - b + c + 2");
     assert_eq!(((a - b) - 2 + c).to_lp_file_format(), "a - b + c - 2");
+
+    let ref x = LpBinary::new("x");
+    let ref y = LpBinary::new("y");
+    assert_eq!((x + (y + 1)).to_lp_file_format(), "x + y + 1");
+    assert_eq!(((x + y) + 1).to_lp_file_format(), "x + y + 1");
 }
 
 #[test]
