@@ -66,6 +66,11 @@ fn associativity() {
 
     assert_eq!((a - (b - 2) + c).to_lp_file_format(), "a - b + c + 2");
     assert_eq!(((a - b) - 2 + c).to_lp_file_format(), "a - b + c - 2");
+
+    let ref x = LpBinary::new("x");
+    let ref y = LpBinary::new("y");
+    assert_eq!((x + (y + 1)).to_lp_file_format(), "x + y + 1");
+    assert_eq!(((x + y) + 1).to_lp_file_format(), "x + y + 1");
 }
 
 #[test]
