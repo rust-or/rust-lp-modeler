@@ -199,9 +199,9 @@ fn simplifications() {
     let expr1 = a - 2f32;
     let expr2 = 1f32 - a;
 
-    let (c, _) = split_constant_and_expr(&simplify(&(&expr1 + &expr2)));
+    let (c, _) = (&simplify(&(&expr1 + &expr2))).split_constant_and_expr();
     assert_eq!(c, -1f32);
 
-    let (c, _) = split_constant_and_expr(&simplify(&(&expr2 + &expr1)));
+    let (c, _) = (&simplify(&(&expr2 + &expr1))).split_constant_and_expr();
     assert_eq!(c, -1f32);
 }

@@ -164,6 +164,26 @@ impl LpExpression {
         }
         self.clone()
     }
+
+    pub fn split_constant_and_expr(&self) -> (f32, LpExpression) {
+        match self {
+            AddExpr(e1, e2) => {
+                if let LitVal(c) = **e2 {
+                    (c, *e1.clone())
+                } else {
+                    (0.0, self.clone())
+                }
+            }
+            SubExpr(e1, e2) => {
+                if let LitVal(c) = **e2 {
+                    (-c, *e1.clone())
+                } else {
+                    (0.0, self.clone())
+                }
+            }
+            _ => (0.0, self.clone()),
+        }
+    }
 }
 
 impl ToTokens for LpExpression {
@@ -214,7 +234,7 @@ impl LpConstraint {
         // TODO: Optimize tailrec
         let &LpConstraint(ref lhs, ref op, ref rhs) = self;
         let ref lhs_expr = simplify(&(lhs - rhs));
-        let (constant, lhs_expr) = split_constant_and_expr(lhs_expr);
+        let (constant, lhs_expr) = lhs_expr.split_constant_and_expr();
         LpConstraint(lhs_expr, op.clone(), LitVal(-constant))
     }
 }
@@ -232,25 +252,6 @@ impl ToTokens for LpConstraint {
     }
 }
 
-pub fn split_constant_and_expr(expr: &LpExpression) -> (f32, LpExpression) {
-    match expr {
-        AddExpr(e1, e2) => {
-            if let LitVal(c) = **e2 {
-                (c, *e1.clone())
-            } else {
-                (0.0, expr.clone())
-            }
-        }
-        SubExpr(e1, e2) => {
-            if let LitVal(c) = **e2 {
-                (-c, *e1.clone())
-            } else {
-                (0.0, expr.clone())
-            }
-        }
-        _ => (0.0, expr.clone()),
-    }
-}
 
 pub fn simplify(expr: &LpExpression) -> LpExpression {
     fn simplify_rec(expr: &LpExpression) -> LpExpression {

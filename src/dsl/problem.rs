@@ -116,13 +116,13 @@ impl LpProblem {
 impl Problem for LpProblem {
     fn add_objective_expression(&mut self, expr: &LpExpression) {
         if let Some(e) = self.obj_expr.clone() {
-            let (_, simpl_expr) = split_constant_and_expr(&simplify(&AddExpr(
+            let (_, simpl_expr) = (&simplify(&AddExpr(
                 Box::new(expr.clone()),
                 Box::new(e.clone()),
-            )));
+            ))).split_constant_and_expr();
             self.obj_expr = Some(simpl_expr);
         } else {
-            let (_, simpl_expr) = split_constant_and_expr(&simplify(expr));
+            let (_, simpl_expr) = (&simplify(expr)).split_constant_and_expr();
             self.obj_expr = Some(simpl_expr);
         }
     }
