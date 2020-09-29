@@ -27,7 +27,7 @@ impl LpFileFormat for LpProblem {
 
         let constraints_block = constraints_lp_file_block(self);
         if constraints_block.len() > 0 {
-            buffer.push_str(format!("\n\nSubject To\n{}", &constraints_block).as_str());
+            buffer.push_str(format!("\n\nSubject To\n{}", LpExpression::LpAtomicExpr::Constraints_block).as_str());
         }
 
         let bounds_block = bounds_lp_file_block(self);
@@ -67,7 +67,7 @@ fn constraints_lp_file_block(prob: &LpProblem) -> String {
     let mut constraints = prob.constraints.iter();
     let mut index = 1;
     while let Some(ref constraint) = constraints.next() {
-        res.push_str(&format!("  c{}: {}\n", index.to_string(), &constraint.to_lp_file_format()));
+        res.push_str(&format!("  c{}: {}\n", index.to_string(), LpExpression::LpAtomicExpr::Constraint.to_lp_file_format()));
         index += 1;
     }
     res
@@ -77,12 +77,12 @@ fn bounds_lp_file_block(prob: &LpProblem) -> String {
     let mut res = String::new();
     for (_, v) in prob.variables() {
         match v {
-            &ConsInt(LpInteger {
+            &LpExpression::LpAtomicExpr::ConsInt(LpInteger {
                          ref name,
                          lower_bound,
                          upper_bound,
                      })
-            | &ConsCont(LpContinuous {
+            | &LpExpression::LpAtomicExpr::ConsCont(LpContinuous {
                             ref name,
                             lower_bound,
                             upper_bound,
@@ -97,7 +97,7 @@ fn bounds_lp_file_block(prob: &LpProblem) -> String {
                     res.push_str(&format!("  {} <= {}\n", &name, &u.to_string()));
                 } else {
                     match v {
-                        &ConsCont(LpContinuous { .. }) => {
+                        &LpExpression::LpAtomicExpr::ConsCont(LpContinuous { .. }) => {
                             res.push_str(&format!("  {} free\n", &name));
                         } // TODO: IntegerVar => -INF to INF
                         _ => (),
@@ -114,7 +114,7 @@ fn integers_lp_file_block(prob: &LpProblem) -> String {
     let mut res = String::new();
     for (_, v) in prob.variables() {
         match v {
-            &ConsInt(LpInteger { ref name, .. }) => {
+            &LpExpression::LpAtomicExpr::ConsInt(LpInteger { ref name, .. }) => {
                 res.push_str(format!("{} ", name).as_str());
             }
             _ => (),
@@ -127,7 +127,7 @@ fn binaries_lp_file_block(prob: &LpProblem) -> String  {
     let mut res = String::new();
     for (_, v) in prob.variables() {
         match v {
-            &ConsBin(LpBinary { ref name }) => {
+            &LpExpression::LpAtomicExpr::ConsBin(LpBinary { ref name }) => {
                 res.push_str(format!("{} ", name).as_str());
             }
             _ => (),
@@ -152,7 +152,7 @@ impl LpFileFormat for LpExpression {
             s
         }
 
-        formalize_signs(show(&simplify(self), false))
+        formalize_signs(show(&self.simplify(), false))
     }
 }
 
@@ -161,33 +161,33 @@ fn show(e: &LpExpression, with_parenthesis: bool) -> String {
     let str_right_mult = if with_parenthesis { ")" } else { "" };
     let str_op_mult = if with_parenthesis { " * " } else { " " };
     match e {
-        &LitVal(n) => n.to_string(),
-        &AddExpr(ref e1, ref e2) => {
+        LpExpression::LpAtomicExpr::LitVal(n) => n.to_string(),
+        LpExpression::LpCompExpr(LpExprOp::Add, ref e1, ref e2) => {
             str_left_mult.to_string()
                 + &show(e1, with_parenthesis)
                 + " + "
                 + &show(e2, with_parenthesis)
                 + str_right_mult
         }
-        &SubExpr(ref e1, ref e2) => {
+        LpExpression::LpCompExpr(LpExprOp::Subtract, ref e1, ref e2) => {
             str_left_mult.to_string()
                 + &show(e1, with_parenthesis)
                 + " - "
                 + &show(e2, with_parenthesis)
                 + str_right_mult
         }
-        &MulExpr(ref e1, ref e2) => {
+        LpExpression::LpCompExpr(LpExprOp::Multiply, ref e1, ref e2) => {
             let ref deref_e1 = **e1;
 
             match deref_e1 {
-                &LitVal(v) if v == 1.0 => {
+                LpExpression::LpAtomicExpr::LitVal(v) if v == 1.0 => {
                     //e2.to_lp_file_format()
                     str_left_mult.to_string()
                         + &" ".to_string()
                         + &show(e2, with_parenthesis)
                         + str_right_mult
                 }
-                &LitVal(v) if v == -1.0 => {
+                LpExpression::LpAtomicExpr::LitVal(v) if v == -1.0 => {
                     //"-".to_string() + &e2.to_lp_file_format()
                     str_left_mult.to_string()
                         + &"-".to_string()
@@ -203,9 +203,9 @@ fn show(e: &LpExpression, with_parenthesis: bool) -> String {
                 }
             }
         }
-        &ConsBin(LpBinary { name: ref n, .. }) => n.to_string(),
-        &ConsInt(LpInteger { name: ref n, .. }) => n.to_string(),
-        &ConsCont(LpContinuous { name: ref n, .. }) => n.to_string(),
+        LpExpression::LpAtomicExpr::ConsBin(LpBinary { name: ref n, .. }) => n.to_string(),
+        LpExpression::LpAtomicExpr::ConsInt(LpInteger { name: ref n, .. }) => n.to_string(),
+        LpExpression::LpAtomicExpr::ConsCont(LpContinuous { name: ref n, .. }) => n.to_string(),
         _ => "EmptyExpr!!".to_string(),
     }
 }

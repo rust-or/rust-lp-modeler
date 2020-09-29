@@ -12,7 +12,7 @@ fn expressions_creation() {
 
     assert_eq!(
         a + b,
-        AddExpr(Box::new(ConsInt(a.clone())), Box::new(ConsInt(b.clone())))
+        AddExpr(Box::new(LpExpression::LpAtomicExpr::ConsInt(a.clone())), Box::new(LpExpression::LpAtomicExpr::ConsInt(b.clone())))
     );
 }
 
@@ -199,9 +199,9 @@ fn simplifications() {
     let expr1 = a - 2f32;
     let expr2 = 1f32 - a;
 
-    let (c, _) = (&simplify(&(&expr1 + &expr2))).split_constant_and_expr();
+    let (c, _) = (expr1.clone() + expr2.clone()).simplify().split_constant_and_expr();
     assert_eq!(c, -1f32);
 
-    let (c, _) = (&simplify(&(&expr2 + &expr1))).split_constant_and_expr();
+    let (c, _) = (expr2.clone() + expr1.clone()).simplify().split_constant_and_expr();
     assert_eq!(c, -1f32);
 }

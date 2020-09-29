@@ -86,18 +86,19 @@ impl LpProblem {
     pub fn variables(&self) -> HashMap<String, &LpExpression> {
         fn var<'a>(expr: &'a LpExpression, lst: &mut Vec<(String, &'a LpExpression)>) {
             match expr {
-                &ConsBin(LpBinary { ref name, .. })
-                | &ConsInt(LpInteger { ref name, .. })
-                | &ConsCont(LpContinuous { ref name, .. }) => {
+                LpExpression::LpAtomicExpr::ConsBin(LpBinary { ref name, .. })
+                | LpExpression::LpAtomicExpr::ConsInt(LpInteger { ref name, .. })
+                | LpExpression::LpAtomicExpr::ConsCont(LpContinuous { ref name, .. }) => {
                     lst.push((name.clone(), expr));
                 }
 
-                &MulExpr(_, ref e) => {
-                    var(&*e, lst);
+                LpExpression::LpCompExpr(LpExprOp::Multiply, _, ref e) => {
+                    var(e, lst);
                 }
-                &AddExpr(ref e1, ref e2) | &SubExpr(ref e1, ref e2) => {
-                    var(&*e1, lst);
-                    var(&*e2, lst);
+                LpExpression::LpCompExpr(LpExprOp::Add, ref e1, ref e2)
+                | LpExpression::LpCompExpr(LpExprOp::Subtract, ref e1, ref e2) => {
+                    var(e1, lst);
+                    var(e2, lst);
                 }
                 _ => (),
             }
@@ -116,13 +117,15 @@ impl LpProblem {
 impl Problem for LpProblem {
     fn add_objective_expression(&mut self, expr: &LpExpression) {
         if let Some(e) = self.obj_expr.clone() {
-            let (_, simpl_expr) = (&simplify(&AddExpr(
-                Box::new(expr.clone()),
-                Box::new(e.clone()),
-            ))).split_constant_and_expr();
+            let (_, simpl_expr) = LpExpression::LpCompExpr(
+                    LpExprOp::Add,
+                    expr,
+                    &e,
+                ).simplify()
+                .split_constant_and_expr();
             self.obj_expr = Some(simpl_expr);
         } else {
-            let (_, simpl_expr) = (&simplify(expr)).split_constant_and_expr();
+            let (_, simpl_expr) = (simplify(&Box::new(expr.clone()))).split_constant_and_expr();
             self.obj_expr = Some(simpl_expr);
         }
     }

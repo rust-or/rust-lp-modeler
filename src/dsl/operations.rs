@@ -1,9 +1,9 @@
 use std::ops::{Add, Mul, Neg, Sub};
 use dsl::LpExpression::*;
-use dsl::{Constraint, LpBinary, LpConstraint, LpContinuous, LpExpression, LpInteger};
+use dsl::{Constraint, LpBinary, LpConstraint, LpContinuous, LpExpression, LpInteger, LpExprOp, LpExprArena};
 
 /// Operations trait for any type implementing Into<LpExpressions> trait
-pub trait LpOperations<T> where T: Into<LpExpression> {
+pub trait LpOperations<T> where T: Into<LpExprArena> {
     /// Less or equal binary syntax for LpExpression
     fn le(&self, lhs_expr: T) -> LpConstraint;
     /// Greater or equal binary syntax for LpExpression
@@ -17,7 +17,7 @@ macro_rules! to_into_expr {
     ($type_to:ty) => {
         impl Into<LpExpression> for $type_to {
             fn into(self) -> LpExpression {
-                LitVal(self as f32)
+                LpExpression::LpAtomicExpr::LitVal(self as f32)
             }
         }
     };
@@ -36,9 +36,9 @@ macro_rules! to_into_expr {
 }
 to_into_expr!(f32);
 to_into_expr!(i32);
-to_into_expr!(LpBinary, ConsBin);
-to_into_expr!(LpInteger, ConsInt);
-to_into_expr!(LpContinuous, ConsCont);
+to_into_expr!(LpBinary, LpExpression::LpAtomicExpr::ConsBin);
+to_into_expr!(LpInteger, LpExpression::LpAtomicExpr::ConsInt);
+to_into_expr!(LpContinuous, LpExpression::LpAtomicExpr::ConsCont);
 
 /// Macro implementing binary operations for Into<LpExpression> or &Into<LpExpression>
 macro_rules! operations_for_expr {
@@ -49,7 +49,7 @@ macro_rules! operations_for_expr {
         {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
-                $expr_type(Box::new(self.clone()), Box::new(_rhs.into()))
+                LpExpression::LpCompExpr($expr_type, self.clone(), _rhs.into())
             }
         }
         impl<'a, T> $trait_name<T> for &'a LpExpression
@@ -58,15 +58,15 @@ macro_rules! operations_for_expr {
         {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
-                $expr_type(Box::new(self.clone()), Box::new(_rhs.into()))
+                LpExpression::LpCompExpr($expr_type, self.clone(), _rhs.into())
             }
         }
     };
 }
 
-operations_for_expr!(Add, add, AddExpr);
-operations_for_expr!(Sub, sub, SubExpr);
-operations_for_expr!(Mul, mul, MulExpr);
+operations_for_expr!(Add, add, LpExprOp::Add);
+operations_for_expr!(Sub, sub, LpExprOp::Subtract);
+operations_for_expr!(Mul, mul, LpExprOp::Multiply);
 
 /// Macro implementing a binary operation with a LpVars and a Into<Expression>
 macro_rules! lpvars_operation_for_intoexpr {
@@ -77,7 +77,7 @@ macro_rules! lpvars_operation_for_intoexpr {
         {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
-                $expr_type(Box::new($cons_type(self.clone())), Box::new(_rhs.into())).normalize()
+                $expr_type($cons_type(self.clone()), _rhs.into()).normalize()
             }
         }
         impl<'a, T> $trait_name<T> for &'a $lp_type
@@ -86,21 +86,21 @@ macro_rules! lpvars_operation_for_intoexpr {
         {
             type Output = LpExpression;
             fn $f_name(self, _rhs: T) -> LpExpression {
-                $expr_type(Box::new($cons_type(self.clone())), Box::new(_rhs.into())).normalize()
+                $expr_type($cons_type(self.clone()), _rhs.into()).normalize()
             }
         }
     };
 }
 
-lpvars_operation_for_intoexpr!(Mul, mul, LpBinary, MulExpr, ConsBin);
-lpvars_operation_for_intoexpr!(Add, add, LpBinary, AddExpr, ConsBin);
-lpvars_operation_for_intoexpr!(Sub, sub, LpBinary, SubExpr, ConsBin);
-lpvars_operation_for_intoexpr!(Mul, mul, LpInteger, MulExpr, ConsInt);
-lpvars_operation_for_intoexpr!(Add, add, LpInteger, AddExpr, ConsInt);
-lpvars_operation_for_intoexpr!(Sub, sub, LpInteger, SubExpr, ConsInt);
-lpvars_operation_for_intoexpr!(Mul, mul, LpContinuous, MulExpr, ConsCont);
-lpvars_operation_for_intoexpr!(Add, add, LpContinuous, AddExpr, ConsCont);
-lpvars_operation_for_intoexpr!(Sub, sub, LpContinuous, SubExpr, ConsCont);
+lpvars_operation_for_intoexpr!(Mul, mul, LpBinary, LpExprOp::Multiply, LpExpression::LpAtomicExpr::ConsBin);
+lpvars_operation_for_intoexpr!(Add, add, LpBinary, LpExprOp::Add, LpExpression::LpAtomicExpr::ConsBin);
+lpvars_operation_for_intoexpr!(Sub, sub, LpBinary, LpExprOp::Subtract, LpExpression::LpAtomicExpr::ConsBin);
+lpvars_operation_for_intoexpr!(Mul, mul, LpInteger, LpExprOp::Multiply, LpExpression::LpAtomicExpr::ConsInt);
+lpvars_operation_for_intoexpr!(Add, add, LpInteger, LpExprOp::Add, LpExpression::LpAtomicExpr::ConsInt);
+lpvars_operation_for_intoexpr!(Sub, sub, LpInteger, LpExprOp::Subtract, LpExpression::LpAtomicExpr::ConsInt);
+lpvars_operation_for_intoexpr!(Mul, mul, LpContinuous, LpExprOp::Multiply, LpExpression::LpAtomicExpr::ConsCont);
+lpvars_operation_for_intoexpr!(Add, add, LpContinuous, LpExprOp::Add, LpExpression::LpAtomicExpr::ConsCont);
+lpvars_operation_for_intoexpr!(Sub, sub, LpContinuous, LpExprOp::Subtract, LpExpression::LpAtomicExpr::ConsCont);
 
 /// Macro implementing binary operations for a numeric type
 macro_rules! numeric_operation_for_expr {
@@ -108,13 +108,13 @@ macro_rules! numeric_operation_for_expr {
         impl $trait_name<LpExpression> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: LpExpression) -> LpExpression {
-                $type_expr(Box::new(LitVal(self as f32)), Box::new(_rhs))
+                LpExpression::LpCompExpr($type_expr, LpExpression::LpAtomicExpr::LitVal(self as f32), _rhs)
             }
         }
         impl<'a> $trait_name<&'a LpExpression> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: &'a LpExpression) -> LpExpression {
-                $type_expr(Box::new(LitVal(self as f32)), Box::new(_rhs.clone()))
+                LpExpression::LpCompExpr($type_expr, LpExpression::LpAtomicExpr::LitVal(self as f32), _rhs.clone())
             }
         }
     };
@@ -122,9 +122,9 @@ macro_rules! numeric_operation_for_expr {
 /// Macro implementing add, mul and sub for a specific numeric type
 macro_rules! numeric_all_ops_for_expr {
     ($num_type: ty) => {
-        numeric_operation_for_expr!($num_type, Add, add, AddExpr);
-        numeric_operation_for_expr!($num_type, Mul, mul, MulExpr);
-        numeric_operation_for_expr!($num_type, Sub, sub, SubExpr);
+        numeric_operation_for_expr!($num_type, Add, add, LpExprOp::Add);
+        numeric_operation_for_expr!($num_type, Mul, mul, LpExprOp::Multiply);
+        numeric_operation_for_expr!($num_type, Sub, sub, LpExprOp::Subtract);
     };
 }
 numeric_all_ops_for_expr!(f32);
@@ -137,8 +137,8 @@ impl<'a> Into<LpExpression> for &'a LpExpression {
     }
 }
 
-/// Implementing LpOperations trait for any Into<LpExpression>
-impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
+/// Implementing LpOperations trait for any Into<LpExprArena>
+impl<T: Into<LpExprArena> + Clone, U> LpOperations<T> for U where U: Into<LpExprArena> + Clone {
     fn le(&self, lhs_expr: T) -> LpConstraint {
         LpConstraint(
             self.clone().into(),
@@ -165,25 +165,33 @@ impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExp
     }
 }
 
-impl<'a> Neg for &'a LpExpression {
-    type Output = LpExpression;
-    fn neg(self) -> LpExpression {
-        MulExpr(Box::new(LitVal(-1.0)), Box::new(self.clone()))
-    }
-}
+//impl<'a> Neg for &'a LpExpression {
+//    type Output = LpExpression;
+//    fn neg(self) -> LpExpression {
+//        LpExpression::LpCompExpr(
+//            LpExprOp::Multiply,
+//            LpExpression::LpAtomicExpr::LitVal(-1.0),
+//            self
+//        )
+//    }
+//}
 macro_rules! neg_operation_for_lpvars {
     ($lp_var_type: ty, $constr_expr: ident) => {
         impl<'a> Neg for &'a $lp_var_type {
             type Output = LpExpression;
             fn neg(self) -> LpExpression {
-                MulExpr(Box::new(LitVal(-1.0)), Box::new($constr_expr(self.clone())))
+                LpExpression::LpCompExpr(
+                    LpExprOp::Multiply,
+                    LpExpression::LpAtomicExpr::LitVal(-1.0), 
+                    $constr_expr(self.clone())
+                )
             }
         }
     };
 }
-neg_operation_for_lpvars!(LpInteger, ConsInt);
-neg_operation_for_lpvars!(LpContinuous, ConsCont);
-neg_operation_for_lpvars!(LpBinary, ConsBin);
+neg_operation_for_lpvars!(LpInteger, LpExpression::LpAtomicExpr::ConsInt);
+neg_operation_for_lpvars!(LpContinuous, LpExpression::LpAtomicExpr::ConsCont);
+neg_operation_for_lpvars!(LpBinary, LpExpression::LpAtomicExpr::ConsBin);
 
 /// Macro implementing binary operations for a numeric type
 macro_rules! numeric_operation_for_lpvars {
@@ -191,15 +199,20 @@ macro_rules! numeric_operation_for_lpvars {
         impl $trait_name<$lp_type> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: $lp_type) -> LpExpression {
-                $type_expr(Box::new(LitVal(self as f32)), Box::new($cons_expr(_rhs)))
+                LpExpression::LpCompExpr(
+                    $type_expr,
+                    LpExpression::LpAtomicExpr::LitVal(self as f32),
+                    $cons_expr(_rhs)
+                )
             }
         }
         impl<'a> $trait_name<&'a $lp_type> for $num_type {
             type Output = LpExpression;
             fn $f_name(self, _rhs: &'a $lp_type) -> LpExpression {
-                $type_expr(
-                    Box::new(LitVal(self as f32)),
-                    Box::new($cons_expr(_rhs.clone())),
+                LpExpression::LpCompExpr(
+                    $type_expr,
+                    LpExpression::LpAtomicExpr::LitVal(self as f32),
+                    $cons_expr(_rhs.clone()),
                 )
             }
         }
@@ -209,15 +222,15 @@ macro_rules! numeric_operation_for_lpvars {
 /// Macro implementing add, mul and sub for a specific numeric type
 macro_rules! numeric_all_ops_for_lpvars {
     ($num_type: ty) => {
-        numeric_operation_for_lpvars!($num_type, Add, add, AddExpr, LpInteger, ConsInt);
-        numeric_operation_for_lpvars!($num_type, Add, add, AddExpr, LpBinary, ConsBin);
-        numeric_operation_for_lpvars!($num_type, Add, add, AddExpr, LpContinuous, ConsCont);
-        numeric_operation_for_lpvars!($num_type, Mul, mul, MulExpr, LpInteger, ConsInt);
-        numeric_operation_for_lpvars!($num_type, Mul, mul, MulExpr, LpBinary, ConsBin);
-        numeric_operation_for_lpvars!($num_type, Mul, mul, MulExpr, LpContinuous, ConsCont);
-        numeric_operation_for_lpvars!($num_type, Sub, sub, SubExpr, LpInteger, ConsInt);
-        numeric_operation_for_lpvars!($num_type, Sub, sub, SubExpr, LpBinary, ConsBin);
-        numeric_operation_for_lpvars!($num_type, Sub, sub, SubExpr, LpContinuous, ConsCont);
+        numeric_operation_for_lpvars!($num_type, Add, add, LpExprOp::Add,  LpInteger, LpExpression::LpAtomicExpr::ConsInt);
+        numeric_operation_for_lpvars!($num_type, Add, add, LpExprOp::Add,  LpBinary, LpExpression::LpAtomicExpr::ConsBin);
+        numeric_operation_for_lpvars!($num_type, Add, add, LpExprOp::Add,  LpContinuous, LpExpression::LpAtomicExpr::ConsCont);
+        numeric_operation_for_lpvars!($num_type, Mul, mul, LpExprOp::Multiply,  LpInteger, LpExpression::LpAtomicExpr::ConsInt);
+        numeric_operation_for_lpvars!($num_type, Mul, mul, LpExprOp::Multiply,  LpBinary, LpExpression::LpAtomicExpr::ConsBin);
+        numeric_operation_for_lpvars!($num_type, Mul, mul, LpExprOp::Multiply,  LpContinuous, LpExpression::LpAtomicExpr::ConsCont);
+        numeric_operation_for_lpvars!($num_type, Sub, sub, LpExprOp::Subtract,  LpInteger, LpExpression::LpAtomicExpr::ConsInt);
+        numeric_operation_for_lpvars!($num_type, Sub, sub, LpExprOp::Subtract,  LpBinary, LpExpression::LpAtomicExpr::ConsBin);
+        numeric_operation_for_lpvars!($num_type, Sub, sub, LpExprOp::Subtract,  LpContinuous, LpExpression::LpAtomicExpr::ConsCont);
     };
 }
 numeric_all_ops_for_lpvars!(i32);
