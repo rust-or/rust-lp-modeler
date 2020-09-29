@@ -6,7 +6,7 @@ use std::ops::AddAssign;
 
 use self::uuid::Uuid;
 use dsl::*;
-use dsl::LpExpression::*;
+use dsl::LpExpression;
 
 /// Enum helping to specify the objective function of the linear problem.
 ///
@@ -24,8 +24,8 @@ pub enum LpObjective {
 }
 
 pub trait Problem {
-    fn add_objective_expression(&mut self, expr: &LpExpression);
-    fn add_constraints(&mut self, expr: &LpConstraint);
+    fn add_objective_expression(&mut self, expr_arena: &mut LpExprArena);
+    fn add_constraints(&mut self, contraint_expr: &LpConstraint);
 }
 
 /// Structure used for creating the model and solving a linear problem.
@@ -64,7 +64,7 @@ pub struct LpProblem {
     pub name: &'static str,
     pub unique_name: String,
     pub objective_type: LpObjective,
-    pub obj_expr: Option<LpExpression>,
+    pub obj_expr_arena: Option<LpExprArena>,
     pub constraints: Vec<LpConstraint>,
 }
 
@@ -76,37 +76,35 @@ impl LpProblem {
             name,
             unique_name,
             objective_type: objective,
-            obj_expr: None,
+            obj_expr_arena: None,
             constraints: Vec::new(),
+        }
+    }
+    fn var<'a>(&self, expr: &'a LpExpression, lst: &mut Vec<(String, &'a LpExpression)>) {
+        match expr {
+            LpExpression::LpAtomicExpr::ConsBin(LpBinary { ref name, .. })
+            | LpExpression::LpAtomicExpr::ConsInt(LpInteger { ref name, .. })
+            | LpExpression::LpAtomicExpr::ConsCont(LpContinuous { ref name, .. }) => {
+                lst.push((name.clone(), expr));
+            },
+            LpExpression::LpCompExpr(LpExprOp::Multiply, _, e) => {
+                self.var(self.obj_expr_arena.unwrap().expr_ref_at(*e), lst);
+            },
+            LpExpression::LpCompExpr(LpExprOp::Add, e1, e2)
+            | LpExpression::LpCompExpr(LpExprOp::Subtract, e1, e2) => {
+                self.var(self.obj_expr_arena.unwrap().expr_ref_at(*e1), lst);
+                self.var(self.obj_expr_arena.unwrap().expr_ref_at(*e2), lst);
+            }
+            _ => (),
         }
     }
 
     // TODO: Call once and pass into parameter
     // TODO: Check variables on the objective function
     pub fn variables(&self) -> HashMap<String, &LpExpression> {
-        fn var<'a>(expr: &'a LpExpression, lst: &mut Vec<(String, &'a LpExpression)>) {
-            match expr {
-                LpExpression::LpAtomicExpr::ConsBin(LpBinary { ref name, .. })
-                | LpExpression::LpAtomicExpr::ConsInt(LpInteger { ref name, .. })
-                | LpExpression::LpAtomicExpr::ConsCont(LpContinuous { ref name, .. }) => {
-                    lst.push((name.clone(), expr));
-                }
-
-                LpExpression::LpCompExpr(LpExprOp::Multiply, _, ref e) => {
-                    var(e, lst);
-                }
-                LpExpression::LpCompExpr(LpExprOp::Add, ref e1, ref e2)
-                | LpExpression::LpCompExpr(LpExprOp::Subtract, ref e1, ref e2) => {
-                    var(e1, lst);
-                    var(e2, lst);
-                }
-                _ => (),
-            }
-        }
-
         let mut lst: Vec<_> = Vec::new();
         for e in &self.constraints {
-            var(&e.0, &mut lst);
+            self.var(self.obj_expr_arena.unwrap().get_root_expr_ref(), &mut lst);
         }
         lst.iter()
             .map(|&(ref n, ref x)| (n.clone(), *x))
@@ -115,23 +113,19 @@ impl LpProblem {
 }
 
 impl Problem for LpProblem {
-    fn add_objective_expression(&mut self, expr: &LpExpression) {
-        if let Some(e) = self.obj_expr.clone() {
-            let (_, simpl_expr) = LpExpression::LpCompExpr(
-                    LpExprOp::Add,
-                    expr,
-                    &e,
-                ).simplify()
+    fn add_objective_expression(&mut self, expr_arena: &mut LpExprArena) {
+        if let Some(e) = &self.obj_expr_arena {
+            let (_, simpl_expr) = expr_arena.merge(&e, LpExprOp::Add).simplify()
                 .split_constant_and_expr();
-            self.obj_expr = Some(simpl_expr);
+            self.obj_expr_arena = Some(simpl_expr);
         } else {
-            let (_, simpl_expr) = (simplify(&Box::new(expr.clone()))).split_constant_and_expr();
-            self.obj_expr = Some(simpl_expr);
+            let (_, simpl_expr) = expr_arena.simplify().split_constant_and_expr();
+            self.obj_expr_arena = Some(simpl_expr);
         }
     }
 
-    fn add_constraints(&mut self, expr: &LpConstraint) {
-        self.constraints.push(expr.clone());
+    fn add_constraints(&mut self, constraint_expr: &LpConstraint) {
+        self.constraints.push(constraint_expr.clone());
     }
 }
 
@@ -146,10 +140,10 @@ macro_rules! impl_addassign_for_generic_problem {
         /// Add an expression as an objective function
         impl<T> AddAssign<T> for $problem
         where
-            T: Into<LpExpression>,
+            T: Into<LpExprArena>,
         {
             fn add_assign(&mut self, _rhs: T) {
-                self.add_objective_expression(&_rhs.into());
+                self.add_objective_expression(&mut _rhs.into());
             }
         }
     };

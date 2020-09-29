@@ -4,7 +4,6 @@ use std::io::Result;
 
 use dsl::*;
 use dsl::Constraint::*;
-use dsl::LpExpression::*;
 
 pub trait LpFileFormat {
     fn to_lp_file_format(&self) -> String;
@@ -57,7 +56,7 @@ fn objective_lp_file_block(prob: &LpProblem) -> String {
         LpObjective::Maximize => "Maximize\n  ",
         LpObjective::Minimize => "Minimize\n  "
     };
-    match prob.obj_expr {
+    match prob.obj_expr_arena {
         Some(ref expr) => format!("{}obj: {}", obj_type, expr.to_lp_file_format()),
         _ => String::new()
     }
@@ -136,7 +135,7 @@ fn binaries_lp_file_block(prob: &LpProblem) -> String  {
     res
 }
 
-impl LpFileFormat for LpExpression {
+impl LpFileFormat for LpExprArena {
     fn to_lp_file_format(&self) -> String {
         fn formalize_signs(s: String) -> String {
             let mut s = s.clone();
@@ -151,64 +150,11 @@ impl LpFileFormat for LpExpression {
             }
             s
         }
-
-        formalize_signs(show(&self.simplify(), false))
+        let root_index = self.get_root_index();
+        formalize_signs(self.simplify().show(root_index, false))
     }
 }
 
-fn show(e: &LpExpression, with_parenthesis: bool) -> String {
-    let str_left_mult = if with_parenthesis { "(" } else { "" };
-    let str_right_mult = if with_parenthesis { ")" } else { "" };
-    let str_op_mult = if with_parenthesis { " * " } else { " " };
-    match e {
-        LpExpression::LpAtomicExpr::LitVal(n) => n.to_string(),
-        LpExpression::LpCompExpr(LpExprOp::Add, ref e1, ref e2) => {
-            str_left_mult.to_string()
-                + &show(e1, with_parenthesis)
-                + " + "
-                + &show(e2, with_parenthesis)
-                + str_right_mult
-        }
-        LpExpression::LpCompExpr(LpExprOp::Subtract, ref e1, ref e2) => {
-            str_left_mult.to_string()
-                + &show(e1, with_parenthesis)
-                + " - "
-                + &show(e2, with_parenthesis)
-                + str_right_mult
-        }
-        LpExpression::LpCompExpr(LpExprOp::Multiply, ref e1, ref e2) => {
-            let ref deref_e1 = **e1;
-
-            match deref_e1 {
-                LpExpression::LpAtomicExpr::LitVal(v) if v == 1.0 => {
-                    //e2.to_lp_file_format()
-                    str_left_mult.to_string()
-                        + &" ".to_string()
-                        + &show(e2, with_parenthesis)
-                        + str_right_mult
-                }
-                LpExpression::LpAtomicExpr::LitVal(v) if v == -1.0 => {
-                    //"-".to_string() + &e2.to_lp_file_format()
-                    str_left_mult.to_string()
-                        + &"-".to_string()
-                        + &show(e2, with_parenthesis)
-                        + str_right_mult
-                }
-                _ => {
-                    str_left_mult.to_string()
-                        + &show(e1, with_parenthesis)
-                        + str_op_mult
-                        + &show(e2, with_parenthesis)
-                        + str_right_mult
-                }
-            }
-        }
-        LpExpression::LpAtomicExpr::ConsBin(LpBinary { name: ref n, .. }) => n.to_string(),
-        LpExpression::LpAtomicExpr::ConsInt(LpInteger { name: ref n, .. }) => n.to_string(),
-        LpExpression::LpAtomicExpr::ConsCont(LpContinuous { name: ref n, .. }) => n.to_string(),
-        _ => "EmptyExpr!!".to_string(),
-    }
-}
 
 impl LpFileFormat for LpConstraint {
     fn to_lp_file_format(&self) -> String {

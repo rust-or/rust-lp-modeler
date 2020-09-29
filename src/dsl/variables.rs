@@ -1,13 +1,11 @@
 /// # Module variables
 ///
 use self::LpExpression::*;
-use util::is_zero;
 
 use proc_macro2::{TokenStream};
 use quote::{quote, ToTokens};
 
 use std::convert::Into;
-use std::borrow::Borrow;
 
 pub trait BoundableLp: PartialEq + Clone {
     fn lower_bound(&self, lw: f32) -> Self;
@@ -142,7 +140,7 @@ pub enum LpAtomicExpr {
     ConsBin(LpBinary),
     ConsCont(LpContinuous),
     LitVal(f32),
-    EmptyExpr,
+    EmptyExpr
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -167,16 +165,15 @@ pub enum LpExpression {
     LpCompExpr(LpExprOp, LpExprArenaIndex, LpExprArenaIndex)
 }
 
-
 impl LpExpression {
     /// Fix the numeric operand in a multiplication in an expression
     /// c * 4 must be considered as 4 c in a linear formulation lp file
     pub fn normalize(self) -> LpExpression {
         if let LpCompExpr(LpExprOp::Multiply, e1, e2) = self {
-            if let LpAtomicExpr::LitVal(_) = e1 {
+            if let LpExpression::LpAtomicExpr::LitVal(_) = e1 {
                 return self.clone();
             } else {
-                if let LpAtomicExpr::LitVal(_) = e2 {
+                if let LpExpression::LpAtomicExpr::LitVal(_) = e2 {
                     return LpExpression::LpCompExpr(LpExprOp::Multiply, e2, e1);
                 } else {
                     return LpExpression::LpCompExpr(LpExprOp::Multiply, e1, e2);
@@ -187,18 +184,18 @@ impl LpExpression {
         }
     }
 
-    pub fn split_constant_and_expr(self) -> (f32, LpExpression) {
+    pub fn split_constant_and_expr(self, lp_expr_arena: &LpExprArena) -> (f32, LpExpression) {
         match self {
-            LpCompExpr(LpExprOp::Add, &e1, &e2) => {
-                if let LpAtomicExpr::LitVal(c) = e2 {
-                    (c, e1)
+            LpCompExpr(LpExprOp::Add, e1, e2) => {
+                if let LpExpression::LpAtomicExpr::LitVal(c) = e2 {
+                    (c, lp_expr_arena.expr_at(e1))
                 } else {
                     (0.0, self.clone())
                 }
             }
-            LpCompExpr(LpExprOp::Subtract, &e1, &e2) => {
-                if let LpAtomicExpr::LitVal(c) = e2 {
-                    (-c, e1)
+            LpCompExpr(LpExprOp::Subtract, e1, e2) => {
+                if let LpExpression::LpAtomicExpr::LitVal(c) = e2 {
+                    (-c, lp_expr_arena.expr_at(e1))
                 } else {
                     (0.0, self.clone())
                 }
@@ -208,6 +205,7 @@ impl LpExpression {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct LpExprArena {
     root: LpExprArenaIndex,
     array: Vec<LpExpression>
@@ -222,13 +220,17 @@ impl LpExprArena {
        }
     }
 
+    pub fn get_root_index(&self) -> LpExprArenaIndex {
+        self.root
+    }
+
     pub fn set_root(&mut self, root_index: LpExprArenaIndex) {
         self.root = root_index;
     }
 
-    pub fn add_lp_expr(&mut self, lp_expr: LpExpression) -> LpExprArenaIndex {
-        let index = self.len();
-        self.array.push(lp_expr);
+    pub fn add_lp_expr<T>(&mut self, lp_expr: T) -> LpExprArenaIndex where T: Into<LpExpression> + Clone {
+        let index = self.array.len();
+        self.array.push(lp_expr.into());
         return index
     }
 
@@ -236,14 +238,14 @@ impl LpExprArena {
        self.array[index] = lp_expr;
     }
 
-    pub fn index_expr_ref(&self, index: LpExprArenaIndex) -> &LpExpression {
+    pub fn expr_ref_at(&self, index: LpExprArenaIndex) -> &LpExpression {
         match self.array.get(index) {
             Some(expr) => expr,
             None => panic!("Requested index out of bound of LpExprArena vector. This should not happen.")
         }
     }
 
-    pub fn index_expr(&self, index: LpExprArenaIndex) -> LpExpression {
+    pub fn expr_at(&self, index: LpExprArenaIndex) -> LpExpression {
         match self.array.get(index) {
             Some(&expr) => expr,
             None => panic!("Requested index out of bound of LpExprArena vector. This should not happen.")
@@ -251,7 +253,98 @@ impl LpExprArena {
     }
 
     pub fn get_root_expr(&self) -> LpExpression {
-        index_expr_ref(self, self.root).clone()
+        self.expr_at(self.root)
+    }
+
+    pub fn get_root_expr_ref(&self) -> &LpExpression {
+        self.expr_ref_at(self.root)
+    }
+
+    pub fn merge(&mut self, move_lp_expr_arena: &LpExprArena, operation: LpExprOp) -> &mut Self {
+        let move_root_expr = move_lp_expr_arena.get_root_expr();
+        let moved_root_index = self.add_lp_expr(move_root_expr.clone());
+        let new_root_index = self.add_lp_expr(
+            LpExpression::LpCompExpr(
+                operation,
+                self.root,
+                moved_root_index
+            )
+        );
+        self.set_root(new_root_index);
+        let mut move_stack: Vec<LpExprArenaIndex> = Vec::new();
+        move_stack.push(moved_root_index);
+        while let Some(self_parent_index) = move_stack.pop() {
+            match self.expr_ref_at(self_parent_index) {
+                &LpAtomicExpr => {},
+                &LpCompExpr(operation, move_left_index, move_right_index) => {
+                    let new_left_index = self.add_lp_expr(move_lp_expr_arena.expr_at(move_left_index));
+                    let new_right_index = self.add_lp_expr(move_lp_expr_arena.expr_at(move_right_index));
+                    self.change_lp_expr(
+                        self_parent_index,
+                        LpExpression::LpCompExpr(
+                            operation,
+                            new_left_index,
+                            new_right_index
+                        )
+                    );
+                    move_stack.push(new_left_index);
+                    move_stack.push(new_right_index);
+                },
+            }
+        }
+        self
+    }
+
+    pub fn show(&self, e: &LpExprArenaIndex, with_parenthesis: bool) -> String {
+        let str_left_mult = if with_parenthesis { "(" } else { "" };
+        let str_right_mult = if with_parenthesis { ")" } else { "" };
+        let str_op_mult = if with_parenthesis { " * " } else { " " };
+        match self.expr_ref_at(*e) {
+            LpExpression::LpAtomicExpr::LitVal(n) => n.to_string(),
+            LpExpression::LpCompExpr(LpExprOp::Add, e1, e2) => {
+                str_left_mult.to_string()
+                    + &show(e1, with_parenthesis)
+                    + " + "
+                    + &show(e2, with_parenthesis)
+                    + str_right_mult
+            }
+            LpExpression::LpCompExpr(LpExprOp::Subtract, e1, e2) => {
+                str_left_mult.to_string()
+                    + &show(e1, with_parenthesis)
+                    + " - "
+                    + &show(e2, with_parenthesis)
+                    + str_right_mult
+            }
+            LpExpression::LpCompExpr(LpExprOp::Multiply, e1, e2) => {
+                match self.expr_ref_at(*e1) {
+                    LpExpression::LpAtomicExpr::LitVal(1.0) => {
+                        //e2.to_lp_file_format()
+                        str_left_mult.to_string()
+                            + &" ".to_string()
+                            + &show(e2, with_parenthesis)
+                            + str_right_mult
+                    },
+                    LpExpression::LpAtomicExpr::LitVal(-1.0) => {
+                        //"-".to_string() + &e2.to_lp_file_format()
+                        str_left_mult.to_string()
+                            + &"-".to_string()
+                            + &show(e2, with_parenthesis)
+                            + str_right_mult
+                    }
+                    _ => {
+                        str_left_mult.to_string()
+                            + &show(e1, with_parenthesis)
+                            + str_op_mult
+                            + &show(e2, with_parenthesis)
+                            + str_right_mult
+                    }
+                }
+            }
+            LpExpression::LpAtomicExpr::ConsBin(LpBinary { name: ref n, .. }) => n.to_string(),
+            LpExpression::LpAtomicExpr::ConsInt(LpInteger { name: ref n, .. }) => n.to_string(),
+            LpExpression::LpAtomicExpr::ConsCont(LpContinuous { name: ref n, .. }) => n.to_string(),
+            _ => "EmptyExpr!!".to_string(),
+        }
     }
 
     pub fn simplify(mut self) -> self {
@@ -266,14 +359,14 @@ impl LpExprArena {
             || ( starting_root != self.get_root_expr()) {
             starting_root = self.get_root_expr();
             first_round = false;
-            lp_expr_stack.push(self.root.unwrap());
+            lp_expr_stack.push(self.get_root_index());
             while let Some(handled_expr_index) = lp_expr_stack.pop() {
-                    match self.index_expr(handled_expr_index) {
+                    match self.expr_at(handled_expr_index) {
                         LpCompExpr(LpExprOp::Multiply, left_index, right_index) => {
-                            match (self.index_expr_ref(left_index), self.index_expr_ref(right_index)) {
+                            match (self.expr_ref_at(left_index), self.expr_ref_at(right_index)) {
                                 // Trivial rule: 0 * x = 0
-                                (_, LpAtomicExpr::LitVal(0.0))
-                                | (LpAtomicExpr::LitVal(0.0), _) => {
+                                (_, LpExpression::LpAtomicExpr::LitVal(0.0))
+                                | (LpExpression::LpAtomicExpr::LitVal(0.0), _) => {
                                     self.change_lp_expr(
                                         handled_expr_index,
                                         LpExpression::LpAtomicExpr::LitVal(0.0)
@@ -281,7 +374,7 @@ impl LpExprArena {
                                 },
 
                                 // Simplify two literals
-                                (LpAtomicExpr::LitVal(c1), LpAtomicExpr::LitVal(c2)) => {
+                                (LpExpression::LpAtomicExpr::LitVal(c1), LpExpression::LpAtomicExpr::LitVal(c2)) => {
                                     self.change_lp_expr(
                                         handled_expr_index,
                                         LpExpression::LpAtomicExpr::LitVal(c1 * c2)
@@ -329,12 +422,12 @@ impl LpExprArena {
 
                                 // COMMUTATIVITY WITH CONSTANTS
                                 // c1*Multiply
-                                (&LpAtomicExpr::LitVal(c1), &LpCompExpr(LpExprOp::Multiply, a_index, b_index)) => {
-                                    match (self.index_expr_ref(a_index), self.index_expr_ref(b_index)) {
+                                (&LpExpression::LpAtomicExpr::LitVal(c1), &LpCompExpr(LpExprOp::Multiply, a_index, b_index)) => {
+                                    match (self.expr_ref_at(a_index), self.expr_ref_at(b_index)) {
                                         // c1*(c2*x) = (c1*c2)*x
-                                        (&LpAtomicExpr::LitVal(c2), &x)
+                                        (&LpExpression::LpAtomicExpr::LitVal(c2), &x)
                                         // c1*(expr*c2) = (c1*c2)*expr
-                                        | (LpExpression(x), &LpAtomicExpr::LitVal(c2)) => {
+                                        | (LpExpression(x), &LpExpression::LpAtomicExpr::LitVal(c2)) => {
                                             self.change_lp_expr(
                                                 left_index,
                                                 LpExpression::LpAtomicExpr::LitVal(c1 * c2),
@@ -373,13 +466,13 @@ impl LpExprArena {
                                     );
                                     self.change_lp_expr(
                                         right_index,
-                                        self.index_expr(b_index)
+                                        self.expr_at(b_index)
                                     );
                                     lp_expr_stack.push(handled_expr_index);
                                 }
 
                                 // Place literal first for *
-                                (&a, &LpAtomicExpr::LitVal(c1)) => {
+                                (&a, &LpExpression::LpAtomicExpr::LitVal(c1)) => {
                                     self.change_lp_expr(
                                         left_index,
                                         LpExpression::LpAtomicExpr::LitVal(c1)
@@ -398,17 +491,17 @@ impl LpExprArena {
                             }
                         },
                         LpCompExpr(LpExprOp::Add, left_expr_index, right_expr_index) => {
-                            match (self.index_expr_ref(left_expr_index), self.index_expr_ref(right_expr_index)) {
+                            match (self.expr_ref_at(left_expr_index), self.expr_ref_at(right_expr_index)) {
                                 // Trivial rule: 0 + x = x
-                                (&LpAtomicExpr::LitVal(0.0), &a)
+                                (&LpExpression::LpAtomicExpr::LitVal(0.0), &a)
                                 // Trivial rule: x + 0 = x
-                                | (&a, &LpAtomicExpr::LitVal(0.0)) => {
+                                | (&a, &LpExpression::LpAtomicExpr::LitVal(0.0)) => {
                                     self.change_lp_expr(handled_expr_index, a);
                                     lp_expr_stack.push(handled_expr_index);
                                 },
 
                                 // Simplify two literals
-                                (&LpAtomicExpr::LitVal(c1), &LpAtomicExpr::LitVal(c2)) => {
+                                (&LpExpression::LpAtomicExpr::LitVal(c1), &LpExpression::LpAtomicExpr::LitVal(c2)) => {
                                     self.change_lp_expr(
                                         handled_expr_index,
                                         LpExpression::LpAtomicExpr::LitVal(c1 + c2)
@@ -425,7 +518,7 @@ impl LpExprArena {
                                     );
                                     self.change_lp_expr(
                                         right_expr_index,
-                                        self.index_expr(c_index)
+                                        self.expr_at(c_index)
                                     );
                                     lp_expr_stack.push(handled_expr_index);
                                 }
@@ -439,7 +532,7 @@ impl LpExprArena {
                                     );
                                     self.change_lp_expr(
                                         right_expr_index,
-                                        self.index_expr(c_index)
+                                        self.expr_at(c_index)
                                     );
                                     self.change_lp_expr(
                                         handled_expr_index,
@@ -449,7 +542,7 @@ impl LpExprArena {
                                 }
 
                                 // Place literal at the end
-                                (&LpAtomicExpr::LitVal(c), &x) => {
+                                (&LpExpression::LpAtomicExpr::LitVal(c), &x) => {
                                     self.change_lp_expr(
                                         left_expr_index,
                                         x
@@ -464,12 +557,12 @@ impl LpExprArena {
 
                                 // Accumulate consts +/-
                                 // (a+c1)+c2 = a+(c1+c2)
-                                (&LpCompExpr(LpExprOp::Add, a_index, b_index), &LpAtomicExpr::LitVal(c2)) => {
-                                    match self.index_expr_ref(b_index) {
-                                        &LpAtomicExpr::LitVal(c1) => {
+                                (&LpCompExpr(LpExprOp::Add, a_index, b_index), &LpExpression::LpAtomicExpr::LitVal(c2)) => {
+                                    match self.expr_ref_at(b_index) {
+                                        &LpExpression::LpAtomicExpr::LitVal(c1) => {
                                             self.change_lp_expr(
                                                 left_expr_index,
-                                                self.index_expr(a_index)
+                                                self.expr_at(a_index)
                                             );
                                             self.change_lp_expr(
                                                 right_expr_index,
@@ -484,9 +577,9 @@ impl LpExprArena {
                                 }
                                 // (a-c1)+c2 = a+(c2-c1)
                                 // (c1-b)+c2 = -b+(c1+c2)
-                                (&LpCompExpr(LpExprOp::Subtract, a_index, b_index), &LpAtomicExpr::LitVal(c2)) => {
-                                    match (self.index_expr_ref(a_index), self.index_expr_ref(b_index)) {
-                                        (&a, &LpAtomicExpr::LitVal(c1)) => {
+                                (&LpCompExpr(LpExprOp::Subtract, a_index, b_index), &LpExpression::LpAtomicExpr::LitVal(c2)) => {
+                                    match (self.expr_ref_at(a_index), self.expr_ref_at(b_index)) {
+                                        (&a, &LpExpression::LpAtomicExpr::LitVal(c1)) => {
                                             self.change_lp_expr(
                                                 left_expr_index,
                                                 a
@@ -497,10 +590,15 @@ impl LpExprArena {
                                             );
                                             lp_expr_stack.push(handled_expr_index);
                                         }
-                                        (&LpAtomicExpr::LitVal(c1), &b) => {
+                                        (&LpExpression::LpAtomicExpr::LitVal(c1), _) => {
+                                            let lit_new_index = self.add_lp_expr(LpExpression::LpAtomicExpr::LitVal(-1.0));
                                             self.change_lp_expr(
                                                 left_expr_index,
-                                                -b
+                                                LpCompExpr(
+                                                    LpExprOp::Subtract,
+                                                    lit_new_index,
+                                                    b_index
+                                                )
 //                                                LpExpression::LpCompExpr(LpExprOp::Subtract, LpExpression::LpAtomicExpr::LitVal(0.0), b),
                                             );
                                             self.change_lp_expr(
@@ -518,34 +616,42 @@ impl LpExprArena {
 
                                 // Extract the const
                                 // (a+c1)+b = (a+b)+c1
-                                (&LpCompExpr(LpExprOp::Add, a, &LpAtomicExpr::LitVal(c1)), &b) => {
-                                    let new_b_index = self.add_lp_expr(b);
-                                    self.change_lp_expr(
-                                        left_expr_index,
-                                        LpExpression::LpCompExpr(LpExprOp::Add, a, new_b_index)
-                                    );
-                                    self.change_lp_expr(
-                                        right_expr_index,
-                                        LpExpression::LpAtomicExpr::LitVal(c1)
-                                    );
-                                    lp_expr_stack.push(handled_expr_index);
+                                (&LpCompExpr(LpExprOp::Add, a, c1_index), &b) => {
+                                    match self.expr_ref_at(c1_index) {
+                                        &LpExpression::LpAtomicExpr::LitVal(c1) => {
+                                            let new_b_index = self.add_lp_expr(b);
+                                            self.change_lp_expr(
+                                                left_expr_index,
+                                                LpExpression::LpCompExpr(LpExprOp::Add, a, new_b_index)
+                                            );
+                                            self.change_lp_expr(
+                                                right_expr_index,
+                                                LpExpression::LpAtomicExpr::LitVal(c1)
+                                            );
+                                            lp_expr_stack.push(handled_expr_index);
+                                        }
+                                    }
                                 },
                                 // (a-c1)+b = (a+b)-c1
-                                (&LpCompExpr(LpExprOp::Subtract, a, &LpAtomicExpr::LitVal(c1)), &b) => {
-                                    let new_b_index = self.add_lp_expr(b);
-                                    self.change_lp_expr(
-                                        left_expr_index,
-                                        LpExpression::LpCompExpr(LpExprOp::Add, a, new_b_index)
-                                    );
-                                    self.change_lp_expr(
-                                        right_expr_index,
-                                        LpExpression::LpAtomicExpr::LitVal(c1),
-                                    );
-                                    self.change_lp_expr(
-                                        handled_expr_index,
-                                        LpExpression::LpCompExpr(LpExprOp::Subtract, left_expr_index, right_expr_index)
-                                    );
-                                    lp_expr_stack.push(handled_expr_index);
+                                (&LpCompExpr(LpExprOp::Subtract, a, c1_index), &b) => {
+                                    match self.expr_ref_at(c1_index) {
+                                        &LpExpression::LpAtomicExpr::LitVal(c1) => {
+                                            let new_b_index = self.add_lp_expr(b);
+                                            self.change_lp_expr(
+                                                left_expr_index,
+                                                LpExpression::LpCompExpr(LpExprOp::Add, a, new_b_index)
+                                            );
+                                            self.change_lp_expr(
+                                                right_expr_index,
+                                                LpExpression::LpAtomicExpr::LitVal(c1),
+                                            );
+                                            self.change_lp_expr(
+                                                handled_expr_index,
+                                                LpExpression::LpCompExpr(LpExprOp::Subtract, left_expr_index, right_expr_index)
+                                            );
+                                            lp_expr_stack.push(handled_expr_index);
+                                        }
+                                    }
                                 },
 
                                 // Accumulate consts +/-
@@ -568,10 +674,10 @@ impl LpExprArena {
                                 },
                             }
                         },
-                        &LpCompExpr(LpExprOp::Subtract, left_index, right_index) => {
-                            match (self.index_expr_ref(left_index), self.index_expr_ref(right_index)) {
+                        LpCompExpr(LpExprOp::Subtract, left_index, right_index) => {
+                            match (self.expr_ref_at(left_index), self.expr_ref_at(right_index)) {
                                 // Trivial rule: x - 0 = x
-                                (&a, &LpAtomicExpr::LitVal(0.0)) => {
+                                (&a, &LpExpression::LpAtomicExpr::LitVal(0.0)) => {
                                     self.change_lp_expr(
                                         handled_expr_index,
                                         a
@@ -610,11 +716,18 @@ impl LpExprArena {
 
                                 // Place literal at the end
                                 // c1 - b = -b + c1
-                                (&LpAtomicExpr::LitVal(c1), &b) => {
-                                    let b_new_index = self.add_lp_expr(-b);
+                                (&LpExpression::LpAtomicExpr::LitVal(c1), _) => {
+                                    let lit_new_index = self.add_lp_expr(LpExpression::LpAtomicExpr::LitVal(-1.0));
+                                    let new_index = self.add_lp_expr(
+                                        LpCompExpr(
+                                            LpExprOp::Multiply,
+                                            lit_new_index,
+                                            right_index
+                                        )
+                                    );
                                     self.change_lp_expr(
                                         handled_expr_index,
-                                        LpExpression::LpCompExpr(LpExprOp::Add, b_new_index, left_index)
+                                        LpExpression::LpCompExpr(LpExprOp::Add, new_index, left_index)
                                     );
                                     lp_expr_stack.push(handled_expr_index);
                                 },
@@ -622,9 +735,9 @@ impl LpExprArena {
                                 // Accumulate consts +/-
                                 // (a-c1)-c2 = a-(c1+c2)
                                 // (c1-b)-c2 = -b+(c1-c2)
-                                (&LpCompExpr(LpExprOp::Subtract, a, b), &LpAtomicExpr::LitVal(c2)) => {
-                                    match (self.index_expr_ref(a), self.index_expr_ref(b)) {
-                                        (&a, &LpAtomicExpr::LitVal(c1)) => {
+                                (&LpCompExpr(LpExprOp::Subtract, a_index, b_index), &LpExpression::LpAtomicExpr::LitVal(c2)) => {
+                                    match (self.expr_ref_at(a_index), self.expr_ref_at(b_index)) {
+                                        (&a, &LpExpression::LpAtomicExpr::LitVal(c1)) => {
                                             self.change_lp_expr(
                                                 left_index,
                                                 a
@@ -635,10 +748,15 @@ impl LpExprArena {
                                             );
                                             lp_expr_stack.push(handled_expr_index);
                                         },
-                                        (&LpAtomicExpr::LitVal(c1), &b) => {
+                                        (&LpExpression::LpAtomicExpr::LitVal(c1), _) => {
+                                            let lit_new_index = self.add_lp_expr(LpExpression::LpAtomicExpr::LitVal(-1.0));
                                             self.change_lp_expr(
                                                 left_index,
-                                                -b
+                                                LpCompExpr(
+                                                    LpExprOp::Multiply,
+                                                    lit_new_index,
+                                                    b_index
+                                                )
                                             );
                                             self.change_lp_expr(
                                                 right_index,
@@ -646,7 +764,11 @@ impl LpExprArena {
                                             );
                                             self.change_lp_expr(
                                                 handled_expr_index,
-                                                LpExpression::LpCompExpr(LpExprOp::Add, left_index, right_index)
+                                                LpCompExpr(
+                                                    LpExprOp::Add,
+                                                    left_index,
+                                                    right_index
+                                                )
                                             );
                                             lp_expr_stack.push(handled_expr_index);
                                         },
@@ -654,47 +776,59 @@ impl LpExprArena {
                                             lp_expr_stack.push(left_index);
                                         },
                                     }
-                                },
+                                }
 
                                 // (a+c1)-c2 = a+(c1-c2)
-                                (&LpCompExpr(LpExprOp::Add, a_index, &LpAtomicExpr::LitVal(c1)), &LpAtomicExpr::LitVal(c2)) => {
-                                    self.change_lp_expr(
-                                        right_index,
-                                        LpExpression::LpAtomicExpr::LitVal(c1 - c2)
-                                    );
-                                    self.change_lp_expr(
-                                        handled_expr_index,
-                                        LpExpression::LpCompExpr(LpExprOp::Add, a_index, right_index)
-                                    );
-                                    lp_expr_stack.push(handled_expr_index);
-                                }
+                                (&LpCompExpr(LpExprOp::Add, a_index, c1_index), &LpExpression::LpAtomicExpr::LitVal(c2)) => {
+                                    match self.expr_ref_at(c1_index) {
+                                        &LpExpression::LpAtomicExpr::LitVal(c1) => {
+                                            self.change_lp_expr(
+                                                right_index,
+                                                LpExpression::LpAtomicExpr::LitVal(c1 - c2)
+                                            );
+                                            self.change_lp_expr(
+                                                handled_expr_index,
+                                                LpExpression::LpCompExpr(LpExprOp::Add, a_index, right_index)
+                                            );
+                                            lp_expr_stack.push(handled_expr_index);
+                                        }
+                                    }
+                                },
 
                                 // Extract the const:
                                 // (a+c1)-b = (a-b)+c1
-                                (&LpCompExpr(LpExprOp::Add, a_index, &LpAtomicExpr::LitVal(c1)), &b) => {
-                                    let c1_new_index = self.add_lp_expr(LpExpression::LpAtomicExpr::LitVal(c1));
-                                    self.change_lp_expr(
-                                        left_index,
-                                        LpExpression::LpCompExpr(LpExprOp::Subtract, a_index, right_index),
-                                    );
-                                    self.change_lp_expr(
-                                        handled_expr_index,
-                                        LpExpression::LpCompExpr(LpExprOp::Add, left_index, c1_new_index)
-                                    );
-                                    lp_expr_stack.push(handled_expr_index);
-                                }
+                                (&LpCompExpr(LpExprOp::Add, a_index, c1_index), &b) => {
+                                    match self.expr_ref_at(c1_index) {
+                                        &LpExpression::LpAtomicExpr::LitVal(c1) => {
+                                            let c1_new_index = self.add_lp_expr(LpExpression::LpAtomicExpr::LitVal(c1));
+                                            self.change_lp_expr(
+                                                left_index,
+                                                LpExpression::LpCompExpr(LpExprOp::Subtract, a_index, right_index),
+                                            );
+                                            self.change_lp_expr(
+                                                handled_expr_index,
+                                                LpExpression::LpCompExpr(LpExprOp::Add, left_index, c1_new_index)
+                                            );
+                                            lp_expr_stack.push(handled_expr_index);
+                                        }
+                                    }
+                                },
                                 // (a-c1)-b = (a-b)-c1
-                                (&LpCompExpr(LpExprOp::Subtract, a_index, &LpAtomicExpr::LitVal(c1)), &b) => {
-                                    self.change_lp_expr(
-                                        left_index,
-                                        self.index_expr(a_index) - b
-                                    );
-                                    self.change_lp_expr(
-                                        right_index,
-                                        LpExpression::LpAtomicExpr::LitVal(c1),
-                                    );
-                                    lp_expr_stack.push(handled_expr_index);
-                                }
+                                (&LpCompExpr(LpExprOp::Subtract, a_index, c1_index), &b) => {
+                                    match self.expr_ref_at(c1_index) {
+                                        &LpExpression::LpAtomicExpr::LitVal(c1) => {
+                                            self.change_lp_expr(
+                                                left_index,
+                                                self.expr_at(a_index) - b
+                                            );
+                                            self.change_lp_expr(
+                                                right_index,
+                                                LpExpression::LpAtomicExpr::LitVal(c1),
+                                            );
+                                            lp_expr_stack.push(handled_expr_index);
+                                        }
+                                    }
+                                },
 
                                 _ => {
                                     lp_expr_stack.push(left_index);
@@ -702,10 +836,10 @@ impl LpExprArena {
                                 },
                             }
                         }
-                        &LpAtomicExpr::ConsBin(_)
-                        | &LpAtomicExpr::ConsInt(_)
-                        | &LpAtomicExpr::ConsCont(_)
-                        | &LpAtomicExpr::LpAtomicExpr::LitVal(_)
+                        LpExpression::LpAtomicExpr::ConsBin(_)
+                        | LpExpression::LpAtomicExpr::ConsInt(_)
+                        | LpExpression::LpAtomicExpr::ConsCont(_)
+                        | LpExpression::LpAtomicExpr::LitVal(_)
                         | _ => {},
                     };
             }
@@ -760,17 +894,17 @@ pub struct LpConstraint(pub LpExprArena, pub Constraint, pub LpExprArena);
 impl LpConstraint {
     pub fn generalize(&self) -> LpConstraint {
         // TODO: Optimize tailrec
-        let &LpConstraint(ref lhs, ref op, ref rhs) = self;
-        let (constant, lhs_expr) = (lhs - rhs).simplify().split_constant_and_expr();
+        let &LpConstraint(ref mut lhs, ref op, ref rhs) = self;
+        let (constant, lhs_expr) = lhs.merge(rhs, LpExprOp::Subtract).simplify().split_constant_and_expr();
         LpConstraint(lhs_expr, op.clone(), LpExpression::LpAtomicExpr::LitVal(-constant))
     }
 }
 
 impl ToTokens for LpConstraint {
     fn to_tokens(&self, stream: &mut TokenStream) {
-        let lhs = &self.0;
+        let lhs = &self.0.get_root_expr();
         let constraint = &self.1;
-        let rhs = &self.2;
+        let rhs = &self.2.get_root_expr();
         stream.extend(quote!(
             LpConstraint(
                 #lhs, #constraint, #rhs
@@ -829,7 +963,7 @@ pub fn sum<'a, T: 'a,U: 'a>(expr: &'a Vec<T>, f: impl Fn(&'a T) -> U) -> LpExprA
 }
 
 pub trait SummableExp {
-    fn sum(&self) -> LpExpression;
+    fn sum(&self) -> LpExprArena;
 }
 
 /// make a complete expression or a constraint with a vector of expressions

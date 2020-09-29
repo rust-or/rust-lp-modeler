@@ -13,7 +13,6 @@ pub use self::glpk::*;
 use std::fs::File;
 use std::fs;
 use util::is_zero;
-use dsl::LpExpression::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Status {
@@ -71,18 +70,30 @@ impl Solution<'_> {
         i
     }
     pub fn eval(&self) -> Option<f32> {
-        self.related_problem.and_then( |problem| problem.obj_expr.as_ref().map( |obj_expr| Self::eval_with(obj_expr, &self.results ) ))
+        self.related_problem
+            .and_then( |problem| {
+                match &problem.obj_expr_arena {
+                    Some(obj_expr_arena) => Some( self.eval_with(obj_expr_arena.get_root_expr_ref(), &self.results) ),
+                    None => None
+                }
+            })
     }
-    fn eval_with(expr: &LpExpression, values: &HashMap<String, f32>) -> f32 {
+    fn eval_with(&self, expr: &LpExpression, values: &HashMap<String, f32>) -> f32 {
         match expr {
-            AddExpr(left, right) => Self::eval_with(left, values) + Self::eval_with(right, values),
-            ConsBin(LpBinary { name })
-            | ConsCont(LpContinuous { name, .. })
-            | ConsInt(LpInteger { name, .. }) => *values.get(name).unwrap_or(&0f32),
-            MulExpr(left, right) => Self::eval_with(left, values) * Self::eval_with(right, values),
-            SubExpr(left, right) => Self::eval_with(left, values) - Self::eval_with(right, values),
-            LitVal(n) => *n,
-            EmptyExpr => 0.0
+            &LpExpression::LpCompExpr(operation, left, right) => {
+                let left_ref = self.related_problem.unwrap().obj_expr_arena.unwrap().expr_ref_at(left);
+                let right_ref = self.related_problem.unwrap().obj_expr_arena.unwrap().expr_ref_at(right);
+                match operation {
+                    LpExprOp::Add => self.eval_with(left_ref, values) + self.eval_with(right_ref, values),
+                    LpExprOp::Multiply => self.eval_with(left_ref, values) * self.eval_with(right_ref, values),
+                    LpExprOp::Subtract => self.eval_with(left_ref, values) - self.eval_with(right_ref, values),
+                }
+            },
+            &LpExpression::LpAtomicExpr::ConsBin(LpBinary { name })
+            | &LpExpression::LpAtomicExpr::ConsCont(LpContinuous { name, .. })
+            | &LpExpression::LpAtomicExpr::ConsInt(LpInteger { name, .. }) => *values.get(&name).unwrap_or(&0f32),
+            &LpExpression::LpAtomicExpr::LitVal(n) => *n,
+            &LpExpression::LpAtomicExpr::EmptyExpr => 0.0
         }
     }
 }
