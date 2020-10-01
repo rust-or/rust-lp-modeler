@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use dsl::{Problem, LpContinuous, LpBinary, LpInteger, LpProblem, LpExpression};
+use dsl::{Problem, LpContinuous, LpBinary, LpInteger, LpProblem, LpExpression, LpExprOp, LpExprArenaIndex};
 
 pub mod cbc;
 pub use self::cbc::*;
@@ -73,27 +73,25 @@ impl Solution<'_> {
         self.related_problem
             .and_then( |problem| {
                 match &problem.obj_expr_arena {
-                    Some(obj_expr_arena) => Some( self.eval_with(obj_expr_arena.get_root_expr_ref(), &self.results) ),
+                    Some(obj_expr_arena) => Some( self.eval_with(&obj_expr_arena.get_root_index(), &self.results) ),
                     None => None
                 }
             })
     }
-    fn eval_with(&self, expr: &LpExpression, values: &HashMap<String, f32>) -> f32 {
-        match expr {
-            &LpExpression::LpCompExpr(operation, left, right) => {
-                let left_ref = self.related_problem.unwrap().obj_expr_arena.unwrap().expr_ref_at(left);
-                let right_ref = self.related_problem.unwrap().obj_expr_arena.unwrap().expr_ref_at(right);
+    fn eval_with(&self, index: &LpExprArenaIndex, values: &HashMap<String, f32>) -> f32 {
+        match self.related_problem.unwrap().obj_expr_arena.as_ref().unwrap().expr_ref_at(*index) {
+            LpExpression::LpCompExpr(operation, left, right) => {
                 match operation {
-                    LpExprOp::Add => self.eval_with(left_ref, values) + self.eval_with(right_ref, values),
-                    LpExprOp::Multiply => self.eval_with(left_ref, values) * self.eval_with(right_ref, values),
-                    LpExprOp::Subtract => self.eval_with(left_ref, values) - self.eval_with(right_ref, values),
+                    LpExprOp::Addition => self.eval_with(left, values) + self.eval_with(right, values),
+                    LpExprOp::Multiplication => self.eval_with(left, values) * self.eval_with(right, values),
+                    LpExprOp::Subtraction => self.eval_with(left, values) - self.eval_with(right, values),
                 }
             },
-            &LpExpression::LpAtomicExpr::ConsBin(LpBinary { name })
-            | &LpExpression::LpAtomicExpr::ConsCont(LpContinuous { name, .. })
-            | &LpExpression::LpAtomicExpr::ConsInt(LpInteger { name, .. }) => *values.get(&name).unwrap_or(&0f32),
-            &LpExpression::LpAtomicExpr::LitVal(n) => *n,
-            &LpExpression::LpAtomicExpr::EmptyExpr => 0.0
+            LpExpression::ConsBin(LpBinary { name })
+            | LpExpression::ConsCont(LpContinuous { name, .. })
+            | LpExpression::ConsInt(LpInteger { name, .. }) => *values.get(name).unwrap_or(&0f32),
+            LpExpression::LitVal(n) => *n,
+            LpExpression::EmptyExpr => 0.0
         }
     }
 }

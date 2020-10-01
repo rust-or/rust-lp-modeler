@@ -6,7 +6,6 @@ use std::ops::AddAssign;
 
 use self::uuid::Uuid;
 use dsl::*;
-use dsl::LpExpression;
 
 /// Enum helping to specify the objective function of the linear problem.
 ///
@@ -80,47 +79,31 @@ impl LpProblem {
             constraints: Vec::new(),
         }
     }
-    fn var<'a>(&self, expr: &'a LpExpression, lst: &mut Vec<(String, &'a LpExpression)>) {
-        match expr {
-            LpExpression::LpAtomicExpr::ConsBin(LpBinary { ref name, .. })
-            | LpExpression::LpAtomicExpr::ConsInt(LpInteger { ref name, .. })
-            | LpExpression::LpAtomicExpr::ConsCont(LpContinuous { ref name, .. }) => {
-                lst.push((name.clone(), expr));
-            },
-            LpExpression::LpCompExpr(LpExprOp::Multiply, _, e) => {
-                self.var(self.obj_expr_arena.unwrap().expr_ref_at(*e), lst);
-            },
-            LpExpression::LpCompExpr(LpExprOp::Add, e1, e2)
-            | LpExpression::LpCompExpr(LpExprOp::Subtract, e1, e2) => {
-                self.var(self.obj_expr_arena.unwrap().expr_ref_at(*e1), lst);
-                self.var(self.obj_expr_arena.unwrap().expr_ref_at(*e2), lst);
-            }
-            _ => (),
-        }
-    }
+
 
     // TODO: Call once and pass into parameter
     // TODO: Check variables on the objective function
-    pub fn variables(&self) -> HashMap<String, &LpExpression> {
-        let mut lst: Vec<_> = Vec::new();
-        for e in &self.constraints {
-            self.var(self.obj_expr_arena.unwrap().get_root_expr_ref(), &mut lst);
+    pub fn variables(&self) -> HashMap<String, (usize, usize)> {
+        let mut lst: HashMap<String, (usize, usize)> = HashMap::new();
+        for constraint_index in 0..self.constraints.len() {
+            let constraint = self.constraints.get(constraint_index).unwrap();
+            constraint.var(constraint.0.get_root_index(), constraint_index, &mut lst);
         }
-        lst.iter()
-            .map(|&(ref n, ref x)| (n.clone(), *x))
-            .collect::<HashMap<String, &LpExpression>>()
+        lst
     }
 }
 
 impl Problem for LpProblem {
     fn add_objective_expression(&mut self, expr_arena: &mut LpExprArena) {
         if let Some(e) = &self.obj_expr_arena {
-            let (_, simpl_expr) = expr_arena.merge(&e, LpExprOp::Add).simplify()
-                .split_constant_and_expr();
-            self.obj_expr_arena = Some(simpl_expr);
+            let mut simple_expr = expr_arena
+                .merge(&e, LpExprOp::Addition);
+            let _ = simple_expr.simplify().split_off_constant();
+            self.obj_expr_arena = Some(simple_expr);
         } else {
-            let (_, simpl_expr) = expr_arena.simplify().split_constant_and_expr();
-            self.obj_expr_arena = Some(simpl_expr);
+            let mut simple_expr = expr_arena.clone();
+            let _ = simple_expr.simplify().split_off_constant();
+            self.obj_expr_arena = Some(simple_expr);
         }
     }
 

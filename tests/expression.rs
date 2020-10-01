@@ -12,7 +12,7 @@ fn expressions_creation() {
 
     assert_eq!(
         a + b,
-        AddExpr(Box::new(LpExpression::LpAtomicExpr::ConsInt(a.clone())), Box::new(LpExpression::LpAtomicExpr::ConsInt(b.clone())))
+        AddExpr(Box::new(LpExpression::ConsInt(a.clone())), Box::new(LpExpression::ConsInt(b.clone())))
     );
 }
 
