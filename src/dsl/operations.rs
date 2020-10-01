@@ -113,7 +113,7 @@ macro_rules! operations_for_expr {
         {
             type Output = LpExprArena;
             fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
-                let mut new_lp_expr_arena = self.clone();
+                let new_lp_expr_arena = self.clone();
                 new_lp_expr_arena.merge(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
@@ -123,7 +123,7 @@ macro_rules! operations_for_expr {
         {
             type Output = LpExprArena;
             fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
-                let mut new_lp_expr_arena = (*self).clone();
+                let new_lp_expr_arena = (*self).clone();
                 new_lp_expr_arena.merge(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
@@ -143,7 +143,7 @@ macro_rules! lpvars_operation_for_intoexpr {
         {
             type Output = LpExprArena;
             fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
-                let mut new_lp_expr_arena: LpExprArena = self.clone().into();
+                let new_lp_expr_arena: LpExprArena = self.clone().into();
                 new_lp_expr_arena.merge(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
@@ -153,7 +153,7 @@ macro_rules! lpvars_operation_for_intoexpr {
         {
             type Output = LpExprArena;
             fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
-                let mut new_lp_expr_arena: LpExprArena = (*self).clone().into();
+                let new_lp_expr_arena: LpExprArena = (*self).clone().into();
                 new_lp_expr_arena.merge(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
@@ -176,14 +176,14 @@ macro_rules! numeric_operation_for_expr {
         impl $trait_name<LpExprArena> for $num_type {
             type Output = LpExprArena;
             fn $f_name(self, lp_expr_arena: LpExprArena) -> LpExprArena {
-                let mut new_lp_expr_arena: LpExprArena = lp_expr_arena.clone();
+                let new_lp_expr_arena: LpExprArena = lp_expr_arena.clone();
                 new_lp_expr_arena.merge(&(self as f32).into(), $type_expr)
             }
         }
         impl<'a> $trait_name<&'a LpExprArena> for $num_type {
             type Output = LpExprArena;
             fn $f_name(self, lp_expr_arena: &'a LpExprArena) -> LpExprArena {
-                let mut new_lp_expr_arena: LpExprArena = (*lp_expr_arena).clone();
+                let new_lp_expr_arena: LpExprArena = (*lp_expr_arena).clone();
                 new_lp_expr_arena.merge(&(self as f32).into(), $type_expr)
             }
         }
@@ -271,14 +271,14 @@ macro_rules! numeric_operation_for_lpvars {
         impl $trait_name<$lp_type> for $num_type {
             type Output = LpExprArena;
             fn $f_name(self, var: $lp_type) -> LpExprArena {
-                let mut new_lp_expr_arena: LpExprArena = var.clone().into();
+                let new_lp_expr_arena: LpExprArena = var.clone().into();
                 new_lp_expr_arena.merge(&(self as f32).into(), $type_expr)
             }
         }
         impl<'a> $trait_name<&'a $lp_type> for $num_type {
             type Output = LpExprArena;
             fn $f_name(self, var: &'a $lp_type) -> LpExprArena {
-                let mut new_lp_expr_arena: LpExprArena = (*var).clone().into();
+                let new_lp_expr_arena: LpExprArena = (*var).clone().into();
                 new_lp_expr_arena.merge(&(self as f32).into(), $type_expr)
             }
         }

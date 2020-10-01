@@ -1099,22 +1099,13 @@ impl ToTokens for LpConstraint {
 /// problem += lp_sum(v).equal(10.0);
 /// ```
 ///
-pub fn lp_sum<T>(expr: &Vec<T>) -> LpExprArena where T: Into<LpExpression> + Clone {
-    let mut arena = LpExprArena::new();
-    match expr.first() {
+pub fn lp_sum<T>(not_yet_lp_expr_arenas: &Vec<T>) -> LpExprArena where T: Into<LpExprArena> + Clone {
+    match not_yet_lp_expr_arenas.first() {
         Some(first) => {
-            arena.add_lp_expr(first);
-            for a in expr[1..].iter() {
-                let index = arena.add_lp_expr(a);
-                arena.add_lp_expr(
-                    &LpExpression::LpCompExpr(
-                        LpExprOp::Addition,
-                        index - 1,
-                        index
-                    )
-                );
+            let mut arena: LpExprArena = first.clone().into();
+            for a in not_yet_lp_expr_arenas[1..].iter() {
+                arena.merge(&a.clone().into(), LpExprOp::Addition);
             }
-            arena.set_root(arena.array.len() - 1);
             arena
         },
         None => {
@@ -1123,7 +1114,7 @@ pub fn lp_sum<T>(expr: &Vec<T>) -> LpExprArena where T: Into<LpExpression> + Clo
     }
 }
 
-pub fn sum<'a, T: 'a,U: 'a>(expr: &'a Vec<T>, f: impl Fn(&'a T) -> U) -> LpExprArena where U: Into<LpExpression> + Clone {
+pub fn sum<'a, T: 'a,U: 'a>(expr: &'a Vec<T>, f: impl Fn(&'a T) -> U) -> LpExprArena where U: Into<LpExprArena> + Clone {
     return lp_sum(&expr.iter().map(|t| f(t.into())).collect());
 }
 
@@ -1146,7 +1137,7 @@ pub trait SummableExp {
 /// problem += vec!(a,b,c).sum().equal(10.0);
 /// ```
 ///
-impl<T> SummableExp for Vec<T> where T: Into<LpExpression> + Clone {
+impl<T> SummableExp for Vec<T> where T: Into<LpExprArena> + Clone {
     fn sum(&self) -> LpExprArena {
        lp_sum(self)
     }
