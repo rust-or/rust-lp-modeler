@@ -107,7 +107,7 @@ fn test_readme_example_2() {
     }
 
     // Define Objective Function
-    let mut obj_vec: Vec<LpExpression> = Vec::new();
+    let mut obj_vec: Vec<LpExprArena> = Vec::new();
     for (&(&m, &w), var) in &vars {
         let obj_coef = compat_scores.get(&(m, w)).unwrap();
         obj_vec.push(*obj_coef * var);

@@ -17,14 +17,14 @@ fn test_quotations() {
   let quoted_exp_str = "LpExpression :: ConsInt (".to_owned() + quoted_a_str + ")";
   assert_eq!(quoted_exp.to_string(), quoted_exp_str);
 
-  let full_exp = LpExpression::MulExpr ( Box::new ( LpExpression::SubExpr ( Box::new ( LpExpression::EmptyExpr ) , Box::new ( LpExpression::LitVal ( 1f32 ) ) ) ) , Box::new ( LpExpression::AddExpr ( Box::new ( LpExpression::ConsCont ( LpContinuous { name : "x".to_string() , lower_bound : None , upper_bound : None } ) ) , Box::new ( LpExpression::ConsInt ( LpInteger { name : "y".to_string() , lower_bound : None , upper_bound : None } ) ) ) ) );
+  let full_exp_arena = LpExprArena :: build(0, vec![ LpExpression :: LpCompExpr (LpExprOp :: Multiplication, 1, 2), LpExpression :: LpCompExpr (LpExprOp :: Subtraction, 3, 4 ), LpExpression :: LpCompExpr (LpExprOp :: Addition, 5, 6), LpExpression :: LitVal ( 1f32 ), LpExpression :: EmptyExpr, LpExpression :: ConsCont ( LpContinuous { name : "x".to_string() , lower_bound : None , upper_bound : None }  ), LpExpression :: ConsInt ( LpInteger { name : "y".to_string() , lower_bound : None , upper_bound : None } ) ] );
 
-  let full_exp_quoted = quote!(#full_exp);
-  let full_exp_str = "LpExpression :: MulExpr (Box :: new (LpExpression :: SubExpr (Box :: new (LpExpression :: EmptyExpr) , Box :: new (LpExpression :: LitVal (1f32)))) , Box :: new (LpExpression :: AddExpr (Box :: new (LpExpression :: ConsCont (LpContinuous { name : \"x\" . to_string () , lower_bound : None , upper_bound : None })) , Box :: new (LpExpression :: ConsInt (LpInteger { name : \"y\" . to_string () , lower_bound : None , upper_bound : None })))))";
+  let full_exp_quoted = quote!(#full_exp_arena);
+  let full_exp_str = "LpExpression :: LpCompExpr ( LpExpression :: SubExpr (Box :: new (LpExpression :: EmptyExpr) , Box :: new (LpExpression :: LitVal (1f32)))) , Box :: new (LpExpression :: AddExpr (Box :: new (LpExpression :: ConsCont (LpContinuous { name : \"x\" . to_string () , lower_bound : None , upper_bound : None })) , Box :: new (LpExpression :: ConsInt (LpInteger { name : \"y\" . to_string () , lower_bound : None , upper_bound : None })))))";
   assert_eq!(full_exp_quoted.to_string(), full_exp_str);
 
   // a.equal(&b);
-  let a_eq_b = LpConstraint( SubExpr( Box::new ( ConsInt ( LpInteger { name : "a" . to_string ( ) , lower_bound : None , upper_bound : None } ) ) , Box::new ( ConsInt ( LpInteger { name : "b" . to_string ( ) , lower_bound : None , upper_bound : None } ) ) ) , Constraint::Equal , LitVal(0f32));
+  let a_eq_b = LpConstraint( LpExprArena::build( 0, vec![ LpExpression :: LpCompExpr( LpExprOp :: Subtraction, 1, 2), LpExpression::ConsInt ( LpInteger { name : "a" . to_string ( ) , lower_bound : None , upper_bound : None } ), LpExpression::ConsInt ( LpInteger { name : "b" . to_string ( ) , lower_bound : None , upper_bound : None } ) ] ), Constraint::Equal , LitVal(0f32).into());
 
   let quoted_a_eq_b = quote!(#a_eq_b);
   let a_eq_b_str = "LpConstraint (LpExpression :: SubExpr (Box :: new (LpExpression :: ConsInt (LpInteger { name : \"a\" . to_string () , lower_bound : None , upper_bound : None })) , Box :: new (LpExpression :: ConsInt (LpInteger { name : \"b\" . to_string () , lower_bound : None , upper_bound : None }))) , Constraint :: Equal , LpExpression :: LitVal (0f32))";

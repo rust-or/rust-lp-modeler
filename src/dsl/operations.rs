@@ -235,35 +235,28 @@ impl<T: Into<LpExprArena> + Clone, U> LpOperations<T> for U where U: Into<LpExpr
     }
 }
 
-//impl<'a> Neg for &'a LpExpression {
-//    type Output = LpExpression;
-//    fn neg(self) -> LpExpression {
-//        LpCompExpr(
-//            Multiplication,
-//            LitVal(-1.0),
-//            self
-//        )
-//    }
-//}
-//macro_rules! neg_operation_for_lpvars {
-//    ($lp_var_type: ty, $constr_expr: ident) => {
-//        impl<'a> Neg for &'a $lp_var_type {
-//            type Output = LpExpression;
-//            fn neg(self, lp_expr_arena: &mut LpExprArena) -> LpExpression {
-//                let left_index = lp_expr_arena.add_lp_expr(LpAtomicExpr::LitVal(-1.0));
-//                let right_index = lp_expr_arena.add_lp_expr(LpAtomicExpr::$constr_expr(self.clone()));
-//                LpCompExpr(
-//                    Multiplication,
-//                    left_index,
-//                    right_index
-//                )
-//            }
-//        }
-//    };
-//}
-//neg_operation_for_lpvars!(LpInteger, ConsInt);
-//neg_operation_for_lpvars!(LpContinuous, ConsCont);
-//neg_operation_for_lpvars!(LpBinary, ConsBin);
+impl<'a> Neg for &'a LpExpression {
+    type Output = LpExprArena;
+    fn neg(self) -> LpExprArena {
+        let new_lp_expr_arena: LpExprArena = LitVal(-1.0).into();
+        new_lp_expr_arena.merge(&self.clone().into(), Multiplication)
+    }
+}
+
+macro_rules! neg_operation_for_lpvars {
+    ($lp_var_type: ty) => {
+        impl<'a> Neg for &'a $lp_var_type {
+            type Output = LpExprArena;
+            fn neg(self) -> LpExprArena {
+                let new_lp_expr_arena: LpExprArena = LitVal(-1.0).into();
+                new_lp_expr_arena.merge(&self.clone().into(), Multiplication)
+            }
+        }
+    };
+}
+neg_operation_for_lpvars!(LpInteger);
+neg_operation_for_lpvars!(LpContinuous);
+neg_operation_for_lpvars!(LpBinary);
 
 /// Macro implementing binary operations for a numeric type
 macro_rules! numeric_operation_for_lpvars {

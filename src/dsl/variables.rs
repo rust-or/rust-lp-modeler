@@ -298,6 +298,13 @@ impl LpExprArena {
        }
     }
 
+    pub fn build(root: LpExprArenaIndex, array: Vec<LpExpression>) -> Self {
+        LpExprArena {
+            root,
+            array
+        }
+    }
+
     pub fn get_root_index(&self) -> LpExprArenaIndex {
         self.root
     }
@@ -366,27 +373,27 @@ impl LpExprArena {
         }
     }
 
-    pub fn merge(&self, move_lp_expr_arena: &LpExprArena, operation: LpExprOp) -> Self {
-        let move_root_expr_ref = move_lp_expr_arena.get_root_expr_ref();
+    pub fn merge(&self, right_lp_expr_arena: &LpExprArena, operation: LpExprOp) -> Self {
+        let right_root_expr_ref = right_lp_expr_arena.get_root_expr_ref();
         let mut new_lp_expr_arena = (*self).clone();
-        let moved_root_index = new_lp_expr_arena.add_lp_expr(move_root_expr_ref);
+        let new_index_right_root = new_lp_expr_arena.add_lp_expr(right_root_expr_ref);
         let new_root_index = new_lp_expr_arena.add_lp_expr(
             &LpExpression::LpCompExpr(
                 operation,
-                self.root,
-                moved_root_index
+                new_lp_expr_arena.get_root_index(),
+                new_index_right_root
             )
         );
         new_lp_expr_arena.set_root(new_root_index);
         let mut move_stack: Vec<LpExprArenaIndex> = Vec::new();
-        move_stack.push(moved_root_index);
-        while let Some(self_parent_index) = move_stack.pop() {
-            match self.expr_ref_at(self_parent_index) {
-                LpCompExpr(operation, move_left_index, move_right_index) => {
-                    let new_left_index = new_lp_expr_arena.add_lp_expr(move_lp_expr_arena.expr_ref_at(*move_left_index));
-                    let new_right_index = new_lp_expr_arena.add_lp_expr(move_lp_expr_arena.expr_ref_at(*move_right_index));
+        move_stack.push(new_index_right_root);
+        while let Some(new_parent_index) = move_stack.pop() {
+            let lp_expr_arena = new_lp_expr_arena.clone_expr_at(new_parent_index);
+            if let LpCompExpr(operation, right_arena_left_index, right_arena_right_index) = lp_expr_arena {
+                    let new_left_index = new_lp_expr_arena.add_lp_expr(right_lp_expr_arena.expr_ref_at(right_arena_left_index));
+                    let new_right_index = new_lp_expr_arena.add_lp_expr(right_lp_expr_arena.expr_ref_at(right_arena_right_index));
                     new_lp_expr_arena.change_lp_expr(
-                        self_parent_index,
+                        new_parent_index,
                         LpExpression::LpCompExpr(
                             operation.clone(),
                             new_left_index,
@@ -395,12 +402,10 @@ impl LpExprArena {
                     );
                     move_stack.push(new_left_index);
                     move_stack.push(new_right_index);
-                },
-                // done for this branch
-                _ => {}
             }
         }
-        new_lp_expr_arena
+        let simplified = new_lp_expr_arena.simplify().clone();
+        simplified
     }
 
     pub fn show(&self, e: &LpExprArenaIndex, with_parenthesis: bool) -> String {
@@ -643,6 +648,20 @@ impl LpExprArena {
                                     );
                                 },
 
+                                // Place literal at the end
+                                (&LpExpression::LitVal(c), x) => {
+                                    self.change_lp_expr(
+                                        left_expr_index,
+                                        x.clone()
+                                    );
+                                    self.change_lp_expr(
+                                        right_expr_index,
+                                        LpExpression::LitVal(c)
+                                    );
+                                    lp_expr_stack.push(handled_expr_index);
+                                    lp_expr_stack.push(left_expr_index);
+                                },
+
                                 // ASSOCIATIVITY
                                 // a + (b+c) = (a+b)+c
                                 (a, &LpCompExpr(LpExprOp::Addition, b_index, c_index)) => {
@@ -676,19 +695,6 @@ impl LpExprArena {
                                     lp_expr_stack.push(handled_expr_index);
                                 }
 
-                                // Place literal at the end
-                                (&LpExpression::LitVal(c), x) => {
-                                    self.change_lp_expr(
-                                        left_expr_index,
-                                        x.clone()
-                                    );
-                                    self.change_lp_expr(
-                                        right_expr_index,
-                                        LpExpression::LitVal(c)
-                                    );
-                                    lp_expr_stack.push(handled_expr_index);
-                                    lp_expr_stack.push(left_expr_index);
-                                },
 
                                 // Accumulate consts +/-
                                 // (a+c1)+c2 = a+(c1+c2)
@@ -806,6 +812,7 @@ impl LpExprArena {
                                 // (expr1+c)-expr2 = (expr1-expr2)+c OK
                                 // (expr1-c)-expr2 = (expr1-expr2)-c OK
                                 _ => {
+                                    lp_expr_stack.push(handled_expr_index);
                                     lp_expr_stack.push(left_expr_index);
                                     lp_expr_stack.push(right_expr_index);
                                 },
@@ -1012,6 +1019,19 @@ impl ToTokens for LpExpression {
     }
 }
 
+impl ToTokens for LpExprArena {
+    fn to_tokens(&self, stream: &mut TokenStream) {
+        let root = self.get_root_index();
+        let array = self.array.clone();
+        stream.extend( quote! {
+            LpExprArena {
+                root: #root,
+                array: #( struct #array;),*
+            }
+        });
+    }
+}
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Constraint {
@@ -1104,7 +1124,7 @@ pub fn lp_sum<T>(not_yet_lp_expr_arenas: &Vec<T>) -> LpExprArena where T: Into<L
         Some(first) => {
             let mut arena: LpExprArena = first.clone().into();
             for a in not_yet_lp_expr_arenas[1..].iter() {
-                arena.merge(&a.clone().into(), LpExprOp::Addition);
+                arena = arena.merge(&a.clone().into(), LpExprOp::Addition);
             }
             arena
         },

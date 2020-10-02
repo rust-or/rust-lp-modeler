@@ -36,7 +36,7 @@ fn main() {
             .collect();
 
     // Define Objective Function
-    let obj_vec: Vec<LpExpression> = {
+    let obj_vec: Vec<LpExprArena> = {
        vars.iter().map( |(&(m,w), bin)| {
            let &coef = compatibility_score.get(&(m, w)).unwrap();
            coef * bin
