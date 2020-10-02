@@ -13,97 +13,6 @@ pub trait LpOperations<T> where T: Into<LpExprArena> {
     fn equal(&self, lhs_expr: T) -> LpConstraint;
 }
 
-
-// struct OperatorOverloadableType<O: Into<LpExprArena> + Clone>(O);
-//
-// impl<O: Into<LpExprArena> + Clone> From<OperatorOverloadableType<O>> for LpExprArena {
-//     fn from(from: OperatorOverloadableType<O>) -> Self{
-//         let lp_expr_arena: LpExprArena = from.into();
-//         lp_expr_arena
-//     }
-// }
-//
-// impl<T: Into<LpExprArena> + Clone, O> Add<T> for OperatorOverloadableType<O> where O: Into<LpExprArena> + Clone {
-//     type Output = LpExprArena;
-//     fn add(self, right_unknown: T) -> LpExprArena {
-//         let left_lp_expr_arena: LpExprArena = self.into();
-//         let right_lp_expr_arena: LpExprArena = right_unknown.into();
-//         left_lp_expr_arena.merge(&right_lp_expr_arena, Addition)
-//     }
-// }
-//
-// //impl<'a, 'b, O, T: Into<LpExprArena> + Clone> Add<&'b T> for OperatorOverloadableType<&'a O> where &'a O: Into<LpExprArena> + Clone {
-// //    type Output = LpExprArena;
-// //    fn add(self, right_unknown: &'b T) -> LpExprArena {
-// //        let left_lp_expr_arena: LpExprArena = (*self).into();
-// //        let right_lp_expr_arena: LpExprArena = (*right_unknown).into();
-// //        left_lp_expr_arena.merge(&right_lp_expr_arena, Addition)
-// //    }
-// //}
-//
-// impl<T: Into<LpExprArena> + Clone, O> Sub<T> for OperatorOverloadableType<O> where O: Into<LpExprArena> + Clone {
-//     type Output = LpExprArena;
-//     fn sub(self, right_unknown: T) -> LpExprArena {
-//         let left_lp_expr_arena: LpExprArena = self.into();
-//         let right_lp_expr_arena: LpExprArena = right_unknown.into();
-//         left_lp_expr_arena.merge(&right_lp_expr_arena, Subtraction)
-//     }
-// }
-//
-// impl<T: Into<LpExprArena> + Clone, O> Mul<T> for OperatorOverloadableType<O> where O: Into<LpExprArena> + Clone {
-//     type Output = LpExprArena;
-//     fn mul(self, right_unknown: T) -> LpExprArena {
-//         let left_lp_expr_arena: LpExprArena = self.into();
-//         let right_lp_expr_arena: LpExprArena = right_unknown.into();
-//         left_lp_expr_arena.merge(&right_lp_expr_arena, Multiplication)
-//     }
-// }
-
-//// Macro implementing binary operations for LpExprArena
-//macro_rules! numeric_operation_for_expr {
-//    ($trait_name: ident, $f_name: ident, $op: ident, $type_from_left: ty, $type_from_right: ty) => {
-//        impl $trait_name<$type_from_left> for $type_from_right {
-//            type Output = LpExprArena;
-//            fn $f_name(self, right_unknown: $type_from_left) -> LpExprArena {
-//                let left_lp_expr_arena: LpExprArena = self.into();
-//                let right_lp_expr_arena: LpExprArena = right_unknown.into();
-//                left_lp_expr_arena.merge(&right_lp_expr_arena, $op)
-//            }
-//        }
-//        impl<'a> $trait_name<&'a $type_from_left> for $type_from_right {
-//            type Output = LpExprArena;
-//            fn $f_name(self, right_unknown: &'a $type_from_right) -> LpExprArena {
-//                let left_lp_expr_arena: LpExprArena = self.into();
-//                let right_lp_expr_arena: LpExprArena = right_unknown.into();
-//                left_lp_expr_arena.merge(&right_lp_expr_arena, $op)
-//            }
-//        }
-//    };
-//}
-//// Macro implementing add, mul and sub for LpExprArena
-//
-//macro_rules! all_numeric_operations {
-//    ($type_left: ty, $type_right: ty) => {
-//        numeric_operation_for_expr!(Add, add, Addition, $type_left, $type_right);
-//        numeric_operation_for_expr!(Mul, mul, Multiplication, $type_left, $type_right);
-//        numeric_operation_for_expr!(Sub, sub, Subtraction, $type_left, $type_right);
-//    }
-//}
-//
-//macro_rules! all_type_combinations_numeric_operations {
-//    ($type_right: ty) => {
-//        all_numeric_operations!(LpExpression, $type_right);
-//        all_numeric_operations!(LpInteger, $type_right);
-//        all_numeric_operations!(LpBinary, $type_right);
-//        all_numeric_operations!(LpContinuous, $type_right);
-//    }
-//}
-//
-//all_type_combinations_numeric_operations!(LpExpression);
-//all_type_combinations_numeric_operations!(LpInteger);
-//all_type_combinations_numeric_operations!(LpBinary);
-//all_type_combinations_numeric_operations!(LpContinuous);
-
 /// Macro implementing binary operations for Into<LpExprArena> or &Into<LpExprArena>
 macro_rules! operations_for_expr {
     ($trait_name: ident, $f_name: ident, $expr_type: ident) => {
@@ -176,15 +85,15 @@ macro_rules! numeric_operation_for_expr {
         impl $trait_name<LpExprArena> for $num_type {
             type Output = LpExprArena;
             fn $f_name(self, lp_expr_arena: LpExprArena) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = lp_expr_arena.clone();
-                new_lp_expr_arena.merge(&(self as f32).into(), $type_expr)
+                let new_lp_expr_arena: LpExprArena = (self as f32).into();
+                new_lp_expr_arena.merge(&lp_expr_arena.clone(), $type_expr)
             }
         }
         impl<'a> $trait_name<&'a LpExprArena> for $num_type {
             type Output = LpExprArena;
             fn $f_name(self, lp_expr_arena: &'a LpExprArena) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = (*lp_expr_arena).clone();
-                new_lp_expr_arena.merge(&(self as f32).into(), $type_expr)
+                let new_lp_expr_arena: LpExprArena = (self as f32).into();
+                new_lp_expr_arena.merge(lp_expr_arena, $type_expr)
             }
         }
     };
