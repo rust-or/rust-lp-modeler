@@ -154,7 +154,8 @@ impl LpFileFormat for LpExprArena {
             s
         }
         let root_index = self.get_root_index();
-        formalize_signs(self.show(&root_index, false))
+        let mut clone = self.clone();
+        formalize_signs(clone.simplify().show(&root_index, false))
     }
 }
 

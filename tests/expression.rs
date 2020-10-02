@@ -1,7 +1,6 @@
 extern crate lp_modeler;
 
 use lp_modeler::dsl::*;
-use lp_modeler::dsl::LpExpression::*;
 
 use lp_modeler::format::lp_format::LpFileFormat;
 

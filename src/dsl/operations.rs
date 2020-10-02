@@ -260,19 +260,21 @@ neg_operation_for_lpvars!(LpBinary);
 
 /// Macro implementing binary operations for a numeric type
 macro_rules! numeric_operation_for_lpvars {
-    ($num_type: ty, $trait_name: ident, $f_name: ident, $type_expr: ident, $lp_type: ty) => {
-        impl $trait_name<$lp_type> for $num_type {
+    ($num_type_left: ty, $trait_name: ident, $f_name: ident, $type_expr: ident, $lp_type_right: ty) => {
+        impl $trait_name<$lp_type_right> for $num_type_left {
             type Output = LpExprArena;
-            fn $f_name(self, var: $lp_type) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = var.clone().into();
-                new_lp_expr_arena.merge(&(self as f32).into(), $type_expr)
+            fn $f_name(self, var: $lp_type_right) -> LpExprArena {
+                let new_lp_expr_arena: LpExprArena = (self as f32).clone().into();
+                let new_right: LpExprArena = var.clone().into();
+                new_lp_expr_arena.merge(&new_right, $type_expr)
             }
         }
-        impl<'a> $trait_name<&'a $lp_type> for $num_type {
+        impl<'a> $trait_name<&'a $lp_type_right> for $num_type_left {
             type Output = LpExprArena;
-            fn $f_name(self, var: &'a $lp_type) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = (*var).clone().into();
-                new_lp_expr_arena.merge(&(self as f32).into(), $type_expr)
+            fn $f_name(self, var: &'a $lp_type_right) -> LpExprArena {
+                let new_lp_expr_arena: LpExprArena = (self as f32).into();
+                let new_right: LpExprArena = (*var).clone().into();
+                new_lp_expr_arena.merge(&new_right, $type_expr)
             }
         }
     };
