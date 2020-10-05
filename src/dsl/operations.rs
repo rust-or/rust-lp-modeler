@@ -23,7 +23,7 @@ macro_rules! operations_for_expr {
             type Output = LpExprArena;
             fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
                 let new_lp_expr_arena = self.clone();
-                new_lp_expr_arena.merge(&not_yet_lp_expr_arena.into(), $expr_type)
+                new_lp_expr_arena.merge_cloned_arenas(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
         impl<'a, T> $trait_name<T> for &'a LpExprArena
@@ -33,7 +33,7 @@ macro_rules! operations_for_expr {
             type Output = LpExprArena;
             fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
                 let new_lp_expr_arena = (*self).clone();
-                new_lp_expr_arena.merge(&not_yet_lp_expr_arena.into(), $expr_type)
+                new_lp_expr_arena.merge_cloned_arenas(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
     };
@@ -53,7 +53,7 @@ macro_rules! lpvars_operation_for_intoexpr {
             type Output = LpExprArena;
             fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
                 let new_lp_expr_arena: LpExprArena = self.clone().into();
-                new_lp_expr_arena.merge(&not_yet_lp_expr_arena.into(), $expr_type)
+                new_lp_expr_arena.merge_cloned_arenas(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
         impl<'a, T> $trait_name<T> for &'a $lp_type
@@ -63,7 +63,7 @@ macro_rules! lpvars_operation_for_intoexpr {
             type Output = LpExprArena;
             fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
                 let new_lp_expr_arena: LpExprArena = (*self).clone().into();
-                new_lp_expr_arena.merge(&not_yet_lp_expr_arena.into(), $expr_type)
+                new_lp_expr_arena.merge_cloned_arenas(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
     };
@@ -86,14 +86,14 @@ macro_rules! numeric_operation_for_expr {
             type Output = LpExprArena;
             fn $f_name(self, lp_expr_arena: LpExprArena) -> LpExprArena {
                 let new_lp_expr_arena: LpExprArena = (self as f32).into();
-                new_lp_expr_arena.merge(&lp_expr_arena.clone(), $type_expr)
+                new_lp_expr_arena.merge_cloned_arenas(&lp_expr_arena.clone(), $type_expr)
             }
         }
         impl<'a> $trait_name<&'a LpExprArena> for $num_type {
             type Output = LpExprArena;
             fn $f_name(self, lp_expr_arena: &'a LpExprArena) -> LpExprArena {
                 let new_lp_expr_arena: LpExprArena = (self as f32).into();
-                new_lp_expr_arena.merge(lp_expr_arena, $type_expr)
+                new_lp_expr_arena.merge_cloned_arenas(lp_expr_arena, $type_expr)
             }
         }
     };
@@ -148,7 +148,7 @@ impl<'a> Neg for &'a LpExpression {
     type Output = LpExprArena;
     fn neg(self) -> LpExprArena {
         let new_lp_expr_arena: LpExprArena = LitVal(-1.0).into();
-        new_lp_expr_arena.merge(&self.clone().into(), Multiplication)
+        new_lp_expr_arena.merge_cloned_arenas(&self.clone().into(), Multiplication)
     }
 }
 
@@ -158,7 +158,7 @@ macro_rules! neg_operation_for_lpvars {
             type Output = LpExprArena;
             fn neg(self) -> LpExprArena {
                 let new_lp_expr_arena: LpExprArena = LitVal(-1.0).into();
-                new_lp_expr_arena.merge(&self.clone().into(), Multiplication)
+                new_lp_expr_arena.merge_cloned_arenas(&self.clone().into(), Multiplication)
             }
         }
     };
@@ -175,7 +175,7 @@ macro_rules! numeric_operation_for_lpvars {
             fn $f_name(self, var: $lp_type_right) -> LpExprArena {
                 let new_lp_expr_arena: LpExprArena = (self as f32).clone().into();
                 let new_right: LpExprArena = var.clone().into();
-                new_lp_expr_arena.merge(&new_right, $type_expr)
+                new_lp_expr_arena.merge_cloned_arenas(&new_right, $type_expr)
             }
         }
         impl<'a> $trait_name<&'a $lp_type_right> for $num_type_left {
@@ -183,7 +183,7 @@ macro_rules! numeric_operation_for_lpvars {
             fn $f_name(self, var: &'a $lp_type_right) -> LpExprArena {
                 let new_lp_expr_arena: LpExprArena = (self as f32).into();
                 let new_right: LpExprArena = (*var).clone().into();
-                new_lp_expr_arena.merge(&new_right, $type_expr)
+                new_lp_expr_arena.merge_cloned_arenas(&new_right, $type_expr)
             }
         }
     };

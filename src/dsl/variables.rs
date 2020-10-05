@@ -194,10 +194,10 @@ impl LpExpression {
     /// c * 4 must be considered as 4 c in a linear formulation lp file
     pub fn normalize(self, lp_expr_arena: &LpExprArena) -> LpExpression {
         if let LpCompExpr(Multiplication, e1, e2) = self {
-            if let LitVal(_) = lp_expr_arena.clone_expr_at(e1) {
+            if let LitVal(_) = lp_expr_arena.expr_clone_at(e1) {
                 return self.clone();
             } else {
-                if let LitVal(_) = lp_expr_arena.clone_expr_at(e2) {
+                if let LitVal(_) = lp_expr_arena.expr_clone_at(e2) {
                     return LpCompExpr(Multiplication, e2, e1);
                 } else {
                     return LpCompExpr(Multiplication, e1, e2);
@@ -349,23 +349,23 @@ impl LpExprArena {
         self.root
     }
 
-    pub fn set_root(&mut self, root_index: LpExprArenaIndex) {
+    pub fn set_root_to_index(&mut self, root_index: LpExprArenaIndex) {
         self.root = root_index;
     }
 
-    pub fn add_lp_expr<T>(&mut self, lp_expr: &T) -> LpExprArenaIndex where T: Into<LpExpression> + Clone {
+    pub fn push_as_expr<T>(&mut self, lp_expr: &T) -> LpExprArenaIndex where T: Into<LpExpression> + Clone {
         let index = self.array.len();
         self.array.push(lp_expr.clone().into());
         return index
     }
 
-    pub fn clone_expr_at_index_and_push(&mut self, index: LpExprArenaIndex) -> LpExprArenaIndex {
+    pub fn clone_expr_at_and_push(&mut self, index: LpExprArenaIndex) -> LpExprArenaIndex {
         let new_index = self.array.len();
-        self.array.push(self.clone_expr_at(index));
+        self.array.push(self.expr_clone_at(index));
         return new_index
     }
 
-    pub fn change_lp_expr(&mut self, index: LpExprArenaIndex, lp_expr: LpExpression) {
+    pub fn overwrite_expr_at(&mut self, index: LpExprArenaIndex, lp_expr: LpExpression) {
        self.array[index] = lp_expr;
     }
 
@@ -376,7 +376,7 @@ impl LpExprArena {
         }
     }
 
-    pub fn clone_expr_at(&self, index: LpExprArenaIndex) -> LpExpression {
+    pub fn expr_clone_at(&self, index: LpExprArenaIndex) -> LpExpression {
         match self.array.get(index) {
             Some(expr) => expr.clone(),
             None => panic!("Requested index out of bound of LpExprArena vector. This should not happen.")
@@ -384,7 +384,7 @@ impl LpExprArena {
     }
 
     pub fn get_root_expr(&self) -> LpExpression {
-        self.clone_expr_at(self.root)
+        self.expr_clone_at(self.root)
     }
 
     pub fn get_root_expr_ref(&self) -> &LpExpression {
@@ -398,16 +398,16 @@ impl LpExprArena {
                 c
             },
             LpCompExpr(Addition, e1, e2) => {
-                if let LitVal(c) = self.clone_expr_at(e2) {
-                    self.set_root(e1);
+                if let LitVal(c) = self.expr_clone_at(e2) {
+                    self.set_root_to_index(e1);
                     c
                 } else {
                     0.0
                 }
             },
             LpCompExpr(Subtraction, e1, e2) => {
-                if let LitVal(c) = self.clone_expr_at(e2) {
-                    self.set_root(e1);
+                if let LitVal(c) = self.expr_clone_at(e2) {
+                    self.set_root_to_index(e1);
                     -c
                 } else {
                     0.0
@@ -417,27 +417,27 @@ impl LpExprArena {
         }
     }
 
-    pub fn merge(&self, right_lp_expr_arena: &LpExprArena, operation: LpExprOp) -> Self {
+    pub fn merge_cloned_arenas(&self, right_lp_expr_arena: &LpExprArena, operation: LpExprOp) -> Self {
         let mut new_arena = self.clone();
-        let index_at_insertion = new_arena.insert_arena(right_lp_expr_arena);
-        let new_root = new_arena.add_lp_expr(
+        let index_at_insertion = new_arena.push_arena_at_root(right_lp_expr_arena);
+        let new_root = new_arena.push_as_expr(
             &LpCompExpr(operation, new_arena.get_root_index(), index_at_insertion)
         );
-        new_arena.set_root(new_root);
+        new_arena.set_root_to_index(new_root);
         new_arena
     }
 
-    pub fn insert_arena(&mut self, right_lp_expr_arena: &LpExprArena) -> LpExprArenaIndex {
+    pub fn push_arena_at_root(&mut self, right_lp_expr_arena: &LpExprArena) -> LpExprArenaIndex {
         let right_root_expr_ref = right_lp_expr_arena.get_root_expr_ref();
-        let new_index_right_root = self.add_lp_expr(right_root_expr_ref);
+        let new_index_right_root = self.push_as_expr(right_root_expr_ref);
         let mut move_stack: Vec<LpExprArenaIndex> = Vec::new();
         move_stack.push(new_index_right_root);
         while let Some(new_parent_index) = move_stack.pop() {
-            let lp_expr_arena = self.clone_expr_at(new_parent_index);
+            let lp_expr_arena = self.expr_clone_at(new_parent_index);
             if let LpCompExpr(operation, right_arena_left_index, right_arena_right_index) = lp_expr_arena {
-                    let new_left_index = self.add_lp_expr(right_lp_expr_arena.expr_ref_at(right_arena_left_index));
-                    let new_right_index = self.add_lp_expr(right_lp_expr_arena.expr_ref_at(right_arena_right_index));
-                    self.change_lp_expr(
+                    let new_left_index = self.push_as_expr(right_lp_expr_arena.expr_ref_at(right_arena_left_index));
+                    let new_right_index = self.push_as_expr(right_lp_expr_arena.expr_ref_at(right_arena_right_index));
+                    self.overwrite_expr_at(
                         new_parent_index,
                         LpCompExpr(
                             operation.clone(),
@@ -453,7 +453,7 @@ impl LpExprArena {
     }
 
     pub fn clone_subtree_at_index_and_push(&mut self, index: LpExprArenaIndex) -> LpExprArena {
-        let mut clone_stack: Vec<LpExpression> = vec![self.clone_expr_at(index)];
+        let mut clone_stack: Vec<LpExpression> = vec![self.expr_clone_at(index)];
         let mut cloned_subtree = LpExprArena::new();
         let mut new_left_index: LpExprArenaIndex;
         let mut new_right_index_stack: Vec<LpExprArenaIndex> = Vec::new();
@@ -462,24 +462,24 @@ impl LpExprArena {
             if let LpCompExpr(op, left_index, right_index) = expr {
                 clone_stack.push(LpCompExpr(op, left_index, right_index));
                 left_stack.push(left);
-                clone_stack.push(self.clone_expr_at(left_index));
+                clone_stack.push(self.expr_clone_at(left_index));
                 left_stack.push(true);
-                clone_stack.push(self.clone_expr_at(right_index));
+                clone_stack.push(self.expr_clone_at(right_index));
                 left_stack.push(false);
             } else {
                 if left {
-                    new_left_index = cloned_subtree.add_lp_expr(&expr);
+                    new_left_index = cloned_subtree.push_as_expr(&expr);
                     while left {
                         if let (Some(LpCompExpr(op, _, _)), Some(local_left)) = (clone_stack.pop(), left_stack.pop()) {
                             if let Some(new_right_index) = new_right_index_stack.pop() {
                                 left = local_left;
                                 if left {
-                                    new_left_index = cloned_subtree.add_lp_expr(
+                                    new_left_index = cloned_subtree.push_as_expr(
                                         &LpCompExpr(op, new_left_index, new_right_index)
                                     );
                                 } else {
                                     new_right_index_stack.push(
-                                        cloned_subtree.add_lp_expr(
+                                        cloned_subtree.push_as_expr(
                                             &LpCompExpr(op, new_left_index, new_right_index)
                                         )
                                     );
@@ -492,13 +492,13 @@ impl LpExprArena {
                         }
                     }
                 } else {
-                    new_right_index_stack.push( cloned_subtree.add_lp_expr(&expr) );
+                    new_right_index_stack.push( cloned_subtree.push_as_expr(&expr) );
                 }
             }
         }
 
         if let Some(root_index)  = new_right_index_stack.pop() {
-            cloned_subtree.set_root(root_index);
+            cloned_subtree.set_root_to_index(root_index);
             cloned_subtree
         } else {
             panic!("Got an empty new_right_index_stack. This is a bug.");
@@ -526,7 +526,7 @@ impl LpExprArena {
                     + str_right_mult
             }
             LpCompExpr(Multiplication, e1, e2) => {
-                match self.clone_expr_at(*e1) {
+                match self.expr_clone_at(*e1) {
                     LitVal(c) if c == 1.0 => {
                         //e2.to_lp_file_format()
                         str_left_mult.to_string()
@@ -574,18 +574,18 @@ impl LpExprArena {
             while let Some(handled_expr_index) = lp_expr_stack.pop() {
                 println!("\nself.show({}, true): {:?}", self.get_root_index(), self.show(&self.get_root_index(), true));
                 println!("LpExprArena: {:?}", self);
-                println!("Handling index: {}, expression: {:?}", handled_expr_index, self.clone_expr_at(handled_expr_index));
-                if let LpCompExpr(_, left, right) = self.clone_expr_at(handled_expr_index) {
-                    println!("left [{}]: {:?}", left, self.clone_expr_at(left));
-                    println!("right [{}]: {:?}", right, self.clone_expr_at(right));
+                println!("Handling index: {}, expression: {:?}", handled_expr_index, self.expr_clone_at(handled_expr_index));
+                if let LpCompExpr(_, left, right) = self.expr_clone_at(handled_expr_index) {
+                    println!("left [{}]: {:?}", left, self.expr_clone_at(left));
+                    println!("right [{}]: {:?}", right, self.expr_clone_at(right));
                 }
-                match self.clone_expr_at(handled_expr_index) {
+                match self.expr_clone_at(handled_expr_index) {
                     LpCompExpr(Multiplication, left_index, right_index) => {
-                        match (self.clone_expr_at(left_index), self.clone_expr_at(right_index)) {
+                        match (self.expr_clone_at(left_index), self.expr_clone_at(right_index)) {
                             // Trivial rule: 0 * x = 0
                             (_, LitVal(c))
                             | (LitVal(c), _) if c == 0.0 => {
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LitVal(0.0)
                                 )
@@ -593,7 +593,7 @@ impl LpExprArena {
 
                             // Simplify two literals
                             (LitVal(c1), LitVal(c2)) => {
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LitVal(c1 * c2)
                                 )
@@ -605,19 +605,19 @@ impl LpExprArena {
                                 let i_new_index: LpExprArenaIndex;
                                 if let LpCompExpr(_, _, _) = i {
                                     let new_subtree = self.clone_subtree_at_index_and_push(left_index);
-                                    i_new_index = self.insert_arena(&new_subtree);
+                                    i_new_index = self.push_arena_at_root(&new_subtree);
                                 } else {
                                     // Cons or LitVal type
-                                    i_new_index = self.clone_expr_at_index_and_push(left_index);
+                                    i_new_index = self.clone_expr_at_and_push(left_index);
                                 }
-                                let new_left_index = self.add_lp_expr(
+                                let new_left_index = self.push_as_expr(
                                     &LpCompExpr(Multiplication, left_index, a_index)
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     right_index,
                                     LpCompExpr(Multiplication, i_new_index, b_index)
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(Addition, new_left_index, right_index)
                                 );
@@ -628,19 +628,19 @@ impl LpExprArena {
                                 let i_new_index: LpExprArenaIndex;
                                 if let LpCompExpr(_, _, _) = i {
                                     let new_subtree = self.clone_subtree_at_index_and_push(right_index);
-                                    i_new_index = self.insert_arena(&new_subtree);
+                                    i_new_index = self.push_arena_at_root(&new_subtree);
                                 } else {
                                     // Cons or LitVal type
-                                    i_new_index = self.clone_expr_at_index_and_push(right_index);
+                                    i_new_index = self.clone_expr_at_and_push(right_index);
                                 }
-                                let new_right_index = self.add_lp_expr(
+                                let new_right_index = self.push_as_expr(
                                     &LpCompExpr(Multiplication, right_index, b_index)
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     left_index,
                                     LpCompExpr(Multiplication, i_new_index, a_index)
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(Addition, left_index, new_right_index)
                                 );
@@ -652,19 +652,19 @@ impl LpExprArena {
                                 let i_new_index: LpExprArenaIndex;
                                 if let LpCompExpr(_, _, _) = i {
                                     let new_subtree = self.clone_subtree_at_index_and_push(right_index);
-                                    i_new_index = self.insert_arena(&new_subtree);
+                                    i_new_index = self.push_arena_at_root(&new_subtree);
                                 } else {
                                     // Cons or LitVal type
-                                    i_new_index = self.clone_expr_at_index_and_push(right_index);
+                                    i_new_index = self.clone_expr_at_and_push(right_index);
                                 }
-                                let new_right_index = self.add_lp_expr(
+                                let new_right_index = self.push_as_expr(
                                     &LpCompExpr(Multiplication, right_index, b_index)
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     left_index,
                                     LpCompExpr(Multiplication, i_new_index, a_index)
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(Subtraction, left_index, new_right_index)
                                 );
@@ -675,19 +675,19 @@ impl LpExprArena {
                                 let i_new_index: LpExprArenaIndex;
                                 if let LpCompExpr(_, _, _) = i {
                                     let new_subtree = self.clone_subtree_at_index_and_push(left_index);
-                                    i_new_index = self.insert_arena(&new_subtree);
+                                    i_new_index = self.push_arena_at_root(&new_subtree);
                                 } else {
                                     // Cons or LitVal type
-                                    i_new_index = self.clone_expr_at_index_and_push(left_index);
+                                    i_new_index = self.clone_expr_at_and_push(left_index);
                                 }
-                                let new_left_index = self.add_lp_expr(
+                                let new_left_index = self.push_as_expr(
                                     &LpCompExpr(Multiplication, left_index, a_index)
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     right_index,
                                     LpCompExpr(Multiplication, i_new_index, b_index)
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(Subtraction, new_left_index, right_index)
                                 );
@@ -698,14 +698,14 @@ impl LpExprArena {
                             // COMMUTATIVITY WITH CONSTANTS
                             // c1*(a*b)
                             (LitVal(c1), LpCompExpr(Multiplication, a_index, b_index)) => {
-                                match (self.clone_expr_at(a_index), self.clone_expr_at(b_index)) {
+                                match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     // c1*(c2*b) = (c1*c2)*b
                                     (LitVal(c2), _) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LitVal(c1 * c2),
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(
                                                 Multiplication,
@@ -717,11 +717,11 @@ impl LpExprArena {
                                     },
                                     // c1*(a*c2) = (c1*c2)*a
                                     (_, LitVal(c2)) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LitVal(c1 * c2),
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(
                                                 Multiplication,
@@ -733,8 +733,8 @@ impl LpExprArena {
                                     },
                                     // c1*(a*b) = (c1*a)*b
                                     (_, _) => {
-                                        let lit_new_index = self.add_lp_expr(&LitVal(c1));
-                                        self.change_lp_expr(
+                                        let lit_new_index = self.push_as_expr(&LitVal(c1));
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(
                                                 Multiplication,
@@ -742,7 +742,7 @@ impl LpExprArena {
                                                 a_index
                                             )
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(
                                                 Multiplication,
@@ -761,21 +761,21 @@ impl LpExprArena {
                             // COMMUTATIVITY
                             // x*(a*b) = (x*a)*b
                             (_, LpCompExpr(Multiplication, a_index, b_index)) => {
-                                let left_new_index = self.clone_expr_at_index_and_push(left_index);
-                                self.change_lp_expr(
+                                let left_new_index = self.clone_expr_at_and_push(left_index);
+                                self.overwrite_expr_at(
                                     left_index,
                                     LpCompExpr(Multiplication, left_new_index, a_index),
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     right_index,
-                                    self.clone_expr_at(b_index)
+                                    self.expr_clone_at(b_index)
                                 );
                                 lp_expr_stack.push(handled_expr_index);
                             },
 
                             // Place literal first for *
                             (_, LitVal(_)) => {
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(
                                         Multiplication,
@@ -797,18 +797,18 @@ impl LpExprArena {
                         }
                     },
                     LpCompExpr(Addition, left_index, right_index) => {
-                        match (self.clone_expr_at(left_index), self.clone_expr_at(right_index)) {
+                        match (self.expr_clone_at(left_index), self.expr_clone_at(right_index)) {
                             // Trivial rule: 0 + x = x
                             (LitVal(c), a)
                             // Trivial rule: x + 0 = x
                             | (a, LitVal(c)) if c == 0.0 => {
-                                self.change_lp_expr(handled_expr_index, a.clone());
+                                self.overwrite_expr_at(handled_expr_index, a.clone());
                                 lp_expr_stack.push(handled_expr_index);
                             },
 
                             // Simplify two literals
                             (LitVal(c1), LitVal(c2)) => {
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LitVal(c1 + c2)
                                 );
@@ -816,7 +816,7 @@ impl LpExprArena {
 
                             // Place literal at the end
                             (LitVal(_c), _x) => {
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(Addition, right_index, left_index)
                                 );
@@ -826,30 +826,30 @@ impl LpExprArena {
                             // ASSOCIATIVITY
                             // a + (b+c) = (a+b)+c
                             (a, LpCompExpr(Addition, b_index, c_index)) => {
-                                let new_a_index = self.add_lp_expr(&a.clone());
-                                self.change_lp_expr(
+                                let new_a_index = self.push_as_expr(&a.clone());
+                                self.overwrite_expr_at(
                                     left_index,
                                     LpCompExpr(Addition, new_a_index, b_index),
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     right_index,
-                                    self.clone_expr_at(c_index)
+                                    self.expr_clone_at(c_index)
                                 );
                                 lp_expr_stack.push(handled_expr_index);
                             },
 
                             // a + (b-c) = (a+b) - c
                             (a, LpCompExpr(Subtraction, b_index, c_index)) => {
-                                let new_a_index = self.add_lp_expr(&a.clone());
-                                self.change_lp_expr(
+                                let new_a_index = self.push_as_expr(&a.clone());
+                                self.overwrite_expr_at(
                                     left_index,
                                     LpCompExpr(Addition, new_a_index, b_index),
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     right_index,
-                                    self.clone_expr_at(c_index)
+                                    self.expr_clone_at(c_index)
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(Subtraction, left_index, right_index)
                                 );
@@ -859,13 +859,13 @@ impl LpExprArena {
                             // Accumulate consts +/-
                             // (a+c1)+c2 = a+(c1+c2)
                             (LpCompExpr(Addition, a_index, b_index), LitVal(c2)) => {
-                                match self.clone_expr_at(b_index) {
+                                match self.expr_clone_at(b_index) {
                                     LitVal(c1) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             left_index,
-                                            self.clone_expr_at(a_index)
+                                            self.expr_clone_at(a_index)
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             right_index,
                                             LitVal(c1 + c2)
                                         );
@@ -877,14 +877,14 @@ impl LpExprArena {
                                 }
                             },
                             (LpCompExpr(Subtraction, a_index, b_index), LitVal(c2)) => {
-                                match (self.clone_expr_at(a_index), self.clone_expr_at(b_index)) {
+                                match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     // (a-c1)+c2 = a+(c2-c1)
                                     (_a, LitVal(c1)) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             right_index,
                                             LitVal(c2 - c1)
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(Addition, a_index, right_index)
                                         );
@@ -892,8 +892,8 @@ impl LpExprArena {
                                     },
                                     // (c1-b)+c2 = -b+(c1+c2)
                                     (LitVal(c1), _b) => {
-                                        let lit_new_index = self.add_lp_expr(&LitVal(-1.0));
-                                        self.change_lp_expr(
+                                        let lit_new_index = self.push_as_expr(&LitVal(-1.0));
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(
                                                 Multiplication,
@@ -901,7 +901,7 @@ impl LpExprArena {
                                                 b_index
                                             )
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             right_index,
                                             LitVal(c1 + c2)
                                         );
@@ -916,14 +916,14 @@ impl LpExprArena {
 
                             // Extract the const
                             (LpCompExpr(Addition, a_index, b_index), _x) => {
-                                match (self.clone_expr_at(a_index), self.clone_expr_at(b_index)) {
+                                match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     // (a+c1)+x = (a+x)+c1
                                     (_, LitVal(_c1)) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Addition, a_index, right_index)
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(Addition, left_index, b_index)
                                         );
@@ -948,14 +948,14 @@ impl LpExprArena {
                                 }
                             },
                             (LpCompExpr(Subtraction, a_index, b_index), _x) => {
-                                match (self.clone_expr_at(a_index), self.clone_expr_at(b_index)) {
+                                match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     // (a-c1)+x = (a+x)-c1
                                     (_a, LitVal(_c1)) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Addition, a_index, right_index)
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(Subtraction, left_index, b_index)
                                         );
@@ -963,11 +963,11 @@ impl LpExprArena {
                                     },
                                     // (c1-b)+x = (x-b)+c1
                                     (LitVal(_c1), _b) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Subtraction, right_index, b_index)
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(Addition, left_index, a_index)
                                         );
@@ -998,8 +998,8 @@ impl LpExprArena {
                             (a, b) => {
                                 // a + a = 2 * a
                                 if a == b {
-                                    let new_lit_index = self.add_lp_expr(&LitVal(2.0));
-                                    self.change_lp_expr(
+                                    let new_lit_index = self.push_as_expr(&LitVal(2.0));
+                                    self.overwrite_expr_at(
                                         handled_expr_index,
                                         LpCompExpr(
                                             Multiplication,
@@ -1027,10 +1027,10 @@ impl LpExprArena {
                         }
                     },
                     LpCompExpr(Subtraction, left_index, right_index) => {
-                        match (self.clone_expr_at(left_index), self.clone_expr_at(right_index)) {
+                        match (self.expr_clone_at(left_index), self.expr_clone_at(right_index)) {
                             // Trivial rule: x - 0 = x
                             (a, LitVal(c)) if c == 0.0 => {
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     a.clone()
                                 );
@@ -1039,12 +1039,12 @@ impl LpExprArena {
 
                             // a - (b + c) = (a-b)-c
                             (_, LpCompExpr(Addition, b_index, c_index)) => {
-                                let a_new_index = self.clone_expr_at_index_and_push(left_index);
-                                self.change_lp_expr(
+                                let a_new_index = self.clone_expr_at_and_push(left_index);
+                                self.overwrite_expr_at(
                                     left_index,
                                     LpCompExpr(Subtraction, a_new_index, b_index)
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(Subtraction, left_index, c_index)
                                 );
@@ -1053,13 +1053,13 @@ impl LpExprArena {
 
                             // a - (b - c) = (a-b)+c
                             (_, LpCompExpr(Subtraction, b_index, c_index)) => {
-                                let a_new_index = self.clone_expr_at_index_and_push(left_index);
-                                self.change_lp_expr(
+                                let a_new_index = self.clone_expr_at_and_push(left_index);
+                                self.overwrite_expr_at(
                                     left_index,
                                     LpCompExpr(Subtraction, a_new_index, b_index),
 
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(Addition, left_index, c_index)
                                 );
@@ -1069,15 +1069,15 @@ impl LpExprArena {
                             // Place literal at the end
                             // c1 - b = -b + c1
                             (LitVal(_), _) => {
-                                let lit_new_index = self.add_lp_expr(&LitVal(-1.0));
-                                let new_index = self.add_lp_expr(
+                                let lit_new_index = self.push_as_expr(&LitVal(-1.0));
+                                let new_index = self.push_as_expr(
                                     &LpCompExpr(
                                         Multiplication,
                                         lit_new_index,
                                         right_index
                                     )
                                 );
-                                self.change_lp_expr(
+                                self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(Addition, new_index, left_index)
                                 );
@@ -1088,21 +1088,21 @@ impl LpExprArena {
                             // (a-c1)-c2 = a-(c1+c2)
                             // (c1-b)-c2 = -b+(c1-c2)
                             (LpCompExpr(Subtraction, a_index, b_index), LitVal(c2)) => {
-                                match (self.clone_expr_at(a_index), self.clone_expr_at(b_index)) {
+                                match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     (a, LitVal(c1)) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             left_index,
                                             a.clone()
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             right_index,
                                             LitVal(c1 + c2)
                                         );
                                         lp_expr_stack.push(handled_expr_index);
                                     },
                                     (LitVal(c1), _) => {
-                                        let lit_new_index = self.add_lp_expr(&LitVal(-1.0));
-                                        self.change_lp_expr(
+                                        let lit_new_index = self.push_as_expr(&LitVal(-1.0));
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(
                                                 Multiplication,
@@ -1110,11 +1110,11 @@ impl LpExprArena {
                                                 b_index
                                             )
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             right_index,
                                             LitVal(c1 - c2)
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(
                                                 Addition,
@@ -1132,13 +1132,13 @@ impl LpExprArena {
 
                             // (a+c1)-c2 = a+(c1-c2)
                             (LpCompExpr(Addition, a_index, c1_index), LitVal(c2)) => {
-                                match self.clone_expr_at(c1_index) {
+                                match self.expr_clone_at(c1_index) {
                                     LitVal(c1) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             right_index,
                                             LitVal(c1 - c2)
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(Addition, a_index, right_index)
                                         );
@@ -1154,13 +1154,13 @@ impl LpExprArena {
                             // Extract the const:
                             // (a+c1)-x = (a-x)+c1
                             (LpCompExpr(Addition, a_index, b_index), _x) => {
-                                match self.clone_expr_at(b_index) {
+                                match self.expr_clone_at(b_index) {
                                     LitVal(_c1) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Subtraction, a_index, right_index),
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(Addition, left_index, b_index)
                                         );
@@ -1173,14 +1173,14 @@ impl LpExprArena {
                                 }
                             }
                             (LpCompExpr(Subtraction, a_index, b_index), _x) => {
-                                match (self.clone_expr_at(a_index), self.clone_expr_at(b_index)) {
+                                match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     // (a-c1)-x = (a-x)-c1
                                     (_a, LitVal(_c1)) => {
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Subtraction, a_index, right_index)
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(Subtraction, left_index, b_index)
                                         );
@@ -1188,15 +1188,15 @@ impl LpExprArena {
                                     },
                                     // (c1-b)-x = (-b-x)+c1
                                     (LitVal(_c1), _b) => {
-                                        let minus_one_new_index = self.add_lp_expr(&LitVal(-1.0));
-                                        let minus_b_new_index = self.add_lp_expr(
+                                        let minus_one_new_index = self.push_as_expr(&LitVal(-1.0));
+                                        let minus_b_new_index = self.push_as_expr(
                                             &LpCompExpr(Multiplication, minus_one_new_index, b_index)
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Subtraction, minus_b_new_index, right_index)
                                         );
-                                        self.change_lp_expr(
+                                        self.overwrite_expr_at(
                                             handled_expr_index,
                                             LpCompExpr(Addition, left_index, a_index)
                                         );
@@ -1211,7 +1211,7 @@ impl LpExprArena {
                             (a, b) => {
                                 // a - a = 0
                                 if a == b {
-                                    self.change_lp_expr(
+                                    self.overwrite_expr_at(
                                         handled_expr_index,
                                         LitVal(0.0)
                                     );
@@ -1277,7 +1277,7 @@ impl LpConstraint {
     pub fn generalize(&self) -> LpConstraint {
         // TODO: Optimize tailrec
         let &LpConstraint(ref lhs, ref op, ref rhs) = self;
-        let mut new_lhs_expr = lhs.merge(rhs, Subtraction);
+        let mut new_lhs_expr = lhs.merge_cloned_arenas(rhs, Subtraction);
         let constant = new_lhs_expr.simplify().split_off_constant();
         let new_rhs_expr_arena: LpExprArena= LitVal(-constant).into();
         LpConstraint(new_lhs_expr, (*op).clone(), new_rhs_expr_arena)
@@ -1339,7 +1339,7 @@ pub fn lp_sum<T>(not_yet_lp_expr_arenas: &Vec<T>) -> LpExprArena where T: Into<L
         Some(first) => {
             let mut arena: LpExprArena = first.clone().into();
             for a in not_yet_lp_expr_arenas[1..].iter() {
-                arena = arena.merge(&a.clone().into(), Addition);
+                arena = arena.merge_cloned_arenas(&a.clone().into(), Addition);
             }
             arena
         },

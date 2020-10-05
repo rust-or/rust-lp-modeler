@@ -97,7 +97,7 @@ impl Problem for LpProblem {
     fn add_objective_expression(&mut self, expr_arena: &mut LpExprArena) {
         if let Some(e) = &self.obj_expr_arena {
             let mut simple_expr = expr_arena
-                .merge(&e, LpExprOp::Addition);
+                .merge_cloned_arenas(&e, LpExprOp::Addition);
             let _ = simple_expr.simplify().split_off_constant();
             self.obj_expr_arena = Some(simple_expr);
         } else {
