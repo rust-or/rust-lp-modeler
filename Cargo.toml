@@ -26,6 +26,7 @@ travis-ci = { repository = "jcavat/rust-lp-modeler" }
 appveyor = { repository = "jcavat/rust-lp-modeler" }
 
 [dependencies]
+coin_cbc = "0.1.0"
 uuid = { version = "0.7.4", features = ["v4"] }
 quote = "1"
 proc-macro2 = "1.0"
