@@ -10,7 +10,7 @@ install:
   - ps: Start-FileDownload "https://bintray.com/coin-or/download/download_file?file_path=Cbc-2.9-win32-msvc14.zip" -FileName "C:\Cbc\Cbc-2.9.zip"
   - 7z x C:\Cbc\Cbc-2.9.zip -o"C:\Cbc\"
   - SET PATH=%PATH%;C:\Cbc\bin
-  - SET PATH=%PATH%;C:\Cbc\lib
+  - SET LIB=%LIB%;C:\Cbc\lib
   - SET PATH=%PATH%;C:\Program Files (x86)\Rust\bin
   - SET PATH=%PATH%;C:\MinGW\bin
   - rustc -V
