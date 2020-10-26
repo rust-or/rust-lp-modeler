@@ -1,6 +1,7 @@
 extern crate uuid;
 extern crate proc_macro2;
 extern crate quote;
+extern crate coin_cbc;
 
 pub mod util;
 

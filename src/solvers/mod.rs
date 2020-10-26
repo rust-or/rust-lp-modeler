@@ -10,6 +10,9 @@ pub use self::gurobi::*;
 
 pub mod glpk;
 pub use self::glpk::*;
+
+pub mod native_cbc;
+pub use self::native_cbc::*;
 use std::fs::File;
 use std::fs;
 use util::is_zero;
@@ -115,4 +118,3 @@ pub trait WithNbThreads<T> {
     fn nb_threads(&self) -> Option<u32>;
     fn with_nb_threads(&self, threads: u32) -> T;
 }
-
