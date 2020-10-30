@@ -11,7 +11,7 @@ before_install:
 - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
 - sudo apt-get update -qq
 install:
-- sudo apt-get install -qq coinor-cbc
+- sudo apt-get install -qq coinor-libcbc-dev coinor-cbc
 deploy:
   provider: cargo
   on: 
