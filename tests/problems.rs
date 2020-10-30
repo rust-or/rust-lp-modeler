@@ -31,11 +31,14 @@ fn test_readme_example_1() {
     }
 
     let output1 = "\\ One Problem
+
 Maximize
   obj: 10 a + 20 b
+
 Subject To
   c1: 500 a + 1200 b + 1500 c <= 10000
   c2: a - b <= 0
+
 "
         .to_string();
     let output2 = problem.to_lp_file_format();
