@@ -1,7 +1,6 @@
 # lp-modeler
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 [![Build Status](https://travis-ci.org/jcavat/rust-lp-modeler.svg?branch=master)](https://travis-ci.org/jcavat/rust-lp-modeler)
-[![Build status](https://ci.appveyor.com/api/projects/status/5i63bu7rn3m5d4l3?svg=true)](https://ci.appveyor.com/project/jcavat/rust-lp-modeler)
 [![Gitter](https://badges.gitter.im/rust-lp-modeler/community.svg)](https://gitter.im/rust-lp-modeler/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Github Actions](https://github.com/jcavat/rust-lp-modeler/workflows/Rust/badge.svg)](https://github.com/jcavat/rust-lp-modeler/actions)
 This project provides a mathematical programming modeling library for Rust.
