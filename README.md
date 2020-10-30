@@ -35,6 +35,8 @@ End
 
 #### Rust code
 ```rust
+extern crate lp_modeler;
+
 use lp_modeler::solvers::{CbcSolver, SolverTrait};
 use lp_modeler::dsl::*;
 
@@ -61,9 +63,9 @@ fn main() {
 
     // Run optimisation and process output hashmap
     match solver.run(&problem) {
-        Ok((status, var_values)) => {
-            println!("Status {:?}", status);
-            for (name, value) in var_values.iter() {
+        Ok(solution) => {
+            println!("Status {:?}", solution.status);
+            for (name, value) in solution.results.iter() {
                 println!("value of {} = {}", name, value);
             }
         },
