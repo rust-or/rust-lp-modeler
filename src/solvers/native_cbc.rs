@@ -52,7 +52,6 @@ fn var_lit(expr: &LpExpression, lst: &mut Vec<(String, f32)>) {
         &ConsBin(LpBinary { ref name, .. })
         | &ConsInt(LpInteger { ref name, .. })
         | &ConsCont(LpContinuous { ref name, .. }) => {
-            println!("{:?}", (name.clone(), split_constant_and_expr(expr).0));
             lst.push((name.clone(), split_constant_and_expr(expr).0));
         }
 
@@ -139,7 +138,6 @@ impl SolverTrait for NativeCbcSolver {
             }
             let mut lst: Vec<_> = Vec::new();
             var_lit(&general.0, &mut lst);
-            println!("{:?}", lst);
             lst.iter()
                 .for_each(|(n, lit)| m.set_weight(row, cols[n], *lit as f64));
         });
