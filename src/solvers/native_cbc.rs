@@ -1,13 +1,13 @@
 extern crate uuid;
 use coin_cbc;
 
-use dsl::*;
 use dsl::LpExpression::*;
+use dsl::*;
 use solvers::{Solution, SolverTrait, Status, WithMaxSeconds, WithNbThreads};
 use std::collections::HashMap;
 
 /// Solver that calls cbc through [rust bindings](https://github.com/KardinalAI/coin_cbc)
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct NativeCbcSolver {
     name: String,
     threads: Option<u32>,
@@ -56,18 +56,17 @@ fn var_lit(expr: &LpExpression, lst: &mut Vec<(String, f32)>) {
             lst.push((name.clone(), split_constant_and_expr(expr).0));
         }
 
-        MulExpr(val, ref e) =>
-            match **e {
-                ConsBin(LpBinary { ref name, .. })
-                | ConsInt(LpInteger { ref name, .. })
-                | ConsCont(LpContinuous { ref name, .. }) => {
-                    if let LitVal(lit) = *val.clone() {
-                        lst.push((name.clone(), lit))
-                    }
-                },
-                MulExpr(..) | AddExpr(..) => var_lit(&*e, lst),
-                _ => (),
+        MulExpr(val, ref e) => match **e {
+            ConsBin(LpBinary { ref name, .. })
+            | ConsInt(LpInteger { ref name, .. })
+            | ConsCont(LpContinuous { ref name, .. }) => {
+                if let LitVal(lit) = *val.clone() {
+                    lst.push((name.clone(), lit))
+                }
             }
+            MulExpr(..) | AddExpr(..) => var_lit(&*e, lst),
+            _ => (),
+        },
         &AddExpr(ref e1, ref e2) | &SubExpr(ref e1, ref e2) => {
             var_lit(&*e1, lst);
             var_lit(&*e2, lst);
@@ -77,8 +76,8 @@ fn var_lit(expr: &LpExpression, lst: &mut Vec<(String, f32)>) {
 }
 
 fn always_literal(expr: &LpExpression) -> f64 {
-    match expr {
-        &LitVal(num) => num as f64,
+    match *expr {
+        LitVal(num) => num as f64,
         _ => panic!("wrong generalization"),
     }
 }
@@ -122,7 +121,6 @@ impl SolverTrait for NativeCbcSolver {
     type P = LpProblem;
 
     fn run<'a>(&self, problem: &'a Self::P) -> Result<Solution<'a>, String> {
-
         let mut m = coin_cbc::Model::default();
         // columns (variables)
         let cols: HashMap<String, coin_cbc::Col> = problem
@@ -168,7 +166,10 @@ impl SolverTrait for NativeCbcSolver {
                 coin_cbc::raw::Status::Abandoned => Status::Infeasible,
                 _ => Status::NotSolved,
             },
-            results: cols.iter().map(|(name, col)| (name.to_owned(), sol.col(*col) as f32)).collect(),
+            results: cols
+                .iter()
+                .map(|(name, col)| (name.to_owned(), sol.col(*col) as f32))
+                .collect(),
             related_problem: Some(problem),
         })
     }
