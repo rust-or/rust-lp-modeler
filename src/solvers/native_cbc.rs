@@ -47,12 +47,17 @@ impl WithNbThreads<NativeCbcSolver> for NativeCbcSolver {
     }
 }
 
-fn var_lit(expr: &LpExpression, lst: &mut Vec<(String, f32)>) {
+/// Recursively unwrap an expression in a Vec of variables and literals.
+fn var_lit(expr: &LpExpression, lst: &mut Vec<(String, f32)>, mul: Option<f32>) {
+    let mul = match mul {
+        Some(lit) => lit,
+        None => 1.,
+    };
     match expr {
         &ConsBin(LpBinary { ref name, .. })
         | &ConsInt(LpInteger { ref name, .. })
         | &ConsCont(LpContinuous { ref name, .. }) => {
-            lst.push((name.clone(), split_constant_and_expr(expr).0));
+            lst.push((name.clone(), mul * split_constant_and_expr(expr).0));
         }
 
         MulExpr(val, ref e) => match **e {
@@ -60,15 +65,25 @@ fn var_lit(expr: &LpExpression, lst: &mut Vec<(String, f32)>) {
             | ConsInt(LpInteger { ref name, .. })
             | ConsCont(LpContinuous { ref name, .. }) => {
                 if let LitVal(lit) = *val.clone() {
-                    lst.push((name.clone(), lit))
+                    lst.push((name.clone(), mul * lit))
                 }
             }
-            MulExpr(..) | AddExpr(..) => var_lit(&*e, lst),
+            MulExpr(..) | AddExpr(..) | SubExpr(..) => {
+                let next_mul = match *val.clone() {
+                    LitVal(lit) => Some(lit * mul),
+                    _ => None,
+                };
+                var_lit(&*e, lst, next_mul)
+            }
             _ => (),
         },
-        &AddExpr(ref e1, ref e2) | &SubExpr(ref e1, ref e2) => {
-            var_lit(&*e1, lst);
-            var_lit(&*e2, lst);
+        &AddExpr(ref e1, ref e2) => {
+            var_lit(&*e1, lst, None);
+            var_lit(&*e2, lst, None);
+        }
+        &SubExpr(ref e1, ref e2) => {
+            var_lit(&*e1, lst, None);
+            var_lit(&*e2, lst, Some(-1.));
         }
         _ => (),
     }
@@ -137,14 +152,14 @@ impl SolverTrait for NativeCbcSolver {
                 Constraint::Equal => m.set_row_equal(row, always_literal(&general.2)),
             }
             let mut lst: Vec<_> = Vec::new();
-            var_lit(&general.0, &mut lst);
+            var_lit(&general.0, &mut lst, None);
             lst.iter()
                 .for_each(|(n, lit)| m.set_weight(row, cols[n], *lit as f64));
         });
         // objective
         if let Some(objective) = &problem.obj_expr {
             let mut lst: Vec<_> = Vec::new();
-            var_lit(&objective, &mut lst);
+            var_lit(&objective, &mut lst, None);
             lst.iter()
                 .for_each(|(n, lit)| m.set_obj_coeff(cols[n], *lit as f64))
         }
@@ -156,7 +171,7 @@ impl SolverTrait for NativeCbcSolver {
         let sol = m.solve();
 
         let mut lst: Vec<_> = Vec::new();
-        var_lit(&(problem.obj_expr.clone().unwrap()), &mut lst);
+        var_lit(&(problem.obj_expr.clone().unwrap()), &mut lst, None);
 
         Ok(Solution {
             status: match sol.raw().status() {
