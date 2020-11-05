@@ -182,8 +182,8 @@ fn test_readme_example_2() {
 #[test]
 // as in https://github.com/KardinalAI/coin_cbc/blob/master/examples/knapsack.rs
 //
-// Maximize  5a + 3b + 2c + 7d + 4e
-// s.t.      2a + 8b + 4c + 2d + 5e <= 10
+// Maximize  5a + 3b + 2c + 7d - 4e
+// s.t.      2a - 8b + 4c + 2d + 5e <= 10
 fn cbc_native_optimal() {
     let mut problem = LpProblem::new("Knapsack", LpObjective::Maximize);
     let objective: HashMap<&str, f32> =
@@ -195,8 +195,8 @@ fn cbc_native_optimal() {
         .map(|(name, _)| (*name, LpBinary::new(name)))
         .collect();
         problem +=
-        (2.0 * &x["a"] + 8.0 * &x["b"] + 4.0 * &x["c"] + 2. * &x["d"] + 5. * &x["e"]).le(10.);
-    problem += 5.0 * &x["a"] + 3.0 * &x["b"] + 2.0 * &x["c"] + 7. * &x["d"] + 4. * &x["e"];
+        (2.0 * &x["a"] - 8.0 * &x["b"] + 4.0 * &x["c"] + 2. * &x["d"] + 5. * &x["e"]).le(10.);
+    problem += 5.0 * &x["a"] + 3.0 * &x["b"] + 2.0 * &x["c"] + 7. * &x["d"] + -4. * &x["e"];
 
     let solver = NativeCbcSolver::new();
 
@@ -205,7 +205,7 @@ fn cbc_native_optimal() {
             println!("Status {:?}", sol.status);
             println!("{:?}", sol.results);
             assert_eq!(
-                16f32,
+                17f32,
                 x.iter()
                     .map(|(name, var)| match sol.results.get(&var.name) {
                         Some(s) => {
