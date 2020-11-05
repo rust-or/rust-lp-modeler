@@ -14,8 +14,8 @@ install:
 - sudo apt-get install -qq coinor-libcbc-dev coinor-cbc
 deploy:
   provider: cargo
-  on: 
-    condition: $TRAVIS_RUST_VERSION = stable
+  on:
+    condition: "$TRAVIS_RUST_VERSION = stable"
     tags: true
   token:
-    secure: ciowOTr3HLdRC5AqQmyufUiRFso5idxMidI
+    secure: rCyDcA2oSYHD6jwHDfc7XR5DzqgNHwHa0Nd1YrQmjdvTf8OlgyLIXxhCKBl+OxxC6g8d7G0dzcse2t5GFWcN16TTlz4lCsgqnmO5ammpw79vK/6YInyi6A8hXTJxqtQEz4v937F5jW3QazgeeMCoreupo8sGdclbl9HZdUaFmHM0bRmzAhkKkYMuTIwSvGBOxsaqa8yopiHXIp5zI1S920eHcLzINAFbS35Ta+3G+//hXpJDj/M2Jss5Qe+22H3j67X7ZWoFnFxNCm912hHgwMqIrFX65tI6B8S6PYEgcUF19b9CJYGmqCSSEz1BvI8tl6xwfe808BSdTdM2PeISPtiMaGVoba1RdXUnfXSrg7ds9z+IoPwy2AYiK5k536GnJ5GVfICcCa+pUYrD0cv+j0XTZyjum2hYqCQSei9W1FdsD6n/F+WvUkgR2ro02gJ6P+1jamPseR+CtoXgmsZmlohMHq2mulTsIuOwrfORJZX0Sz25OBnwYMltD6/Ia4/P4Wrquv0y/kFS0hmy+2BrqZI7UGAcpNodcfbkb8+quk6vG0sJ5hgHq7ABh7akCK/ZujIgHXym758iH62MT5LZXVxHg0MOfbLvwplHEKynwRr5pCS7hWc3TApA7nL8uT+II3is4SUc3Fz6yDB415vfczK6dKekOFbRLV1gTxQrlYg=
