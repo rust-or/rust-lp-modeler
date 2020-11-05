@@ -195,6 +195,11 @@ A_F = 1
 
 ## Changelog
 
+
+### 0.4.3
+
+* Add a native coin-or impl (NativeCBCSolver) to call CoinOR CBC trough the C API.
+
 ### 0.4.2
 
 * Fix incorrect simplification of (expr-c1)+c2 
@@ -249,7 +254,10 @@ A_F = 1
 * Florian B. [(Lesstat)](https://github.com/Lesstat)
 * Amila Welihinda [(amilajack)](https://github.com/amilajack)
 * [(zappolowski)](https://github.com/zappolowski)
-* Yisu Rem Wang [remysucre](https://github.com/remysucre)
+* Yisu Rem Wang [(remysucre)](https://github.com/remysucre)
+* Tony Cox [(tony-cox)](https://github.com/tony-cox)
+* [EdorianDark](https://github.com/EdorianDark)
+* Colman Humphrey [(ColmanHumphrey)](https://github.com/ColmanHumphrey)
 
 ## Further work
 
