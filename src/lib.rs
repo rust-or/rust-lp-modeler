@@ -1,7 +1,8 @@
-extern crate uuid;
+#[cfg(feature = "native_cbc")]
+extern crate coin_cbc;
 extern crate proc_macro2;
 extern crate quote;
-extern crate coin_cbc;
+extern crate uuid;
 
 pub mod util;
 
@@ -15,7 +16,7 @@ pub mod dsl {
 }
 
 pub mod format {
-   pub mod lp_format;
+    pub mod lp_format;
 }
 
 pub mod solvers;

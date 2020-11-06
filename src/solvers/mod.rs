@@ -11,8 +11,11 @@ pub use self::gurobi::*;
 pub mod glpk;
 pub use self::glpk::*;
 
+#[cfg(feature = "native_cbc")]
 pub mod native_cbc;
+#[cfg(feature = "native_cbc")]
 pub use self::native_cbc::*;
+
 use std::fs::File;
 use std::fs;
 use util::is_zero;

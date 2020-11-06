@@ -2,7 +2,9 @@ extern crate lp_modeler;
 
 use std::collections::HashMap;
 
-use lp_modeler::solvers::{CbcSolver, SolverTrait, Solution, NativeCbcSolver};
+use lp_modeler::solvers::{CbcSolver, SolverTrait, Solution};
+#[cfg(feature = "native_cbc")]
+use lp_modeler::solvers::NativeCbcSolver;
 use lp_modeler::dsl::*;
 use lp_modeler::format::lp_format::LpFileFormat;
 
@@ -180,6 +182,7 @@ fn test_readme_example_2() {
 }
 
 #[test]
+#[cfg(feature = "native_cbc")]
 // as in https://github.com/KardinalAI/coin_cbc/blob/master/examples/knapsack.rs
 //
 // Maximize  5a + 3b + 2c + 7d - 4e
