@@ -1,6 +1,8 @@
 extern crate uuid;
 extern crate proc_macro2;
 extern crate quote;
+
+#[cfg(feature = "native_coin_cbc")]
 extern crate coin_cbc;
 
 pub mod util;
