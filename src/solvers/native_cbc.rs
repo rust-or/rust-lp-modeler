@@ -162,7 +162,8 @@ impl SolverTrait for NativeCbcSolver {
         if let Some(objective) = &problem.obj_expr {
             let mut lst: Vec<_> = Vec::new();
             var_lit(&objective, &mut lst, None);
-            lst.iter().for_each(|(n, lit)| m.set_obj_coeff(cols[n], *lit as f64))
+            lst.iter()
+                .for_each(|(n, lit)| m.set_obj_coeff(cols[n], *lit as f64))
         }
         m.set_obj_sense(match problem.objective_type {
             LpObjective::Maximize => coin_cbc::Sense::Maximize,
