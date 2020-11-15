@@ -108,7 +108,7 @@ fn add_variable(m: &mut coin_cbc::Model, expr: &LpExpression) -> coin_cbc::Col {
                 m.set_col_lower(col, *lb as f64)
             }
             if let Some(ub) = upper_bound {
-                m.set_col_lower(col, *ub as f64)
+                m.set_col_upper(col, *ub as f64)
             }
             col
         }
@@ -122,7 +122,7 @@ fn add_variable(m: &mut coin_cbc::Model, expr: &LpExpression) -> coin_cbc::Col {
                 m.set_col_lower(col, *lb as f64)
             }
             if let Some(ub) = upper_bound {
-                m.set_col_lower(col, *ub as f64)
+                m.set_col_upper(col, *ub as f64)
             }
             col
         }
@@ -160,8 +160,7 @@ impl SolverTrait for NativeCbcSolver {
         if let Some(objective) = &problem.obj_expr {
             let mut lst: Vec<_> = Vec::new();
             var_lit(&objective, &mut lst, None);
-            lst.iter()
-                .for_each(|(n, lit)| m.set_obj_coeff(cols[n], *lit as f64))
+            lst.iter().for_each(|(n, lit)| m.set_obj_coeff(cols[n], *lit as f64))
         }
         m.set_obj_sense(match problem.objective_type {
             LpObjective::Maximize => coin_cbc::Sense::Maximize,
@@ -169,9 +168,6 @@ impl SolverTrait for NativeCbcSolver {
         });
 
         let sol = m.solve();
-
-        let mut lst: Vec<_> = Vec::new();
-        var_lit(&(problem.obj_expr.clone().unwrap()), &mut lst, None);
 
         Ok(Solution {
             status: match sol.raw().status() {
