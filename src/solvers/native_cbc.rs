@@ -57,7 +57,9 @@ fn var_lit(expr: &LpExpression, lst: &mut Vec<(String, f32)>, mul: Option<f32>) 
         &ConsBin(LpBinary { ref name, .. })
         | &ConsInt(LpInteger { ref name, .. })
         | &ConsCont(LpContinuous { ref name, .. }) => {
-            lst.push((name.clone(), mul * split_constant_and_expr(expr).0));
+            let coeff = split_constant_and_expr(expr).0;
+            let coeff = if coeff == 0. { mul } else { mul * coeff };
+            lst.push((name.clone(), coeff));
         }
 
         MulExpr(val, ref e) => match **e {
