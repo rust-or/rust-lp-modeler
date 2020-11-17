@@ -1,9 +1,8 @@
 # lp-modeler
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 [![Build Status](https://travis-ci.org/jcavat/rust-lp-modeler.svg?branch=master)](https://travis-ci.org/jcavat/rust-lp-modeler)
-[![Build status](https://ci.appveyor.com/api/projects/status/5i63bu7rn3m5d4l3?svg=true)](https://ci.appveyor.com/project/jcavat/rust-lp-modeler)
 [![Gitter](https://badges.gitter.im/rust-lp-modeler/community.svg)](https://gitter.im/rust-lp-modeler/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-
+[![Github Actions](https://github.com/jcavat/rust-lp-modeler/workflows/Rust/badge.svg)](https://github.com/jcavat/rust-lp-modeler/actions)
 This project provides a mathematical programming modeling library for Rust.
 
 An optimization problem (e.g. an integer or linear programme) can be formulated using familiar Rust syntax (see examples), and written into a universal [LP model format](https://www.gurobi.com/documentation/8.0/refman/lp_format.html). This can then be processed by a mixed integer programming solver. Presently supported solvers are; COIN-OR CBC, Gurobi and GLPK.
@@ -36,6 +35,8 @@ End
 
 #### Rust code
 ```rust
+extern crate lp_modeler;
+
 use lp_modeler::solvers::{CbcSolver, SolverTrait};
 use lp_modeler::dsl::*;
 
@@ -62,9 +63,9 @@ fn main() {
 
     // Run optimisation and process output hashmap
     match solver.run(&problem) {
-        Ok((status, var_values)) => {
-            println!("Status {:?}", status);
-            for (name, value) in var_values.iter() {
+        Ok(solution) => {
+            println!("Status {:?}", solution.status);
+            for (name, value) in solution.results.iter() {
                 println!("value of {} = {}", name, value);
             }
         },
@@ -194,6 +195,11 @@ A_F = 1
 
 ## Changelog
 
+
+### 0.4.3
+
+* Add a native coin-or impl (NativeCBCSolver) to call CoinOR CBC trough the C API.
+
 ### 0.4.2
 
 * Fix incorrect simplification of (expr-c1)+c2 
@@ -248,7 +254,10 @@ A_F = 1
 * Florian B. [(Lesstat)](https://github.com/Lesstat)
 * Amila Welihinda [(amilajack)](https://github.com/amilajack)
 * [(zappolowski)](https://github.com/zappolowski)
-* Yisu Rem Wang [remysucre](https://github.com/remysucre)
+* Yisu Rem Wang [(remysucre)](https://github.com/remysucre)
+* Tony Cox [(tony-cox)](https://github.com/tony-cox)
+* [EdorianDark](https://github.com/EdorianDark)
+* Colman Humphrey [(ColmanHumphrey)](https://github.com/ColmanHumphrey)
 
 ## Further work
 

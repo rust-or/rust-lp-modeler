@@ -1,8 +1,8 @@
+os:
+- linux
 language: rust
 rust:
 - stable
-- beta
-- nightly
 matrix:
   allow_failures:
   - rust: nightly
@@ -11,11 +11,11 @@ before_install:
 - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main universe"
 - sudo apt-get update -qq
 install:
-- sudo apt-get install -qq coinor-cbc
+- sudo apt-get install -qq coinor-libcbc-dev coinor-cbc
 deploy:
   provider: cargo
-  condition: $TRAVIS_RUST_VERSION = stable
-  on: 
+  on:
+    condition: "$TRAVIS_RUST_VERSION = stable"
     tags: true
   token:
-    secure: ZL0+bM44908IaHEB16yLVS3a+xkJZZGZSFwHkWpDA83WsknhJQ5n08e97AycuatRhZpMVYwYsr9OGPNhPuVOaGQ92XkJ52ZrHH4uY5pOY7FDeDZ2HxG+UVqZG4/mbsWDxZi/MV+8sCq2jEpHwBTxa1kbRKwTYJRPatnnshO9XPmSJ7ojpVOJJJL5B8SumKL8dPk4V6WNBk0hTiPOllwugKPJCLygwmZGJDzevRzQWme9ieptspmGHqip94vmFJ5hhlZkpZIm3YBG1oKsF2SQnPyvOu1ZVVjSm0x8DA/eLRw+9drDd4Avwkla/EIUmwHz6yP5HPUwVnxdzKrXfPxAM6khhauyNa/QIMgwgX5Yo0OrnefBOj3yL3oO66TtImF7UWT403VWzuAOeuSpLD2xTkqMOxg0CT8rbRcS8dJke30URtHkzq3UWTyZZ5+J84Dc+5R7S6nD+G0xu06N+nBpaevEVtaVIpUi4kSB7Leo3e+jE3KWjVufk56irFD70jlvzevvkAmct8sKkrSoSPttmKMY6KxOS5XpiUa8/z+Y6EeX5q/LQhVrJKX/+PBtRYA7pr2T4hltIIeXOUrqD9Ki8yk6nLiMIUP+QFwrMGkJmf4KKlJBh/s8HCRDq6USgc1N8Mjbn5nnv89UPSxUws3ddoWtJGMQ/FWd7IcF6IAPrJs=
+    secure: rCyDcA2oSYHD6jwHDfc7XR5DzqgNHwHa0Nd1YrQmjdvTf8OlgyLIXxhCKBl+OxxC6g8d7G0dzcse2t5GFWcN16TTlz4lCsgqnmO5ammpw79vK/6YInyi6A8hXTJxqtQEz4v937F5jW3QazgeeMCoreupo8sGdclbl9HZdUaFmHM0bRmzAhkKkYMuTIwSvGBOxsaqa8yopiHXIp5zI1S920eHcLzINAFbS35Ta+3G+//hXpJDj/M2Jss5Qe+22H3j67X7ZWoFnFxNCm912hHgwMqIrFX65tI6B8S6PYEgcUF19b9CJYGmqCSSEz1BvI8tl6xwfe808BSdTdM2PeISPtiMaGVoba1RdXUnfXSrg7ds9z+IoPwy2AYiK5k536GnJ5GVfICcCa+pUYrD0cv+j0XTZyjum2hYqCQSei9W1FdsD6n/F+WvUkgR2ro02gJ6P+1jamPseR+CtoXgmsZmlohMHq2mulTsIuOwrfORJZX0Sz25OBnwYMltD6/Ia4/P4Wrquv0y/kFS0hmy+2BrqZI7UGAcpNodcfbkb8+quk6vG0sJ5hgHq7ABh7akCK/ZujIgHXym758iH62MT5LZXVxHg0MOfbLvwplHEKynwRr5pCS7hWc3TApA7nL8uT+II3is4SUc3Fz6yDB415vfczK6dKekOFbRLV1gTxQrlYg=

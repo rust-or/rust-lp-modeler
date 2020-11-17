@@ -7,7 +7,7 @@ use lp_modeler::dsl::*;
 #[test]
 fn test_quotations() {
   use LpExpression::*;
-  let a = LpInteger { name : "a" . to_string ( ) , lower_bound : None , upper_bound : None };
+  let a = LpInteger { name : "a" . to_string () , lower_bound : None , upper_bound : None };
   let quoted_a = quote!(#a);
   let quoted_a_str = "LpInteger { name : \"a\" . to_string () , lower_bound : None , upper_bound : None }";
   assert_eq!(quoted_a.to_string(), quoted_a_str);
@@ -18,6 +18,7 @@ fn test_quotations() {
   assert_eq!(quoted_exp.to_string(), quoted_exp_str);
 
   let full_exp_arena = LpExprArena::build ( 0 , vec![ LpExpression :: LpCompExpr (LpExprOp :: Multiplication , 1, 2), LpExpression :: LpCompExpr (LpExprOp :: Subtraction , 3, 4 ), LpExpression :: LpCompExpr (LpExprOp :: Addition , 5, 6), LpExpression :: LitVal (1f32), LpExpression :: EmptyExpr, LpExpression :: ConsCont (LpContinuous { name : "x".to_string() , lower_bound : None , upper_bound : None }), LpExpression :: ConsInt (LpInteger { name : "y".to_string() , lower_bound : None , upper_bound : None }) ] );
+
 
   let full_exp_quoted = quote!(#full_exp_arena);
   let full_exp_str = "LpExprArena { root : 0usize , array : struct LpExpression :: LpCompExpr (LpExprOp :: Multiplication , 1usize , 2usize) ; , struct LpExpression :: LpCompExpr (LpExprOp :: Subtraction , 3usize , 4usize) ; , struct LpExpression :: LpCompExpr (LpExprOp :: Addition , 5usize , 6usize) ; , struct LpExpression :: LitVal (1f32) ; , struct LpExpression :: EmptyExpr ; , struct LpExpression :: ConsCont (LpContinuous { name : \"x\" . to_string () , lower_bound : None , upper_bound : None }) ; , struct LpExpression :: ConsInt (LpInteger { name : \"y\" . to_string () , lower_bound : None , upper_bound : None }) ; }";

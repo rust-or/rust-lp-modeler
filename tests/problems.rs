@@ -3,6 +3,8 @@ extern crate lp_modeler;
 use std::collections::HashMap;
 
 use lp_modeler::solvers::{CbcSolver, SolverTrait, Solution};
+#[cfg(feature = "native_coin_cbc")]
+use lp_modeler::solvers::NativeCbcSolver;
 use lp_modeler::dsl::*;
 use lp_modeler::format::lp_format::LpFileFormat;
 
@@ -177,4 +179,47 @@ fn test_readme_example_2() {
     assert_eq!(*var_values.get("A_F").unwrap(), 1f32);
     assert_eq!(*var_values.get("B_E").unwrap(), 1f32);
     assert_eq!(*var_values.get("C_D").unwrap(), 1f32);
+}
+
+#[cfg(feature = "native_coin_cbc")]
+#[test]
+// as in https://github.com/KardinalAI/coin_cbc/blob/master/examples/knapsack.rs
+//
+// Maximize  5a + 3b + 2c + 7d - 4e
+// s.t.      2a - 8b + 4c + 2d + 5e <= 10
+fn cbc_native_optimal() {
+    let mut problem = LpProblem::new("Knapsack", LpObjective::Maximize);
+    let objective: HashMap<&str, f32> =
+        vec![("a", 5.0), ("b", 3.0), ("c", 2.0), ("d", 7.0), ("e", 4.0)]
+            .into_iter()
+            .collect();
+    let x: HashMap<&str, LpBinary> = objective
+        .iter()
+        .map(|(name, _)| (*name, LpBinary::new(name)))
+        .collect();
+        problem +=
+        (2.0 * &x["a"] - 8.0 * &x["b"] + 4.0 * &x["c"] + 2. * &x["d"] + 5. * &x["e"]).le(10.);
+    problem += 5.0 * &x["a"] + 3.0 * &x["b"] + 2.0 * &x["c"] + 7. * &x["d"] + -4. * &x["e"];
+
+    let solver = NativeCbcSolver::new();
+
+    match solver.run(&problem) {
+        Ok(sol) => {
+            println!("Status {:?}", sol.status);
+            println!("{:?}", sol.results);
+            assert_eq!(
+                17f32,
+                x.iter()
+                    .map(|(name, var)| match sol.results.get(&var.name) {
+                        Some(s) => {
+                            println!("{:?}*{}", s, objective.get(name).unwrap());
+                            s * objective.get(name).unwrap()
+                        }
+                        _ => 0.,
+                    })
+                    .sum()
+            );
+        }
+        Err(msg) => panic!("Native Cbc Solver panicked at run: {}", msg),
+    }
 }

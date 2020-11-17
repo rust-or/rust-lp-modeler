@@ -25,7 +25,11 @@ exclude = [
 travis-ci = { repository = "jcavat/rust-lp-modeler" }
 appveyor = { repository = "jcavat/rust-lp-modeler" }
 
+[features]
+native_coin_cbc = ["coin_cbc"]
+
 [dependencies]
+coin_cbc = {version = "0.1.0", optional = true}
 uuid = { version = "0.7.4", features = ["v4"] }
 quote = "1"
 proc-macro2 = "1.0"
