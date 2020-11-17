@@ -57,7 +57,9 @@ fn var_lit(expr: &LpExpression, lst: &mut Vec<(String, f32)>, mul: Option<f32>) 
         &ConsBin(LpBinary { ref name, .. })
         | &ConsInt(LpInteger { ref name, .. })
         | &ConsCont(LpContinuous { ref name, .. }) => {
-            lst.push((name.clone(), mul * split_constant_and_expr(expr).0));
+            let coeff = split_constant_and_expr(expr).0;
+            let coeff = if coeff == 0. { mul } else { mul * coeff };
+            lst.push((name.clone(), coeff));
         }
 
         MulExpr(val, ref e) => match **e {
@@ -108,7 +110,7 @@ fn add_variable(m: &mut coin_cbc::Model, expr: &LpExpression) -> coin_cbc::Col {
                 m.set_col_lower(col, *lb as f64)
             }
             if let Some(ub) = upper_bound {
-                m.set_col_lower(col, *ub as f64)
+                m.set_col_upper(col, *ub as f64)
             }
             col
         }
@@ -122,7 +124,7 @@ fn add_variable(m: &mut coin_cbc::Model, expr: &LpExpression) -> coin_cbc::Col {
                 m.set_col_lower(col, *lb as f64)
             }
             if let Some(ub) = upper_bound {
-                m.set_col_lower(col, *ub as f64)
+                m.set_col_upper(col, *ub as f64)
             }
             col
         }
@@ -169,9 +171,6 @@ impl SolverTrait for NativeCbcSolver {
         });
 
         let sol = m.solve();
-
-        let mut lst: Vec<_> = Vec::new();
-        var_lit(&(problem.obj_expr.clone().unwrap()), &mut lst, None);
 
         Ok(Solution {
             status: match sol.raw().status() {
