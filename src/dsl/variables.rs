@@ -508,7 +508,7 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
             &ConsInt(LpInteger { .. }) => expr.clone(),
             &ConsCont(LpContinuous { .. }) => expr.clone(),
             &LitVal(_) => expr.clone(),
-            _ => expr.clone(),
+            &EmptyExpr => LitVal(0.0),
         }
     }
 
