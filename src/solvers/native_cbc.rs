@@ -100,7 +100,7 @@ impl SolverTrait for NativeCbcSolver {
             cols.insert(name, add_variable(&mut m, problem.constraints.get(constraint_index).unwrap().0.expr_ref_at(lp_expr_arena_index) ) );
         }
         // rows (constraints)
-        for cons in problem.constraints {
+        for cons in problem.constraints.clone() {
             let row = m.add_row();
             let mut general = cons.generalize();
             match general.1 {
@@ -109,14 +109,19 @@ impl SolverTrait for NativeCbcSolver {
                 Constraint::Equal => m.set_row_equal(row, always_literal(&general.2)),
             }
             let mut lst: Vec<_> = Vec::new();
-            general.0.simplify().var_lit(general.0.get_root_index(), &mut lst, 1.0);
+            general.0.simplify();
+            let root_index = general.0.get_root_index();
+            general.0.var_lit(root_index, &mut lst, 1.0);
             lst.iter()
                 .for_each(|(n, lit)| m.set_weight(row, cols[n], *lit as f64));
         };
         // objective
-        if let Some(mut objective) = &problem.obj_expr_arena {
+        if let Some(objective) = &problem.obj_expr_arena {
             let mut lst: Vec<_> = Vec::new();
-            objective.simplify().var_lit(objective.get_root_index(), &mut lst, 1.0);
+            let mut cloned_objective = objective.clone();
+            cloned_objective.simplify();
+            let root_index = cloned_objective.get_root_index();
+            cloned_objective.var_lit(root_index, &mut lst, 1.0);
             lst.iter()
                 .for_each(|(n, lit)| m.set_obj_coeff(cols[n], *lit as f64))
         }
