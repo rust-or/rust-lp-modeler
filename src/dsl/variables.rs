@@ -357,7 +357,7 @@ impl LpExpression {
         }
     }
 
-    pub(crate) fn expr_clone_at(&self, index: LpExprArenaIndex) -> LpExprNode {
+    fn expr_clone_at(&self, index: LpExprArenaIndex) -> LpExprNode {
         match self.arena.get(index) {
             Some(expr) => expr.clone(),
             None => panic!("Requested index out of bound of LpExpression vector. This should not happen.")
