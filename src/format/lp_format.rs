@@ -79,12 +79,12 @@ fn bounds_lp_file_block(prob: &LpProblem) -> String {
     for (_, (constraint_index, lp_expr_arena_index)) in prob.variables() {
         let expr_ref = prob.constraints.get(constraint_index).unwrap().0.expr_ref_at(lp_expr_arena_index);
         match expr_ref {
-            &LpExpression::ConsInt(LpInteger {
+            &LpExprNode::ConsInt(LpInteger {
                          ref name,
                          lower_bound,
                          upper_bound,
                      })
-            | &LpExpression::ConsCont(LpContinuous {
+            | &LpExprNode::ConsCont(LpContinuous {
                             ref name,
                             lower_bound,
                             upper_bound,
@@ -99,7 +99,7 @@ fn bounds_lp_file_block(prob: &LpProblem) -> String {
                     res.push_str(&format!("  {} <= {}\n", &name, &u.to_string()));
                 } else {
                     match expr_ref {
-                        &LpExpression::ConsCont(LpContinuous { .. }) => {
+                        &LpExprNode::ConsCont(LpContinuous { .. }) => {
                             res.push_str(&format!("  {} free\n", &name));
                         } // TODO: IntegerVar => -INF to INF
                         _ => (),
@@ -116,7 +116,7 @@ fn integers_lp_file_block(prob: &LpProblem) -> String {
     let mut res = String::new();
     for (_, (constraint_index, lp_expr_arena_index)) in prob.variables() {
         match prob.constraints.get(constraint_index).unwrap().0.expr_ref_at(lp_expr_arena_index) {
-            &LpExpression::ConsInt(LpInteger { ref name, .. }) => {
+            &LpExprNode::ConsInt(LpInteger { ref name, .. }) => {
                 res.push_str(format!("{} ", name).as_str());
             }
             _ => (),
@@ -129,7 +129,7 @@ fn binaries_lp_file_block(prob: &LpProblem) -> String  {
     let mut res = String::new();
     for (_, (constraint_index, lp_expr_arena_index)) in prob.variables() {
         match prob.constraints.get(constraint_index).unwrap().0.expr_ref_at(lp_expr_arena_index) {
-            &LpExpression::ConsBin(LpBinary { ref name }) => {
+            &LpExprNode::ConsBin(LpBinary { ref name }) => {
                 res.push_str(format!("{} ", name).as_str());
             }
             _ => (),
@@ -138,7 +138,7 @@ fn binaries_lp_file_block(prob: &LpProblem) -> String  {
     res
 }
 
-impl LpFileFormat for LpExprArena {
+impl LpFileFormat for LpExpression {
     fn to_lp_file_format(&self) -> String {
         fn formalize_signs(s: String) -> String {
             let mut s = s.clone();

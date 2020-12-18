@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use dsl::{Problem, LpContinuous, LpBinary, LpInteger, LpProblem, LpExpression, LpExprOp, LpExprArenaIndex};
+use dsl::{Problem, LpContinuous, LpBinary, LpInteger, LpProblem, LpExprNode, LpExprOp, LpExprArenaIndex};
 
 pub mod cbc;
 pub use self::cbc::*;
@@ -86,18 +86,18 @@ impl Solution<'_> {
     }
     fn eval_with(&self, index: &LpExprArenaIndex, values: &HashMap<String, f32>) -> f32 {
         match self.related_problem.unwrap().obj_expr_arena.as_ref().unwrap().expr_ref_at(*index) {
-            LpExpression::LpCompExpr(operation, left, right) => {
+            LpExprNode::LpCompExpr(operation, left, right) => {
                 match operation {
                     LpExprOp::Addition => self.eval_with(left, values) + self.eval_with(right, values),
                     LpExprOp::Multiplication => self.eval_with(left, values) * self.eval_with(right, values),
                     LpExprOp::Subtraction => self.eval_with(left, values) - self.eval_with(right, values),
                 }
             },
-            LpExpression::ConsBin(LpBinary { name })
-            | LpExpression::ConsCont(LpContinuous { name, .. })
-            | LpExpression::ConsInt(LpInteger { name, .. }) => *values.get(name).unwrap_or(&0f32),
-            LpExpression::LitVal(n) => *n,
-            LpExpression::EmptyExpr => 0.0
+            LpExprNode::ConsBin(LpBinary { name })
+            | LpExprNode::ConsCont(LpContinuous { name, .. })
+            | LpExprNode::ConsInt(LpInteger { name, .. }) => *values.get(name).unwrap_or(&0f32),
+            LpExprNode::LitVal(n) => *n,
+            LpExprNode::EmptyExpr => 0.0
         }
     }
 }

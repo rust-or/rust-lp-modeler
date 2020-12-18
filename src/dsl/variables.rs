@@ -1,6 +1,6 @@
 /// # Module variables
 ///
-use self::LpExpression::*;
+use self::LpExprNode::*;
 use self::LpExprOp::*;
 
 use proc_macro2::{TokenStream};
@@ -165,7 +165,7 @@ pub struct LpCompExpr {
 
 /// ADT for Linear Programming Expression
 #[derive(Debug, Clone, PartialEq)]
-pub enum LpExpression {
+pub enum LpExprNode {
     ConsInt(LpInteger),
     ConsBin(LpBinary),
     ConsCont(LpContinuous),
@@ -174,25 +174,25 @@ pub enum LpExpression {
     LpCompExpr(LpExprOp, LpExprArenaIndex, LpExprArenaIndex)
 }
 
-impl ToTokens for LpExpression {
+impl ToTokens for LpExprNode {
     fn to_tokens(&self, stream: &mut TokenStream) {
         stream.extend(
             match self {
-                LpExpression::ConsInt(v) => quote!(LpExpression::ConsInt(#v)),
-                LpExpression::ConsBin(v) => quote!(LpExpression::ConsBin(#v)),
-                LpExpression::ConsCont(v) => quote!(LpExpression::ConsCont(#v)),
-                LpExpression::LpCompExpr(op, lhs, rhs) => quote!(LpExpression::LpCompExpr(#op, #lhs, #rhs)),
-                LpExpression::LitVal(v) =>  quote!(LpExpression::LitVal(#v)),
-                LpExpression::EmptyExpr => quote!(LpExpression::EmptyExpr),
+                LpExprNode::ConsInt(v) => quote!(LpExprNode::ConsInt(#v)),
+                LpExprNode::ConsBin(v) => quote!(LpExprNode::ConsBin(#v)),
+                LpExprNode::ConsCont(v) => quote!(LpExprNode::ConsCont(#v)),
+                LpExprNode::LpCompExpr(op, lhs, rhs) => quote!(LpExprNode::LpCompExpr(#op, #lhs, #rhs)),
+                LpExprNode::LitVal(v) =>  quote!(LpExprNode::LitVal(#v)),
+                LpExprNode::EmptyExpr => quote!(LpExprNode::EmptyExpr),
             }
         );
     }
 }
 
-impl LpExpression {
+impl LpExprNode {
     /// Fix the numeric operand in a multiplication in an expression
     /// c * 4 must be considered as 4 c in a linear formulation lp file
-    pub fn normalize(self, lp_expr_arena: &LpExprArena) -> LpExpression {
+    pub fn normalize(self, lp_expr_arena: &LpExpression) -> LpExprNode {
         if let LpCompExpr(Multiplication, e1, e2) = self {
             if let LitVal(_) = lp_expr_arena.expr_clone_at(e1) {
                 return self.clone();
@@ -209,15 +209,15 @@ impl LpExpression {
     }
 }
 
-// Macro implementing Into<LpExpression> for types
+// Macro implementing Into<LpExprNode> for types
 macro_rules! cons_into_expr {
     ($type_from:ty, $wrapper: ident) => {
-        impl From<$type_from> for LpExpression {
+        impl From<$type_from> for LpExprNode {
             fn from(from: $type_from) -> Self {
                 $wrapper(from)
             }
         }
-        impl<'a> From<&'a $type_from> for LpExpression {
+        impl<'a> From<&'a $type_from> for LpExprNode {
             fn from(from: &'a $type_from) -> Self {
                 $wrapper((*from).clone())
             }
@@ -230,12 +230,12 @@ cons_into_expr!(LpContinuous, ConsCont);
 
 macro_rules! lit_into_expr {
     ($type_from:ty) => {
-        impl From<$type_from> for LpExpression {
+        impl From<$type_from> for LpExprNode {
             fn from(from: $type_from) -> Self {
                     LitVal(from as f32)
             }
         }
-        impl<'a> From<&'a $type_from> for LpExpression {
+        impl<'a> From<&'a $type_from> for LpExprNode {
             fn from(from: &'a $type_from) -> Self {
                     LitVal((*from).clone() as f32)
             }
@@ -246,40 +246,40 @@ lit_into_expr!(f32);
 lit_into_expr!(i32);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct LpExprArena {
+pub struct LpExpression {
     root: LpExprArenaIndex,
-    array: Vec<LpExpression>
+    arena: Vec<LpExprNode>
 }
 
-impl ToTokens for LpExprArena {
+impl ToTokens for LpExpression {
     fn to_tokens(&self, stream: &mut TokenStream) {
         let root = self.get_root_index();
-        let array = self.array.clone();
+        let arena = self.arena.clone();
         stream.extend( quote! {
-            LpExprArena {
+            LpExpression {
                 root: #root,
-                array: #( struct #array;),*
+                arena: #( struct #arena;),*
             }
         });
     }
 }
 
-// Macro implementing Into<LpExprArena> for types
+// Macro implementing Into<LpExpression> for types
 macro_rules! cons_into_expr_arena {
     ($type_from:ty, $wrapper: ident) => {
-        impl From<$type_from> for LpExprArena {
+        impl From<$type_from> for LpExpression {
             fn from(from: $type_from) -> Self {
-                LpExprArena {
+                LpExpression {
                     root: 0,
-                    array: vec![$wrapper(from); 1]
+                    arena: vec![$wrapper(from); 1]
                 }
             }
         }
-        impl<'a> From<&'a $type_from> for LpExprArena {
+        impl<'a> From<&'a $type_from> for LpExpression {
             fn from(from: &'a $type_from) -> Self {
-                LpExprArena {
+                LpExpression {
                     root: 0,
-                    array: vec![$wrapper((*from).clone()); 1]
+                    arena: vec![$wrapper((*from).clone()); 1]
                 }
             }
         }
@@ -291,19 +291,19 @@ cons_into_expr_arena!(LpContinuous, ConsCont);
 
 macro_rules! lit_into_expr_arena {
     ($type_from:ty) => {
-        impl From<$type_from> for LpExprArena {
+        impl From<$type_from> for LpExpression {
             fn from(from: $type_from) -> Self {
-                LpExprArena {
+                LpExpression {
                     root: 0,
-                    array: vec![LitVal(from as f32); 1]
+                    arena: vec![LitVal(from as f32); 1]
                 }
             }
         }
-        impl<'a> From<&'a $type_from> for LpExprArena {
+        impl<'a> From<&'a $type_from> for LpExpression {
             fn from(from: &'a $type_from) -> Self {
-                LpExprArena {
+                LpExpression {
                     root: 0,
-                    array: vec![LitVal((*from).clone() as f32); 1]
+                    arena: vec![LitVal((*from).clone() as f32); 1]
                 }
             }
         }
@@ -312,36 +312,36 @@ macro_rules! lit_into_expr_arena {
 lit_into_expr_arena!(f32);
 lit_into_expr_arena!(i32);
 
-impl From<LpExpression> for LpExprArena {
-    fn from(expr: LpExpression) -> Self {
-        LpExprArena {
+impl From<LpExprNode> for LpExpression {
+    fn from(expr: LpExprNode) -> Self {
+        LpExpression {
             root: 0,
-            array: vec![expr; 1]
+            arena: vec![expr; 1]
         }
     }
 }
 
-impl From<&LpExpression> for LpExprArena {
-    fn from(expr: &LpExpression) -> Self {
-        LpExprArena {
+impl From<&LpExprNode> for LpExpression {
+    fn from(expr: &LpExprNode) -> Self {
+        LpExpression {
             root: 0,
-            array: vec![expr.clone(); 1]
+            arena: vec![expr.clone(); 1]
         }
     }
 }
 
-impl LpExprArena {
+impl LpExpression {
     pub fn new() -> Self {
-       LpExprArena {
+       LpExpression {
            root: 0,
-           array: Vec::new()
+           arena: Vec::new()
        }
     }
 
-    pub fn build(root: LpExprArenaIndex, array: Vec<LpExpression>) -> Self {
-        LpExprArena {
+    pub fn build(root: LpExprArenaIndex, arena: Vec<LpExprNode>) -> Self {
+        LpExpression {
             root: root,
-            array: array
+            arena: arena
         }
     }
 
@@ -353,48 +353,48 @@ impl LpExprArena {
         self.root = root_index;
     }
 
-    pub fn push_as_expr<T>(&mut self, lp_expr: &T) -> LpExprArenaIndex where T: Into<LpExpression> + Clone {
-        let index = self.array.len();
-        self.array.push(lp_expr.clone().into());
+    pub fn push_as_expr<T>(&mut self, lp_expr: &T) -> LpExprArenaIndex where T: Into<LpExprNode> + Clone {
+        let index = self.arena.len();
+        self.arena.push(lp_expr.clone().into());
         return index
     }
 
     pub fn clone_expr_at_and_push(&mut self, index: LpExprArenaIndex) -> LpExprArenaIndex {
-        let new_index = self.array.len();
-        self.array.push(self.expr_clone_at(index));
+        let new_index = self.arena.len();
+        self.arena.push(self.expr_clone_at(index));
         return new_index
     }
 
-    pub fn overwrite_expr_at(&mut self, index: LpExprArenaIndex, lp_expr: LpExpression) {
-       self.array[index] = lp_expr;
+    pub fn overwrite_expr_at(&mut self, index: LpExprArenaIndex, lp_expr: LpExprNode) {
+       self.arena[index] = lp_expr;
     }
 
-    pub fn expr_ref_at(&self, index: LpExprArenaIndex) -> &LpExpression {
-        match self.array.get(index) {
+    pub fn expr_ref_at(&self, index: LpExprArenaIndex) -> &LpExprNode {
+        match self.arena.get(index) {
             Some(expr) => expr,
-            None => panic!("Requested index out of bound of LpExprArena vector. This should not happen.")
+            None => panic!("Requested index out of bound of LpExpression vector. This should not happen.")
         }
     }
 
-    pub fn expr_clone_at(&self, index: LpExprArenaIndex) -> LpExpression {
-        match self.array.get(index) {
+    pub fn expr_clone_at(&self, index: LpExprArenaIndex) -> LpExprNode {
+        match self.arena.get(index) {
             Some(expr) => expr.clone(),
-            None => panic!("Requested index out of bound of LpExprArena vector. This should not happen.")
+            None => panic!("Requested index out of bound of LpExpression vector. This should not happen.")
         }
     }
 
-    pub fn get_root_expr(&self) -> LpExpression {
+    pub fn get_root_expr(&self) -> LpExprNode {
         self.expr_clone_at(self.root)
     }
 
-    pub fn get_root_expr_ref(&self) -> &LpExpression {
+    pub fn get_root_expr_ref(&self) -> &LpExprNode {
         self.expr_ref_at(self.root)
     }
 
     pub fn split_off_constant(&mut self) -> f32 {
         match self.get_root_expr() {
             LitVal(c) => {
-                self.clone_from(&LpExprArena::new());
+                self.clone_from(&LpExpression::new());
                 c
             },
             LpCompExpr(Addition, e1, e2) => {
@@ -417,7 +417,53 @@ impl LpExprArena {
         }
     }
 
-    pub fn merge_cloned_arenas(&self, right_lp_expr_arena: &LpExprArena, operation: LpExprOp) -> Self {
+    /// Recursively unwrap an arena of expressions.
+    /// Assumes that self.simplify() was called on the arena before starting recursion, here. That way,
+    /// `LitVal()`s of nested Multiplication expressions are already accumulated towards the left side
+    /// and `LitVal()`s of all Addition / Subtraction expressions are already accumulated towards the
+    /// right end of the tree, with all Addition / SUbtraction expressions on the most global level
+    /// possible.
+    pub fn var_lit(&self, expr_index: LpExprArenaIndex, lst: &mut Vec<(String, f32)>, mul: f32) {
+        match self.expr_ref_at(expr_index) {
+            &ConsBin(LpBinary { ref name, .. })
+            | &ConsInt(LpInteger { ref name, .. })
+            | &ConsCont(LpContinuous { ref name, .. }) => {
+                lst.push((name.clone(), mul));
+            }
+
+            LpCompExpr(LpExprOp::Multiplication, val, ref e) => {
+                match self.expr_ref_at(*e) {
+                    &ConsBin(LpBinary { ref name, .. })
+                    | &ConsInt(LpInteger { ref name, .. })
+                    | &ConsCont(LpContinuous { ref name, .. }) => {
+                        if let &LitVal(lit) = self.expr_ref_at(*val) {
+                            lst.push((name.clone(), mul * lit))
+                        } else {
+                            panic!("This Multiplication expression has a non-`LitVal()` left-hand side.\n\
+                                    Did you call `simplify()` before `var_lit()`? If not:\n\
+                                    This could point to a bug in LpExpression::simplify().");
+                        }
+                    },
+                    _ => {
+                        panic!("This Multiplication expression has a non-`Cons*()` right-hand side.\n\
+                                Did you call `simplify()` before `var_lit()`? If not:\n\
+                                This could point to a bug in LpExpression::simplify().");
+                    },
+                }
+            },
+            &LpCompExpr(LpExprOp::Addition, ref e1, ref e2) => {
+                self.var_lit(*e1, lst, 1.0);
+                self.var_lit(*e2, lst, 1.0);
+            }
+            &LpCompExpr(LpExprOp::Subtraction, ref e1, ref e2) => {
+                self.var_lit(*e1, lst, 1.0);
+                self.var_lit(*e2, lst, -1.0);
+            }
+            _ => (),
+        }
+    }
+
+    pub fn merge_cloned_arenas(&self, right_lp_expr_arena: &LpExpression, operation: LpExprOp) -> Self {
         let mut new_arena = self.clone();
         let index_at_insertion = new_arena.push_arena_at_root(right_lp_expr_arena);
         let new_root = new_arena.push_as_expr(
@@ -427,7 +473,7 @@ impl LpExprArena {
         new_arena
     }
 
-    pub fn push_arena_at_root(&mut self, right_lp_expr_arena: &LpExprArena) -> LpExprArenaIndex {
+    pub fn push_arena_at_root(&mut self, right_lp_expr_arena: &LpExpression) -> LpExprArenaIndex {
         let right_root_expr_ref = right_lp_expr_arena.get_root_expr_ref();
         let new_index_right_root = self.push_as_expr(right_root_expr_ref);
         let mut move_stack: Vec<LpExprArenaIndex> = Vec::new();
@@ -452,9 +498,9 @@ impl LpExprArena {
         new_index_right_root
     }
 
-    pub fn clone_subtree_at_index_and_push(&mut self, index: LpExprArenaIndex) -> LpExprArena {
-        let mut clone_stack: Vec<LpExpression> = vec![self.expr_clone_at(index)];
-        let mut cloned_subtree = LpExprArena::new();
+    pub fn clone_subtree_at_index_and_push(&mut self, index: LpExprArenaIndex) -> LpExpression {
+        let mut clone_stack: Vec<LpExprNode> = vec![self.expr_clone_at(index)];
+        let mut cloned_subtree = LpExpression::new();
         let mut new_left_index: LpExprArenaIndex;
         let mut new_right_index_stack: Vec<LpExprArenaIndex> = Vec::new();
         let mut left_stack: Vec<bool> = vec![false];
@@ -558,7 +604,8 @@ impl LpExprArena {
     }
 
     pub fn simplify(&mut self) -> &mut Self {
-        // keep clone of the starting expression to compare once recursive iteration finishes
+        // keep clone of the root expression at the start of each round to compare
+        // once one round of recursive iteration finishes
         let mut show_at_start = self.show(&self.get_root_index(), true);
         let mut first_round = true;
 
@@ -573,7 +620,7 @@ impl LpExprArena {
             lp_expr_stack.push(self.get_root_index());
             while let Some(handled_expr_index) = lp_expr_stack.pop() {
                 println!("\nself.show({}, true): {:?}", self.get_root_index(), self.show(&self.get_root_index(), true));
-                println!("LpExprArena: {:?}", self);
+                println!("LpExpression: {:?}", self);
                 println!("Handling index: {}, expression: {:?}", handled_expr_index, self.expr_clone_at(handled_expr_index));
                 if let LpCompExpr(_, left, right) = self.expr_clone_at(handled_expr_index) {
                     println!("left [{}]: {:?}", left, self.expr_clone_at(left));
@@ -1238,7 +1285,7 @@ impl LpExprArena {
                     | ConsInt(_)
                     | ConsCont(_)
                     | LitVal(_)
-                    | LpExpression::EmptyExpr => {}
+                    | LpExprNode::EmptyExpr => {}
                 };
                 println!("Current stack after operation: {:?}", lp_expr_stack)
             }
@@ -1271,7 +1318,7 @@ impl ToTokens for Constraint {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct LpConstraint(pub LpExprArena, pub Constraint, pub LpExprArena);
+pub struct LpConstraint(pub LpExpression, pub Constraint, pub LpExpression);
 
 impl LpConstraint {
     pub fn generalize(&self) -> LpConstraint {
@@ -1279,7 +1326,7 @@ impl LpConstraint {
         let &LpConstraint(ref lhs, ref op, ref rhs) = self;
         let mut new_lhs_expr = lhs.merge_cloned_arenas(rhs, Subtraction);
         let constant = new_lhs_expr.simplify().split_off_constant();
-        let new_rhs_expr_arena: LpExprArena= LitVal(-constant).into();
+        let new_rhs_expr_arena: LpExpression = LitVal(-constant).into();
         LpConstraint(new_lhs_expr, (*op).clone(), new_rhs_expr_arena)
     }
 
@@ -1288,7 +1335,7 @@ impl LpConstraint {
             ConsBin(LpBinary { ref name, .. })
             | ConsInt(LpInteger { ref name, .. })
             | ConsCont(LpContinuous { ref name, .. }) => {
-                lst.insert(name.clone(), (constraint_index, expr_index));
+                lst.insert(name.clone(), (constraint_index, expr_index) );
             },
             LpCompExpr(Multiplication, _, e) => {
                 self.var(*e, constraint_index, lst);
@@ -1334,10 +1381,10 @@ impl ToTokens for LpConstraint {
 /// problem += lp_sum(v).equal(10.0);
 /// ```
 ///
-pub fn lp_sum<T>(not_yet_lp_expr_arenas: &Vec<T>) -> LpExprArena where T: Into<LpExprArena> + Clone {
+pub fn lp_sum<T>(not_yet_lp_expr_arenas: &Vec<T>) -> LpExpression where T: Into<LpExpression> + Clone {
     match not_yet_lp_expr_arenas.first() {
         Some(first) => {
-            let mut arena: LpExprArena = first.clone().into();
+            let mut arena: LpExpression = first.clone().into();
             for a in not_yet_lp_expr_arenas[1..].iter() {
                 arena = arena.merge_cloned_arenas(&a.clone().into(), Addition);
             }
@@ -1349,12 +1396,12 @@ pub fn lp_sum<T>(not_yet_lp_expr_arenas: &Vec<T>) -> LpExprArena where T: Into<L
     }
 }
 
-pub fn sum<'a, T: 'a,U: 'a>(expr: &'a Vec<T>, f: impl Fn(&'a T) -> U) -> LpExprArena where U: Into<LpExprArena> + Clone {
+pub fn sum<'a, T: 'a,U: 'a>(expr: &'a Vec<T>, f: impl Fn(&'a T) -> U) -> LpExpression where U: Into<LpExpression> + Clone {
     return lp_sum(&expr.iter().map(|t| f(t.into())).collect());
 }
 
 pub trait SummableExp {
-    fn sum(&self) -> LpExprArena;
+    fn sum(&self) -> LpExpression;
 }
 
 /// make a complete expression or a constraint with a vector of expressions
@@ -1372,8 +1419,8 @@ pub trait SummableExp {
 /// problem += vec!(a,b,c).sum().equal(10.0);
 /// ```
 ///
-impl<T> SummableExp for Vec<T> where T: Into<LpExprArena> + Clone {
-    fn sum(&self) -> LpExprArena {
+impl<T> SummableExp for Vec<T> where T: Into<LpExpression> + Clone {
+    fn sum(&self) -> LpExpression {
        lp_sum(self)
     }
 }

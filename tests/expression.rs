@@ -11,9 +11,9 @@ fn expressions_creation() {
 
     assert_eq!(
         a + b,
-        LpExprArena::build(
+        LpExpression::build(
             2,
-            vec![LpExpression::ConsInt(a.clone()), LpExpression::ConsInt(b.clone()), LpExpression::LpCompExpr(LpExprOp::Addition, 0, 1)]
+            vec![LpExprNode::ConsInt(a.clone()), LpExprNode::ConsInt(b.clone()), LpExprNode::LpCompExpr(LpExprOp::Addition, 0, 1)]
         )
     );
 }

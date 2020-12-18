@@ -23,7 +23,7 @@ pub enum LpObjective {
 }
 
 pub trait Problem {
-    fn add_objective_expression(&mut self, expr_arena: &mut LpExprArena);
+    fn add_objective_expression(&mut self, expr_arena: &mut LpExpression);
     fn add_constraints(&mut self, contraint_expr: &LpConstraint);
 }
 
@@ -63,7 +63,7 @@ pub struct LpProblem {
     pub name: &'static str,
     pub unique_name: String,
     pub objective_type: LpObjective,
-    pub obj_expr_arena: Option<LpExprArena>,
+    pub obj_expr_arena: Option<LpExpression>,
     pub constraints: Vec<LpConstraint>,
 }
 
@@ -94,7 +94,7 @@ impl LpProblem {
 }
 
 impl Problem for LpProblem {
-    fn add_objective_expression(&mut self, expr_arena: &mut LpExprArena) {
+    fn add_objective_expression(&mut self, expr_arena: &mut LpExpression) {
         if let Some(e) = &self.obj_expr_arena {
             let mut simple_expr = expr_arena
                 .merge_cloned_arenas(&e, LpExprOp::Addition);
@@ -123,7 +123,7 @@ macro_rules! impl_addassign_for_generic_problem {
         /// Add an expression as an objective function
         impl<T> AddAssign<T> for $problem
         where
-            T: Into<LpExprArena>,
+            T: Into<LpExpression>,
         {
             fn add_assign(&mut self, _rhs: T) {
                 self.add_objective_expression(&mut _rhs.into());

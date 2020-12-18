@@ -1,37 +1,37 @@
 use std::ops::{Add, Mul, Neg, Sub};
-use dsl::LpExpression::*;
-use dsl::{Constraint, LpBinary, LpConstraint, LpContinuous, LpExpression, LpInteger, LpExprArena};
+use dsl::LpExprNode::*;
+use dsl::{Constraint, LpBinary, LpConstraint, LpContinuous, LpExprNode, LpInteger, LpExpression};
 use dsl::LpExprOp::{Addition, Subtraction, Multiplication};
 
-/// Operations trait for any type implementing Into<LpExprArena> trait
-pub trait LpOperations<T> where T: Into<LpExprArena> {
-    /// Less or equal binary syntax for LpExprArena
+/// Operations trait for any type implementing Into<LpExpression> trait
+pub trait LpOperations<T> where T: Into<LpExpression> {
+    /// Less or equal binary syntax for LpExpression
     fn le(&self, lhs_expr: T) -> LpConstraint;
-    /// Greater or equal binary syntax for LpExprArena
+    /// Greater or equal binary syntax for LpExpression
     fn ge(&self, lhs_expr: T) -> LpConstraint;
-    /// Equality binary syntax for LpExprArena
+    /// Equality binary syntax for LpExpression
     fn equal(&self, lhs_expr: T) -> LpConstraint;
 }
 
-/// Macro implementing binary operations for Into<LpExprArena> or &Into<LpExprArena>
+/// Macro implementing binary operations for Into<LpExpression> or &Into<LpExpression>
 macro_rules! operations_for_expr {
     ($trait_name: ident, $f_name: ident, $expr_type: ident) => {
-        impl<T> $trait_name<T> for LpExprArena
+        impl<T> $trait_name<T> for LpExpression
         where
-            T: Into<LpExprArena> + Clone,
+            T: Into<LpExpression> + Clone,
         {
-            type Output = LpExprArena;
-            fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
+            type Output = LpExpression;
+            fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExpression {
                 let new_lp_expr_arena = self.clone();
                 new_lp_expr_arena.merge_cloned_arenas(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
-        impl<'a, T> $trait_name<T> for &'a LpExprArena
+        impl<'a, T> $trait_name<T> for &'a LpExpression
         where
-            T: Into<LpExprArena> + Clone,
+            T: Into<LpExpression> + Clone,
         {
-            type Output = LpExprArena;
-            fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
+            type Output = LpExpression;
+            fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExpression {
                 let new_lp_expr_arena = (*self).clone();
                 new_lp_expr_arena.merge_cloned_arenas(&not_yet_lp_expr_arena.into(), $expr_type)
             }
@@ -48,21 +48,21 @@ macro_rules! lpvars_operation_for_intoexpr {
     ($trait_name: ident, $f_name: ident, $lp_type: ident, $expr_type: ident) => {
         impl<T> $trait_name<T> for $lp_type
         where
-            T: Into<LpExprArena> + Clone,
+            T: Into<LpExpression> + Clone,
         {
-            type Output = LpExprArena;
-            fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = self.clone().into();
+            type Output = LpExpression;
+            fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExpression {
+                let new_lp_expr_arena: LpExpression = self.clone().into();
                 new_lp_expr_arena.merge_cloned_arenas(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
         impl<'a, T> $trait_name<T> for &'a $lp_type
         where
-            T: Into<LpExprArena> + Clone,
+            T: Into<LpExpression> + Clone,
         {
-            type Output = LpExprArena;
-            fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = (*self).clone().into();
+            type Output = LpExpression;
+            fn $f_name(self, not_yet_lp_expr_arena: T) -> LpExpression {
+                let new_lp_expr_arena: LpExpression = (*self).clone().into();
                 new_lp_expr_arena.merge_cloned_arenas(&not_yet_lp_expr_arena.into(), $expr_type)
             }
         }
@@ -82,17 +82,17 @@ lpvars_operation_for_intoexpr!(Sub, sub, LpContinuous, Subtraction);
 /// Macro implementing binary operations for a numeric type
 macro_rules! numeric_operation_for_expr {
     ($num_type: ty, $trait_name: ident, $f_name: ident, $type_expr: ident) => {
-        impl $trait_name<LpExprArena> for $num_type {
-            type Output = LpExprArena;
-            fn $f_name(self, lp_expr_arena: LpExprArena) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = (self as f32).into();
+        impl $trait_name<LpExpression> for $num_type {
+            type Output = LpExpression;
+            fn $f_name(self, lp_expr_arena: LpExpression) -> LpExpression {
+                let new_lp_expr_arena: LpExpression = (self as f32).into();
                 new_lp_expr_arena.merge_cloned_arenas(&lp_expr_arena.clone(), $type_expr)
             }
         }
-        impl<'a> $trait_name<&'a LpExprArena> for $num_type {
-            type Output = LpExprArena;
-            fn $f_name(self, lp_expr_arena: &'a LpExprArena) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = (self as f32).into();
+        impl<'a> $trait_name<&'a LpExpression> for $num_type {
+            type Output = LpExpression;
+            fn $f_name(self, lp_expr_arena: &'a LpExpression) -> LpExpression {
+                let new_lp_expr_arena: LpExpression = (self as f32).into();
                 new_lp_expr_arena.merge_cloned_arenas(lp_expr_arena, $type_expr)
             }
         }
@@ -109,15 +109,15 @@ macro_rules! numeric_all_ops_for_expr {
 numeric_all_ops_for_expr!(f32);
 numeric_all_ops_for_expr!(i32);
 
-/// &LpExprArena to LpExprArena
-impl<'a> Into<LpExprArena> for &'a LpExprArena {
-    fn into(self) -> LpExprArena {
+/// &LpExpression to LpExpression
+impl<'a> Into<LpExpression> for &'a LpExpression {
+    fn into(self) -> LpExpression {
         (*self).clone()
     }
 }
 
-/// Implementing LpOperations trait for any Into<LpExprArena>
-impl<T: Into<LpExprArena> + Clone, U> LpOperations<T> for U where U: Into<LpExprArena> + Clone {
+/// Implementing LpOperations trait for any Into<LpExpression>
+impl<T: Into<LpExpression> + Clone, U> LpOperations<T> for U where U: Into<LpExpression> + Clone {
     fn le(&self, lhs_expr: T) -> LpConstraint {
         LpConstraint(
             self.clone().into(),
@@ -144,10 +144,10 @@ impl<T: Into<LpExprArena> + Clone, U> LpOperations<T> for U where U: Into<LpExpr
     }
 }
 
-impl<'a> Neg for &'a LpExpression {
-    type Output = LpExprArena;
-    fn neg(self) -> LpExprArena {
-        let new_lp_expr_arena: LpExprArena = LitVal(-1.0).into();
+impl<'a> Neg for &'a LpExprNode {
+    type Output = LpExpression;
+    fn neg(self) -> LpExpression {
+        let new_lp_expr_arena: LpExpression = LitVal(-1.0).into();
         new_lp_expr_arena.merge_cloned_arenas(&self.clone().into(), Multiplication)
     }
 }
@@ -155,9 +155,9 @@ impl<'a> Neg for &'a LpExpression {
 macro_rules! neg_operation_for_lpvars {
     ($lp_var_type: ty) => {
         impl<'a> Neg for &'a $lp_var_type {
-            type Output = LpExprArena;
-            fn neg(self) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = LitVal(-1.0).into();
+            type Output = LpExpression;
+            fn neg(self) -> LpExpression {
+                let new_lp_expr_arena: LpExpression = LitVal(-1.0).into();
                 new_lp_expr_arena.merge_cloned_arenas(&self.clone().into(), Multiplication)
             }
         }
@@ -171,18 +171,18 @@ neg_operation_for_lpvars!(LpBinary);
 macro_rules! numeric_operation_for_lpvars {
     ($num_type_left: ty, $trait_name: ident, $f_name: ident, $type_expr: ident, $lp_type_right: ty) => {
         impl $trait_name<$lp_type_right> for $num_type_left {
-            type Output = LpExprArena;
-            fn $f_name(self, var: $lp_type_right) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = (self as f32).clone().into();
-                let new_right: LpExprArena = var.clone().into();
+            type Output = LpExpression;
+            fn $f_name(self, var: $lp_type_right) -> LpExpression {
+                let new_lp_expr_arena: LpExpression = (self as f32).clone().into();
+                let new_right: LpExpression = var.clone().into();
                 new_lp_expr_arena.merge_cloned_arenas(&new_right, $type_expr)
             }
         }
         impl<'a> $trait_name<&'a $lp_type_right> for $num_type_left {
-            type Output = LpExprArena;
-            fn $f_name(self, var: &'a $lp_type_right) -> LpExprArena {
-                let new_lp_expr_arena: LpExprArena = (self as f32).into();
-                let new_right: LpExprArena = (*var).clone().into();
+            type Output = LpExpression;
+            fn $f_name(self, var: &'a $lp_type_right) -> LpExpression {
+                let new_lp_expr_arena: LpExpression = (self as f32).into();
+                let new_right: LpExpression = (*var).clone().into();
                 new_lp_expr_arena.merge_cloned_arenas(&new_right, $type_expr)
             }
         }
