@@ -189,26 +189,6 @@ impl ToTokens for LpExprNode {
     }
 }
 
-impl LpExprNode {
-    /// Fix the numeric operand in a multiplication in an expression
-    /// c * 4 must be considered as 4 c in a linear formulation lp file
-    pub(crate) fn normalize(self, lp_expr_arena: &LpExpression) -> LpExprNode {
-        if let LpCompExpr(Multiplication, e1, e2) = self {
-            if let LitVal(_) = lp_expr_arena.expr_clone_at(e1) {
-                return self.clone();
-            } else {
-                if let LitVal(_) = lp_expr_arena.expr_clone_at(e2) {
-                    return LpCompExpr(Multiplication, e2, e1);
-                } else {
-                    return LpCompExpr(Multiplication, e1, e2);
-                }
-            }
-        } else {
-            self
-        }
-    }
-}
-
 // Macro implementing Into<LpExprNode> for types
 macro_rules! cons_into_expr {
     ($type_from:ty, $wrapper: ident) => {
