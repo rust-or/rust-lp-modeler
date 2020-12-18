@@ -5,20 +5,6 @@ use lp_modeler::dsl::*;
 use lp_modeler::format::lp_format::LpFileFormat;
 
 #[test]
-fn expressions_creation() {
-    let ref a = LpInteger::new("a").lower_bound(10.0).upper_bound(20.0);
-    let ref b = LpInteger::new("b");
-
-    assert_eq!(
-        a + b,
-        LpExpression::build(
-            2,
-            vec![LpExprNode::ConsInt(a.clone()), LpExprNode::ConsInt(b.clone()), LpExprNode::LpCompExpr(LpExprOp::Addition, 0, 1)]
-        )
-    );
-}
-
-#[test]
 fn distributivity() {
     let ref a = LpInteger::new("a");
     let ref b = LpInteger::new("b");
@@ -192,18 +178,4 @@ fn expression_with_lp_sum() {
         std::panic::catch_unwind( || lp_sum(empty)).is_err(),
         "should panic if empty vec"
     );
-}
-
-#[test]
-fn simplifications() {
-    let a = &LpInteger::new("a");
-
-    let expr1 = a - 2f32;
-    let expr2 = 1f32 - a;
-
-    let c = (expr1.clone() + expr2.clone()).simplify().split_off_constant();
-    assert_eq!(c, -1f32);
-
-    let c = (expr2.clone() + expr1.clone()).simplify().split_off_constant();
-    assert_eq!(c, -1f32);
 }
