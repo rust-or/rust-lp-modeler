@@ -619,8 +619,6 @@ impl LpExpression {
             first_round = false;
             lp_expr_stack.push(self.get_root_index());
             while let Some(handled_expr_index) = lp_expr_stack.pop() {
-                if let LpCompExpr(_, left, right) = self.expr_clone_at(handled_expr_index) {
-                }
                 match self.expr_clone_at(handled_expr_index) {
                     LpCompExpr(Multiplication, left_index, right_index) => {
                         match (self.expr_clone_at(left_index), self.expr_clone_at(right_index)) {
