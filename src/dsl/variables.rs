@@ -338,7 +338,8 @@ impl LpExpression {
        }
     }
 
-    pub(crate) fn build(root: LpExprArenaIndex, arena: Vec<LpExprNode>) -> Self {
+    #[cfg(test)]
+    fn build(root: LpExprArenaIndex, arena: Vec<LpExprNode>) -> Self {
         LpExpression {
             root: root,
             arena: arena
