@@ -311,7 +311,7 @@ impl From<&LpExprNode> for LpExpression {
 }
 
 impl LpExpression {
-    pub(crate) fn new() -> Self {
+    fn new() -> Self {
        LpExpression {
            root: 0,
            arena: Vec::new()
