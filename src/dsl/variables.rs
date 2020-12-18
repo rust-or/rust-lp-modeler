@@ -346,7 +346,7 @@ impl LpExpression {
         return new_index
     }
 
-    pub(crate) fn overwrite_expr_at(&mut self, index: LpExprArenaIndex, lp_expr: LpExprNode) {
+    fn overwrite_expr_at(&mut self, index: LpExprArenaIndex, lp_expr: LpExprNode) {
        self.arena[index] = lp_expr;
     }
 
