@@ -334,7 +334,7 @@ impl LpExpression {
         self.root = root_index;
     }
 
-    pub(crate) fn push_as_expr<T>(&mut self, lp_expr: &T) -> LpExprArenaIndex where T: Into<LpExprNode> + Clone {
+    fn push_as_expr<T>(&mut self, lp_expr: &T) -> LpExprArenaIndex where T: Into<LpExprNode> + Clone {
         let index = self.arena.len();
         self.arena.push(lp_expr.clone().into());
         return index
