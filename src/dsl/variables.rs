@@ -476,7 +476,7 @@ impl LpExpression {
         new_index_right_root
     }
 
-    pub(crate) fn clone_subtree_at_index_and_push(&mut self, index: LpExprArenaIndex) -> LpExpression {
+    fn clone_subtree_at_index_and_push(&mut self, index: LpExprArenaIndex) -> LpExpression {
         let mut clone_stack: Vec<LpExprNode> = vec![self.expr_clone_at(index)];
         let mut cloned_subtree = LpExpression::new();
         let mut new_left_index: LpExprArenaIndex;
