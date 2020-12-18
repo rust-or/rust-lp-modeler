@@ -330,7 +330,7 @@ impl LpExpression {
         self.root
     }
 
-    pub(crate) fn set_root_to_index(&mut self, root_index: LpExprArenaIndex) {
+    fn set_root_to_index(&mut self, root_index: LpExprArenaIndex) {
         self.root = root_index;
     }
 
