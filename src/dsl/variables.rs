@@ -615,16 +615,10 @@ impl LpExpression {
             // check whether the root has changed -- if yes, do another round
             || ( show_at_start != self.show(&self.get_root_index(), true)) {
             show_at_start = self.show(&self.get_root_index(), true);
-            println!("\n\nFirst round: {}", first_round);
             first_round = false;
             lp_expr_stack.push(self.get_root_index());
             while let Some(handled_expr_index) = lp_expr_stack.pop() {
-                println!("\nself.show({}, true): {:?}", self.get_root_index(), self.show(&self.get_root_index(), true));
-                println!("LpExpression: {:?}", self);
-                println!("Handling index: {}, expression: {:?}", handled_expr_index, self.expr_clone_at(handled_expr_index));
                 if let LpCompExpr(_, left, right) = self.expr_clone_at(handled_expr_index) {
-                    println!("left [{}]: {:?}", left, self.expr_clone_at(left));
-                    println!("right [{}]: {:?}", right, self.expr_clone_at(right));
                 }
                 match self.expr_clone_at(handled_expr_index) {
                     LpCompExpr(Multiplication, left_index, right_index) => {
@@ -1287,7 +1281,6 @@ impl LpExpression {
                     | LitVal(_)
                     | LpExprNode::EmptyExpr => {}
                 };
-                println!("Current stack after operation: {:?}", lp_expr_stack)
             }
         }
         self
