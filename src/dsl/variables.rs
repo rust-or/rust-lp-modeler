@@ -451,7 +451,7 @@ impl LpExpression {
         new_arena
     }
 
-    pub(crate) fn push_arena_at_root(&mut self, right_lp_expr_arena: &LpExpression) -> LpExprArenaIndex {
+    fn push_arena_at_root(&mut self, right_lp_expr_arena: &LpExpression) -> LpExprArenaIndex {
         let right_root_expr_ref = right_lp_expr_arena.get_root_expr_ref();
         let new_index_right_root = self.push_as_expr(right_root_expr_ref);
         let mut move_stack: Vec<LpExprArenaIndex> = Vec::new();
