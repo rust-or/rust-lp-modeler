@@ -364,16 +364,12 @@ impl LpExpression {
         }
     }
 
-    pub(crate) fn get_root_expr(&self) -> LpExprNode {
-        self.expr_clone_at(self.root)
-    }
-
     pub(crate) fn get_root_expr_ref(&self) -> &LpExprNode {
         self.expr_ref_at(self.root)
     }
 
     pub(crate) fn split_off_constant(&mut self) -> f32 {
-        match self.get_root_expr() {
+        match self.expr_clone_at(self.root) {
             LitVal(c) => {
                 self.clone_from(&LpExpression::new());
                 c
