@@ -340,7 +340,7 @@ impl LpExpression {
         return index
     }
 
-    pub(crate) fn clone_expr_at_and_push(&mut self, index: LpExprArenaIndex) -> LpExprArenaIndex {
+    fn clone_expr_at_and_push(&mut self, index: LpExprArenaIndex) -> LpExprArenaIndex {
         let new_index = self.arena.len();
         self.arena.push(self.expr_clone_at(index));
         return new_index
