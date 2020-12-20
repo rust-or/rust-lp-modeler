@@ -35,6 +35,7 @@ impl WithMaxSeconds<NativeCbcSolver> for NativeCbcSolver {
         }
     }
 }
+
 impl WithNbThreads<NativeCbcSolver> for NativeCbcSolver {
     fn nb_threads(&self) -> Option<u32> {
         self.threads
@@ -43,6 +44,54 @@ impl WithNbThreads<NativeCbcSolver> for NativeCbcSolver {
         NativeCbcSolver {
             threads: Some(threads),
             ..self.clone()
+        }
+    }
+}
+
+impl LpExpression {
+    /// Recursively unwrap an arena of expressions.
+    /// Assumes that self.simplify() was called on the arena before starting recursion, here. That way,
+    /// `LitVal()`s of nested Multiplication expressions are already accumulated towards the left side
+    /// and `LitVal()`s of all Addition / Subtraction expressions are already accumulated towards the
+    /// right end of the tree, with all Addition / SUbtraction expressions on the most global level
+    /// possible.
+    fn var_lit(&self, expr_index: LpExprArenaIndex, lst: &mut Vec<(String, f32)>, mul: f32) {
+        match self.expr_ref_at(expr_index) {
+            &ConsBin(LpBinary { ref name, .. })
+            | &ConsInt(LpInteger { ref name, .. })
+            | &ConsCont(LpContinuous { ref name, .. }) => {
+                lst.push((name.clone(), mul));
+            }
+
+            LpCompExpr(LpExprOp::Multiplication, val, ref e) => {
+                match self.expr_ref_at(*e) {
+                    &ConsBin(LpBinary { ref name, .. })
+                    | &ConsInt(LpInteger { ref name, .. })
+                    | &ConsCont(LpContinuous { ref name, .. }) => {
+                        if let &LitVal(lit) = self.expr_ref_at(*val) {
+                            lst.push((name.clone(), mul * lit))
+                        } else {
+                            panic!("This Multiplication expression has a non-`LitVal()` left-hand side.\n\
+                                    Did you call `simplify()` before `var_lit()`? If not:\n\
+                                    This could point to a bug in LpExpression::simplify().");
+                        }
+                    },
+                    _ => {
+                        panic!("This Multiplication expression has a non-`Cons*()` right-hand side.\n\
+                                Did you call `simplify()` before `var_lit()`? If not:\n\
+                                This could point to a bug in LpExpression::simplify().");
+                    },
+                }
+            },
+            &LpCompExpr(LpExprOp::Addition, ref e1, ref e2) => {
+                self.var_lit(*e1, lst, 1.0);
+                self.var_lit(*e2, lst, 1.0);
+            }
+            &LpCompExpr(LpExprOp::Subtraction, ref e1, ref e2) => {
+                self.var_lit(*e1, lst, 1.0);
+                self.var_lit(*e2, lst, -1.0);
+            }
+            _ => (),
         }
     }
 }
