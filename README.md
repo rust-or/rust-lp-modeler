@@ -258,6 +258,7 @@ A_F = 1
 * Tony Cox [(tony-cox)](https://github.com/tony-cox)
 * [EdorianDark](https://github.com/EdorianDark)
 * Colman Humphrey [(ColmanHumphrey)](https://github.com/ColmanHumphrey)
+* Stephan Beyer [sbeyer](https://github.com/sbeyer)
 
 ## Further work
 
