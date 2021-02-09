@@ -4,6 +4,7 @@ use lp_modeler::dsl::*;
 use lp_modeler::dsl::LpExpression::*;
 
 use lp_modeler::format::lp_format::LpFileFormat;
+use lp_modeler::constraint;
 
 #[test]
 fn expressions_creation() {
@@ -204,4 +205,16 @@ fn simplifications() {
 
     let (c, _) = split_constant_and_expr(&simplify(&(&expr2 + &expr1)));
     assert_eq!(c, -1f32);
+}
+
+#[test]
+fn macros(){
+    let ref a = LpInteger::new("a");
+    let ref b = LpInteger::new("b");
+    let ref c = LpInteger::new("c");
+
+    assert_eq!(
+        constraint!(2 * a + b + 20 >= c).to_lp_file_format(),
+        "2 a + b - c >= -20"
+    );
 }

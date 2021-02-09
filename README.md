@@ -39,6 +39,7 @@ extern crate lp_modeler;
 
 use lp_modeler::solvers::{CbcSolver, SolverTrait};
 use lp_modeler::dsl::*;
+use lp_modeler::constraint;
 
 fn main() {
     // Define problem variables
@@ -53,10 +54,10 @@ fn main() {
     problem += 10.0 * a + 20.0 * b;
 
     // Constraint: 500*a + 1200*b + 1500*c <= 10000
-    problem += (500*a + 1200*b + 1500*c).le(10000);
+    problem += constraint!(500*a + 1200*b + 1500*c <= 10000);
 
     // Constraint: a <= b
-    problem += (a).le(b);
+    problem += constraint!(a <= b);
 
     // Specify solver
     let solver = CbcSolver::new();
