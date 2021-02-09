@@ -32,9 +32,9 @@ jobs:
       run:  |
         sudo apt install coinor-libcbc-dev coinor-cbc
     - name: Build
-      run: cargo test --no-run --verbose --features "native_coin_cbc"
+      run: cargo test --no-run --verbose --features "native_coin_cbc minilp"
     - name: Run tests
-      run: cargo test --verbose --features "native_coin_cbc"
+      run: cargo test --verbose --features "native_coin_cbc minilp"
   
   test_windows:
     name: Test Windows Default
