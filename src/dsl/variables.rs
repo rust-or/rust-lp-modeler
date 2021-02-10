@@ -312,7 +312,7 @@ impl From<&LpExprNode> for LpExpression {
 }
 
 impl LpExpression {
-    fn new() -> Self {
+    pub fn new() -> Self {
        LpExpression {
            root: 0,
            arena: Vec::new()
