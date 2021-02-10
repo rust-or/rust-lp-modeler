@@ -4,7 +4,6 @@ use std::io::Result;
 
 use dsl::*;
 use dsl::Constraint::*;
-use dsl::LpExpression::*;
 
 pub trait LpFileFormat {
     fn to_lp_file_format(&self) -> String;
@@ -57,8 +56,10 @@ fn objective_lp_file_block(prob: &LpProblem) -> String {
         LpObjective::Maximize => "Maximize\n  ",
         LpObjective::Minimize => "Minimize\n  "
     };
-    match prob.obj_expr {
-        Some(ref expr) => format!("{}obj: {}", obj_type, expr.to_lp_file_format()),
+    match &prob.obj_expr_arena {
+        Some(expr_arena) => {
+            format!("{}obj: {}", obj_type, expr_arena.to_lp_file_format())
+        }
         _ => String::new()
     }
 }
@@ -66,8 +67,8 @@ fn constraints_lp_file_block(prob: &LpProblem) -> String {
     let mut res = String::new();
     let mut constraints = prob.constraints.iter();
     let mut index = 1;
-    while let Some(ref constraint) = constraints.next() {
-        res.push_str(&format!("  c{}: {}\n", index.to_string(), &constraint.to_lp_file_format()));
+    while let Some(constraint) = constraints.next() {
+        res.push_str(&format!("  c{}: {}\n", index.to_string(), constraint.to_lp_file_format()));
         index += 1;
     }
     res
@@ -75,14 +76,15 @@ fn constraints_lp_file_block(prob: &LpProblem) -> String {
 
 fn bounds_lp_file_block(prob: &LpProblem) -> String {
     let mut res = String::new();
-    for (_, v) in prob.variables() {
-        match v {
-            &ConsInt(LpInteger {
+    for (_, (constraint_index, lp_expr_arena_index)) in prob.variables() {
+        let expr_ref = prob.constraints.get(constraint_index).unwrap().0.expr_ref_at(lp_expr_arena_index);
+        match expr_ref {
+            &LpExprNode::ConsInt(LpInteger {
                          ref name,
                          lower_bound,
                          upper_bound,
                      })
-            | &ConsCont(LpContinuous {
+            | &LpExprNode::ConsCont(LpContinuous {
                             ref name,
                             lower_bound,
                             upper_bound,
@@ -96,8 +98,8 @@ fn bounds_lp_file_block(prob: &LpProblem) -> String {
                 } else if let Some(u) = upper_bound {
                     res.push_str(&format!("  {} <= {}\n", &name, &u.to_string()));
                 } else {
-                    match v {
-                        &ConsCont(LpContinuous { .. }) => {
+                    match expr_ref {
+                        &LpExprNode::ConsCont(LpContinuous { .. }) => {
                             res.push_str(&format!("  {} free\n", &name));
                         } // TODO: IntegerVar => -INF to INF
                         _ => (),
@@ -112,9 +114,9 @@ fn bounds_lp_file_block(prob: &LpProblem) -> String {
 
 fn integers_lp_file_block(prob: &LpProblem) -> String {
     let mut res = String::new();
-    for (_, v) in prob.variables() {
-        match v {
-            &ConsInt(LpInteger { ref name, .. }) => {
+    for (_, (constraint_index, lp_expr_arena_index)) in prob.variables() {
+        match prob.constraints.get(constraint_index).unwrap().0.expr_ref_at(lp_expr_arena_index) {
+            &LpExprNode::ConsInt(LpInteger { ref name, .. }) => {
                 res.push_str(format!("{} ", name).as_str());
             }
             _ => (),
@@ -125,9 +127,9 @@ fn integers_lp_file_block(prob: &LpProblem) -> String {
 
 fn binaries_lp_file_block(prob: &LpProblem) -> String  {
     let mut res = String::new();
-    for (_, v) in prob.variables() {
-        match v {
-            &ConsBin(LpBinary { ref name }) => {
+    for (_, (constraint_index, lp_expr_arena_index)) in prob.variables() {
+        match prob.constraints.get(constraint_index).unwrap().0.expr_ref_at(lp_expr_arena_index) {
+            &LpExprNode::ConsBin(LpBinary { ref name }) => {
                 res.push_str(format!("{} ", name).as_str());
             }
             _ => (),
@@ -151,64 +153,12 @@ impl LpFileFormat for LpExpression {
             }
             s
         }
-
-        formalize_signs(show(&simplify(self), false))
+        let root_index = self.get_root_index();
+        let mut clone = self.clone();
+        formalize_signs(clone.simplify().show(&root_index, false))
     }
 }
 
-fn show(e: &LpExpression, with_parenthesis: bool) -> String {
-    let str_left_mult = if with_parenthesis { "(" } else { "" };
-    let str_right_mult = if with_parenthesis { ")" } else { "" };
-    let str_op_mult = if with_parenthesis { " * " } else { " " };
-    match e {
-        &LitVal(n) => n.to_string(),
-        &AddExpr(ref e1, ref e2) => {
-            str_left_mult.to_string()
-                + &show(e1, with_parenthesis)
-                + " + "
-                + &show(e2, with_parenthesis)
-                + str_right_mult
-        }
-        &SubExpr(ref e1, ref e2) => {
-            str_left_mult.to_string()
-                + &show(e1, with_parenthesis)
-                + " - "
-                + &show(e2, with_parenthesis)
-                + str_right_mult
-        }
-        &MulExpr(ref e1, ref e2) => {
-            let ref deref_e1 = **e1;
-
-            match deref_e1 {
-                &LitVal(v) if v == 1.0 => {
-                    //e2.to_lp_file_format()
-                    str_left_mult.to_string()
-                        + &" ".to_string()
-                        + &show(e2, with_parenthesis)
-                        + str_right_mult
-                }
-                &LitVal(v) if v == -1.0 => {
-                    //"-".to_string() + &e2.to_lp_file_format()
-                    str_left_mult.to_string()
-                        + &"-".to_string()
-                        + &show(e2, with_parenthesis)
-                        + str_right_mult
-                }
-                _ => {
-                    str_left_mult.to_string()
-                        + &show(e1, with_parenthesis)
-                        + str_op_mult
-                        + &show(e2, with_parenthesis)
-                        + str_right_mult
-                }
-            }
-        }
-        &ConsBin(LpBinary { name: ref n, .. }) => n.to_string(),
-        &ConsInt(LpInteger { name: ref n, .. }) => n.to_string(),
-        &ConsCont(LpContinuous { name: ref n, .. }) => n.to_string(),
-        _ => "EmptyExpr!!".to_string(),
-    }
-}
 
 impl LpFileFormat for LpConstraint {
     fn to_lp_file_format(&self) -> String {

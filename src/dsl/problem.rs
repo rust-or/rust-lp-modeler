@@ -6,7 +6,6 @@ use std::ops::AddAssign;
 
 use self::uuid::Uuid;
 use dsl::*;
-use dsl::LpExpression::*;
 
 /// Enum helping to specify the objective function of the linear problem.
 ///
@@ -24,8 +23,8 @@ pub enum LpObjective {
 }
 
 pub trait Problem {
-    fn add_objective_expression(&mut self, expr: &LpExpression);
-    fn add_constraints(&mut self, expr: &LpConstraint);
+    fn add_objective_expression(&mut self, expr_arena: &mut LpExpression);
+    fn add_constraints(&mut self, contraint_expr: &LpConstraint);
 }
 
 /// Structure used for creating the model and solving a linear problem.
@@ -64,7 +63,7 @@ pub struct LpProblem {
     pub name: &'static str,
     pub unique_name: String,
     pub objective_type: LpObjective,
-    pub obj_expr: Option<LpExpression>,
+    pub obj_expr_arena: Option<LpExpression>,
     pub constraints: Vec<LpConstraint>,
 }
 
@@ -76,59 +75,40 @@ impl LpProblem {
             name,
             unique_name,
             objective_type: objective,
-            obj_expr: None,
+            obj_expr_arena: None,
             constraints: Vec::new(),
         }
     }
 
+
     // TODO: Call once and pass into parameter
     // TODO: Check variables on the objective function
-    pub fn variables(&self) -> HashMap<String, &LpExpression> {
-        fn var<'a>(expr: &'a LpExpression, lst: &mut Vec<(String, &'a LpExpression)>) {
-            match expr {
-                &ConsBin(LpBinary { ref name, .. })
-                | &ConsInt(LpInteger { ref name, .. })
-                | &ConsCont(LpContinuous { ref name, .. }) => {
-                    lst.push((name.clone(), expr));
-                }
-
-                &MulExpr(_, ref e) => {
-                    var(&*e, lst);
-                }
-                &AddExpr(ref e1, ref e2) | &SubExpr(ref e1, ref e2) => {
-                    var(&*e1, lst);
-                    var(&*e2, lst);
-                }
-                _ => (),
-            }
+    pub fn variables(&self) -> HashMap<String, (usize, usize)> {
+        let mut lst: HashMap<String, (usize, usize)> = HashMap::new();
+        for constraint_index in 0..self.constraints.len() {
+            let constraint = self.constraints.get(constraint_index).unwrap();
+            constraint.var(constraint.0.get_root_index(), constraint_index, &mut lst);
         }
-
-        let mut lst: Vec<_> = Vec::new();
-        for e in &self.constraints {
-            var(&e.0, &mut lst);
-        }
-        lst.iter()
-            .map(|&(ref n, ref x)| (n.clone(), *x))
-            .collect::<HashMap<String, &LpExpression>>()
+        lst
     }
 }
 
 impl Problem for LpProblem {
-    fn add_objective_expression(&mut self, expr: &LpExpression) {
-        if let Some(e) = self.obj_expr.clone() {
-            let (_, simpl_expr) = split_constant_and_expr(&simplify(&AddExpr(
-                Box::new(expr.clone()),
-                Box::new(e.clone()),
-            )));
-            self.obj_expr = Some(simpl_expr);
+    fn add_objective_expression(&mut self, expr_arena: &mut LpExpression) {
+        if let Some(e) = &self.obj_expr_arena {
+            let mut simple_expr = expr_arena
+                .merge_cloned_arenas(&e, LpExprOp::Addition);
+            let _ = simple_expr.simplify().split_off_constant();
+            self.obj_expr_arena = Some(simple_expr);
         } else {
-            let (_, simpl_expr) = split_constant_and_expr(&simplify(expr));
-            self.obj_expr = Some(simpl_expr);
+            let mut simple_expr = expr_arena.clone();
+            let _ = simple_expr.simplify().split_off_constant();
+            self.obj_expr_arena = Some(simple_expr);
         }
     }
 
-    fn add_constraints(&mut self, expr: &LpConstraint) {
-        self.constraints.push(expr.clone());
+    fn add_constraints(&mut self, constraint_expr: &LpConstraint) {
+        self.constraints.push(constraint_expr.clone());
     }
 }
 
@@ -146,7 +126,7 @@ macro_rules! impl_addassign_for_generic_problem {
             T: Into<LpExpression>,
         {
             fn add_assign(&mut self, _rhs: T) {
-                self.add_objective_expression(&_rhs.into());
+                self.add_objective_expression(&mut _rhs.into());
             }
         }
     };

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use dsl::{Problem, LpContinuous, LpBinary, LpInteger, LpProblem, LpExpression};
+use dsl::{Problem, LpContinuous, LpBinary, LpInteger, LpProblem, LpExprNode, LpExprOp, LpExprArenaIndex};
 
 pub mod cbc;
 pub use self::cbc::*;
@@ -24,7 +24,6 @@ pub use self::native_cbc::*;
 use std::fs::File;
 use std::fs;
 use util::is_zero;
-use dsl::LpExpression::*;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Status {
@@ -82,18 +81,28 @@ impl Solution<'_> {
         i
     }
     pub fn eval(&self) -> Option<f32> {
-        self.related_problem.and_then( |problem| problem.obj_expr.as_ref().map( |obj_expr| Self::eval_with(obj_expr, &self.results ) ))
+        self.related_problem
+            .and_then( |problem| {
+                match &problem.obj_expr_arena {
+                    Some(obj_expr_arena) => Some( self.eval_with(&obj_expr_arena.get_root_index(), &self.results) ),
+                    None => None
+                }
+            })
     }
-    fn eval_with(expr: &LpExpression, values: &HashMap<String, f32>) -> f32 {
-        match expr {
-            AddExpr(left, right) => Self::eval_with(left, values) + Self::eval_with(right, values),
-            ConsBin(LpBinary { name })
-            | ConsCont(LpContinuous { name, .. })
-            | ConsInt(LpInteger { name, .. }) => *values.get(name).unwrap_or(&0f32),
-            MulExpr(left, right) => Self::eval_with(left, values) * Self::eval_with(right, values),
-            SubExpr(left, right) => Self::eval_with(left, values) - Self::eval_with(right, values),
-            LitVal(n) => *n,
-            EmptyExpr => 0.0
+    fn eval_with(&self, index: &LpExprArenaIndex, values: &HashMap<String, f32>) -> f32 {
+        match self.related_problem.unwrap().obj_expr_arena.as_ref().unwrap().expr_ref_at(*index) {
+            LpExprNode::LpCompExpr(operation, left, right) => {
+                match operation {
+                    LpExprOp::Addition => self.eval_with(left, values) + self.eval_with(right, values),
+                    LpExprOp::Multiplication => self.eval_with(left, values) * self.eval_with(right, values),
+                    LpExprOp::Subtraction => self.eval_with(left, values) - self.eval_with(right, values),
+                }
+            },
+            LpExprNode::ConsBin(LpBinary { name })
+            | LpExprNode::ConsCont(LpContinuous { name, .. })
+            | LpExprNode::ConsInt(LpInteger { name, .. }) => *values.get(name).unwrap_or(&0f32),
+            LpExprNode::LitVal(n) => *n,
+            LpExprNode::EmptyExpr => 0.0
         }
     }
 }

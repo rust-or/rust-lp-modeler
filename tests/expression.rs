@@ -1,21 +1,9 @@
 extern crate lp_modeler;
 
 use lp_modeler::dsl::*;
-use lp_modeler::dsl::LpExpression::*;
 
 use lp_modeler::format::lp_format::LpFileFormat;
 use lp_modeler::constraint;
-
-#[test]
-fn expressions_creation() {
-    let ref a = LpInteger::new("a").lower_bound(10.0).upper_bound(20.0);
-    let ref b = LpInteger::new("b");
-
-    assert_eq!(
-        a + b,
-        AddExpr(Box::new(ConsInt(a.clone())), Box::new(ConsInt(b.clone())))
-    );
-}
 
 #[test]
 fn distributivity() {
@@ -191,20 +179,6 @@ fn expression_with_lp_sum() {
         std::panic::catch_unwind( || lp_sum(empty)).is_err(),
         "should panic if empty vec"
     );
-}
-
-#[test]
-fn simplifications() {
-    let a = &LpInteger::new("a");
-
-    let expr1 = a - 2f32;
-    let expr2 = 1f32 - a;
-
-    let (c, _) = split_constant_and_expr(&simplify(&(&expr1 + &expr2)));
-    assert_eq!(c, -1f32);
-
-    let (c, _) = split_constant_and_expr(&simplify(&(&expr2 + &expr1)));
-    assert_eq!(c, -1f32);
 }
 
 #[test]

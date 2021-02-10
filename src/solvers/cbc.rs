@@ -114,7 +114,7 @@ impl WithMaxSeconds<CbcSolver> for CbcSolver {
     fn with_max_seconds(&self, seconds: u32) -> CbcSolver {
         CbcSolver {
             seconds: Some(seconds),
-            ..self.clone()
+            ..(*self).clone()
         }
     }
 }
@@ -125,7 +125,7 @@ impl WithNbThreads<CbcSolver> for CbcSolver {
     fn with_nb_threads(&self, threads: u32) -> CbcSolver {
         CbcSolver {
             threads: Some(threads),
-            ..self.clone()
+            ..(*self).clone()
         }
     }
 }

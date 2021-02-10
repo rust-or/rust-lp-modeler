@@ -1,7 +1,8 @@
-use dsl::{LpObjective, LpProblem, LpConstraint, LpExpression, LpContinuous, simplify, Constraint};
+use dsl::{LpObjective, LpProblem, LpConstraint, LpExpression, Constraint, LpExprNode, LpContinuous};
 use std::collections::HashMap;
-use dsl::LpExpression::LitVal;
-use solvers::{ SolverTrait, Solution, Status};
+use solvers::{SolverTrait, Solution, Status};
+use dsl::LpExprNode::LitVal;
+use dsl::LpExprOp::{Multiplication, Addition, Subtraction};
 
 fn direction_to_minilp(objective: &LpObjective) -> minilp::OptimizationDirection {
     match objective {
@@ -15,22 +16,21 @@ fn add_constraint_to_minilp(
     variables: &mut HashMap<String, minilp::Variable>,
     pb: &mut minilp::Problem,
 ) -> Result<(), String> {
-    match constraint.generalize() {
-        LpConstraint(expr, op, LitVal(constant)) => {
-            let expr_variables = decompose_expression(&expr)?;
-            let mut expr = minilp::LinearExpr::empty();
-            for (name, coefficient) in expr_variables.0 {
-                let var = variables.entry(name).or_insert_with(|| {
-                    pb.add_var(0., (f64::NEG_INFINITY, f64::INFINITY))
-                }).clone();
-                expr.add(var, coefficient.coefficient.into());
-            }
-            let op = comparison_to_minilp(op);
-            pb.add_constraint(expr, op, f64::from(constant));
-            Ok(())
-        }
-        _ => Err("constraint generalization failed".into())
+    let LpConstraint(expr, op, constant_arena) = constraint.clone();
+    let constant = if let &LitVal(c) = constant_arena.get_root_expr_ref() { c } else {
+        return Err("not properly simplified".into());
+    };
+    let expr_variables = decompose_expression(expr)?;
+    let mut expr = minilp::LinearExpr::empty();
+    for (name, coefficient) in expr_variables.0 {
+        let var = variables.entry(name).or_insert_with(|| {
+            pb.add_var(0., (f64::NEG_INFINITY, f64::INFINITY))
+        }).clone();
+        expr.add(var, coefficient.coefficient.into());
     }
+    let op = comparison_to_minilp(op);
+    pb.add_constraint(expr, op, f64::from(constant));
+    Ok(())
 }
 
 fn comparison_to_minilp(op: Constraint) -> minilp::ComparisonOp {
@@ -72,41 +72,39 @@ impl VarList {
 }
 
 fn decompose_expression(
-    expr: &LpExpression,
+    mut expr: LpExpression,
 ) -> Result<VarList, String> {
-    fn decompose_expression_recursive(
-        expr: LpExpression,
-        mut decomposed: VarList,
-    ) -> Result<VarList, String> {
-        match expr {
-            LpExpression::ConsCont(var) => { decomposed.add(var, 1.) }
-            LpExpression::MulExpr(lhs, rhs) => {
-                match (*lhs, *rhs) {
-                    (LpExpression::LitVal(lit), LpExpression::ConsCont(var)) => {
-                        decomposed.add(var, lit)
-                    }
-                    (a, b) => {
-                        return Err(format!("Non-simplified multiplication: {:?} * {:?}", a, b));
-                    }
+    expr.simplify();
+    let mut decomposed = VarList::default();
+    let mut idxs = vec![(1., expr.get_root_index())];
+    while let Some((factor, idx)) = idxs.pop() {
+        match expr.expr_ref_at(idx) {
+            LpExprNode::ConsCont(var) => { decomposed.add(var.clone(), factor) }
+            &LpExprNode::LpCompExpr(Multiplication, lhs, rhs) => {
+                if let &LpExprNode::LitVal(lit) = expr.expr_ref_at(lhs) {
+                    idxs.push((factor * lit, rhs))
+                } else {
+                    return Err(format!("Non-simplified multiplication: {:?}", expr.expr_ref_at(idx)));
                 }
             }
-            LpExpression::AddExpr(left, right) => {
-                decomposed = decompose_expression_recursive(*left, decomposed)?;
-                decomposed = decompose_expression_recursive(*right, decomposed)?;
+            &LpExprNode::LpCompExpr(Addition, lhs, rhs) => {
+                idxs.push((factor, lhs));
+                idxs.push((factor, rhs));
+            }
+            &LpExprNode::LpCompExpr(Subtraction, lhs, rhs) => {
+                idxs.push((factor, lhs));
+                idxs.push((-factor, rhs));
             }
             x => return Err(format!("Unsupported expression: {:?}", x))
-        };
-        Ok(decomposed)
+        }
     }
-
-    let simplified = simplify(expr);
-    decompose_expression_recursive(simplified, VarList::default())
+    Ok(decomposed)
 }
 
 
 /// Returns a map from dsl variable name to minilp variable
 fn add_objective_to_minilp(
-    objective: &LpExpression,
+    objective: LpExpression,
     pb: &mut minilp::Problem,
 ) -> Result<HashMap<String, minilp::Variable>, String> {
     let vars = decompose_expression(objective)?;
@@ -124,7 +122,7 @@ fn add_objective_to_minilp(
 fn problem_to_minilp(pb: &LpProblem) -> Result<(minilp::Problem, Vec<Option<String>>), String> {
     let objective = direction_to_minilp(&pb.objective_type);
     let mut minilp_pb = minilp::Problem::new(objective);
-    let objective = pb.obj_expr.as_ref().ok_or("Missing objective")?;
+    let objective = pb.obj_expr_arena.clone().ok_or("Missing objective")?;
     let mut minilp_variables = add_objective_to_minilp(objective, &mut minilp_pb)?;
     for constraint in &pb.constraints {
         add_constraint_to_minilp(
@@ -189,7 +187,7 @@ fn test_decompose() {
     let ref a = LpContinuous::new("a");
     let ref b = LpContinuous::new("b");
     let expr = (4 * (3 * a - b * 2 + a)) * 1 + b;
-    let decomposed = decompose_expression(&expr);
+    let decomposed = decompose_expression(expr);
     let mut expected = VarList::default();
     expected.add(a.clone(), 4. * 3. + 4.);
     expected.add(b.clone(), 4. * (-2.) + 1.);
@@ -214,4 +212,18 @@ fn test_solve() {
     ].into_iter().collect();
     let actual = MiniLpSolver::new().run(&problem).expect("could not solve").results;
     assert_eq!(actual, expected);
+}
+
+#[test]
+fn decompose_large() {
+    use dsl::lp_sum;
+    let count = 1000;
+    let vars: Vec<LpExpression> = (0..count)
+        .map(|i|
+            &LpContinuous::new(&format!("v{}", i)) * 2
+        )
+        .collect();
+    let sum = lp_sum(&vars);
+    let vars = decompose_expression(sum).expect("decompose failed");
+    assert_eq!(vars.0.keys().len(), count);
 }

@@ -1,7 +1,7 @@
 extern crate uuid;
 use coin_cbc;
 
-use dsl::LpExpression::*;
+use dsl::LpExprNode::*;
 use dsl::*;
 use solvers::{Solution, SolverTrait, Status, WithMaxSeconds, WithNbThreads};
 use std::collections::HashMap;
@@ -35,6 +35,7 @@ impl WithMaxSeconds<NativeCbcSolver> for NativeCbcSolver {
         }
     }
 }
+
 impl WithNbThreads<NativeCbcSolver> for NativeCbcSolver {
     fn nb_threads(&self) -> Option<u32> {
         self.threads
@@ -47,58 +48,62 @@ impl WithNbThreads<NativeCbcSolver> for NativeCbcSolver {
     }
 }
 
-/// Recursively unwrap an expression in a Vec of variables and literals.
-fn var_lit(expr: &LpExpression, lst: &mut Vec<(String, f32)>, mul: Option<f32>) {
-    let mul = match mul {
-        Some(lit) => lit,
-        None => 1.,
-    };
-    match expr {
-        &ConsBin(LpBinary { ref name, .. })
-        | &ConsInt(LpInteger { ref name, .. })
-        | &ConsCont(LpContinuous { ref name, .. }) => {
-            let coeff = split_constant_and_expr(expr).0;
-            let coeff = if coeff == 0. { mul } else { mul * coeff };
-            lst.push((name.clone(), coeff));
-        }
-
-        MulExpr(val, ref e) => match **e {
-            ConsBin(LpBinary { ref name, .. })
-            | ConsInt(LpInteger { ref name, .. })
-            | ConsCont(LpContinuous { ref name, .. }) => {
-                if let LitVal(lit) = *val.clone() {
-                    lst.push((name.clone(), mul * lit))
-                }
+impl LpExpression {
+    /// Recursively unwrap an arena of expressions.
+    /// Assumes that self.simplify() was called on the arena before starting recursion, here. That way,
+    /// `LitVal()`s of nested Multiplication expressions are already accumulated towards the left side
+    /// and `LitVal()`s of all Addition / Subtraction expressions are already accumulated towards the
+    /// right end of the tree, with all Addition / SUbtraction expressions on the most global level
+    /// possible.
+    fn var_lit(&self, expr_index: LpExprArenaIndex, lst: &mut Vec<(String, f32)>, mul: f32) {
+        match self.expr_ref_at(expr_index) {
+            &ConsBin(LpBinary { ref name, .. })
+            | &ConsInt(LpInteger { ref name, .. })
+            | &ConsCont(LpContinuous { ref name, .. }) => {
+                lst.push((name.clone(), mul));
             }
-            MulExpr(..) | AddExpr(..) | SubExpr(..) => {
-                let next_mul = match *val.clone() {
-                    LitVal(lit) => Some(lit * mul),
-                    _ => None,
-                };
-                var_lit(&*e, lst, next_mul)
+
+            LpCompExpr(LpExprOp::Multiplication, val, ref e) => {
+                match self.expr_ref_at(*e) {
+                    &ConsBin(LpBinary { ref name, .. })
+                    | &ConsInt(LpInteger { ref name, .. })
+                    | &ConsCont(LpContinuous { ref name, .. }) => {
+                        if let &LitVal(lit) = self.expr_ref_at(*val) {
+                            lst.push((name.clone(), mul * lit))
+                        } else {
+                            panic!("This Multiplication expression has a non-`LitVal()` left-hand side.\n\
+                                    Did you call `simplify()` before `var_lit()`? If not:\n\
+                                    This could point to a bug in LpExpression::simplify().");
+                        }
+                    },
+                    _ => {
+                        panic!("This Multiplication expression has a non-`Cons*()` right-hand side.\n\
+                                Did you call `simplify()` before `var_lit()`? If not:\n\
+                                This could point to a bug in LpExpression::simplify().");
+                    },
+                }
+            },
+            &LpCompExpr(LpExprOp::Addition, ref e1, ref e2) => {
+                self.var_lit(*e1, lst, 1.0);
+                self.var_lit(*e2, lst, 1.0);
+            }
+            &LpCompExpr(LpExprOp::Subtraction, ref e1, ref e2) => {
+                self.var_lit(*e1, lst, 1.0);
+                self.var_lit(*e2, lst, -1.0);
             }
             _ => (),
-        },
-        &AddExpr(ref e1, ref e2) => {
-            var_lit(&*e1, lst, None);
-            var_lit(&*e2, lst, None);
         }
-        &SubExpr(ref e1, ref e2) => {
-            var_lit(&*e1, lst, None);
-            var_lit(&*e2, lst, Some(-1.));
-        }
-        _ => (),
     }
 }
 
-fn always_literal(expr: &LpExpression) -> f64 {
-    match *expr {
-        LitVal(num) => num as f64,
+fn always_literal(expr_arena: &LpExpression) -> f64 {
+    match expr_arena.get_root_expr_ref() {
+        &LitVal(num) => num as f64,
         _ => panic!("wrong generalization"),
     }
 }
 
-fn add_variable(m: &mut coin_cbc::Model, expr: &LpExpression) -> coin_cbc::Col {
+fn add_variable(m: &mut coin_cbc::Model, expr: &LpExprNode) -> coin_cbc::Col {
     match expr {
         ConsInt(LpInteger {
             name: _,
@@ -139,29 +144,33 @@ impl SolverTrait for NativeCbcSolver {
     fn run<'a>(&self, problem: &'a Self::P) -> Result<Solution<'a>, String> {
         let mut m = coin_cbc::Model::default();
         // columns (variables)
-        let cols: HashMap<String, coin_cbc::Col> = problem
-            .variables()
-            .iter()
-            .map(|(name, expr)| (name.clone(), add_variable(&mut m, expr)))
-            .collect();
+        let mut cols: HashMap<String, coin_cbc::Col> = HashMap::new();
+        for (name, (constraint_index, lp_expr_arena_index)) in problem.variables() {
+            cols.insert(name, add_variable(&mut m, problem.constraints.get(constraint_index).unwrap().0.expr_ref_at(lp_expr_arena_index) ) );
+        }
         // rows (constraints)
-        problem.constraints.iter().for_each(|cons| {
+        for cons in problem.constraints.clone() {
             let row = m.add_row();
-            let general = cons.generalize();
+            let mut general = cons.generalize();
             match general.1 {
                 Constraint::GreaterOrEqual => m.set_row_lower(row, always_literal(&general.2)),
                 Constraint::LessOrEqual => m.set_row_upper(row, always_literal(&general.2)),
                 Constraint::Equal => m.set_row_equal(row, always_literal(&general.2)),
             }
             let mut lst: Vec<_> = Vec::new();
-            var_lit(&general.0, &mut lst, None);
+            general.0.simplify();
+            let root_index = general.0.get_root_index();
+            general.0.var_lit(root_index, &mut lst, 1.0);
             lst.iter()
                 .for_each(|(n, lit)| m.set_weight(row, cols[n], *lit as f64));
-        });
+        };
         // objective
-        if let Some(objective) = &problem.obj_expr {
+        if let Some(objective) = &problem.obj_expr_arena {
             let mut lst: Vec<_> = Vec::new();
-            var_lit(&objective, &mut lst, None);
+            let mut cloned_objective = objective.clone();
+            cloned_objective.simplify();
+            let root_index = cloned_objective.get_root_index();
+            cloned_objective.var_lit(root_index, &mut lst, 1.0);
             lst.iter()
                 .for_each(|(n, lit)| m.set_obj_coeff(cols[n], *lit as f64))
         }
