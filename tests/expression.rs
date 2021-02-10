@@ -187,9 +187,10 @@ fn expression_with_lp_sum() {
         lp_sum(expr3).le(5.5).to_lp_file_format(),
         "a <= 5.5"
     );
-    assert!(
-        std::panic::catch_unwind( || lp_sum(empty)).is_err(),
-        "should panic if empty vec"
+    assert_eq!(
+        lp_sum(empty).to_lp_file_format(),
+        "0",
+        "should not panic if empty vec"
     );
 }
 

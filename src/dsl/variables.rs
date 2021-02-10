@@ -462,12 +462,21 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
 /// problem += lp_sum(v).equal(10.0);
 /// ```
 ///
-pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression where T: Into<LpExpression> + Clone {
-    if let Some(first) = expr.first() {
-        expr[1..].iter().fold(first.clone().into(), |a,b| AddExpr(Box::new(a), Box::new(b.clone().into())) )
-    } else {
-        panic!("vector should have at least one element");
+pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression
+    where T: Into<LpExpression> + Clone {
+    let mut results: Vec<LpExpression> = expr.iter().map(|e| e.clone().into()).collect();
+    let mut next = Vec::with_capacity(results.len() / 2);
+    while results.len() > 1 {
+        while results.len() >= 2 {
+            let right = results.pop().expect("impossible because len>2");
+            let left = results.pop().expect("impossible because len>2");
+            next.push(left + right)
+        }
+        next.append(&mut results);
+        next.reverse(); // Required only if we want to maintain the order of operations
+        std::mem::swap(&mut results, &mut next)
     }
+    results.into_iter().next().unwrap_or(LitVal(0.))
 }
 
 pub fn sum<'a, T: 'a,U>(expr: &'a Vec<T>, f: impl Fn(&'a T) -> U) -> LpExpression where U: Into<LpExpression> + Clone {
