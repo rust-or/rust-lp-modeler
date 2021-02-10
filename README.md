@@ -260,6 +260,7 @@ A_F = 1
 * [EdorianDark](https://github.com/EdorianDark)
 * Colman Humphrey [(ColmanHumphrey)](https://github.com/ColmanHumphrey)
 * Stephan Beyer [sbeyer](https://github.com/sbeyer)
+* Ophir Lojkine [lovasoa](https://github.com/lovasoa)
 
 ## Further work
 
