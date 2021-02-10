@@ -554,18 +554,10 @@ impl LpExpression {
     }
 
     pub(crate) fn simplify(&mut self) -> &mut Self {
-        // keep clone of the root expression at the start of each round to compare
-        // once one round of recursive iteration finishes
-        let mut show_at_start = self.show(&self.get_root_index(), true);
-        let mut first_round = true;
-
+        let mut stop = false;
         let mut lp_expr_stack: Vec<LpExprArenaIndex> = Vec::new();
-
-        while first_round
-            // check whether the root has changed -- if yes, do another round
-            || ( show_at_start != self.show(&self.get_root_index(), true)) {
-            show_at_start = self.show(&self.get_root_index(), true);
-            first_round = false;
+        while !stop {
+            stop = true;
             lp_expr_stack.push(self.get_root_index());
             while let Some(handled_expr_index) = lp_expr_stack.pop() {
                 match self.expr_clone_at(handled_expr_index) {
@@ -574,14 +566,16 @@ impl LpExpression {
                             // Trivial rule: 0 * x = 0
                             (_, LitVal(c))
                             | (LitVal(c), _) if c == 0.0 => {
+                                stop = false;
                                 self.overwrite_expr_at(
                                     handled_expr_index,
-                                    LitVal(0.0)
+                                    LitVal(0.0),
                                 )
                             },
 
                             // Simplify two literals
                             (LitVal(c1), LitVal(c2)) => {
+                                stop = false;
                                 self.overwrite_expr_at(
                                     handled_expr_index,
                                     LitVal(c1 * c2)
@@ -591,6 +585,7 @@ impl LpExpression {
                             // DISTRIBUTIVITY
                             // i*(a+b) = i*a+i*b
                             (i, LpCompExpr(Addition, a_index, b_index)) => {
+                                stop = false;
                                 let i_new_index: LpExprArenaIndex;
                                 if let LpCompExpr(_, _, _) = i {
                                     let new_subtree = self.clone_subtree_at_index_and_push(left_index);
@@ -614,6 +609,7 @@ impl LpExpression {
                             },
                             // (a+b)*i = i*a+i*b
                             (LpCompExpr(Addition, a_index, b_index), i) => {
+                                stop = false;
                                 let i_new_index: LpExprArenaIndex;
                                 if let LpCompExpr(_, _, _) = i {
                                     let new_subtree = self.clone_subtree_at_index_and_push(right_index);
@@ -638,6 +634,7 @@ impl LpExpression {
 
                             // (a-b)*i = i*a-i*b
                             (LpCompExpr(Subtraction, a_index, b_index), i) => {
+                                stop = false;
                                 let i_new_index: LpExprArenaIndex;
                                 if let LpCompExpr(_, _, _) = i {
                                     let new_subtree = self.clone_subtree_at_index_and_push(right_index);
@@ -661,6 +658,7 @@ impl LpExpression {
                             },
                             // i*(a-b) = i*a-i*b
                             (i, LpCompExpr(Subtraction, a_index, b_index)) => {
+                                stop = false;
                                 let i_new_index: LpExprArenaIndex;
                                 if let LpCompExpr(_, _, _) = i {
                                     let new_subtree = self.clone_subtree_at_index_and_push(left_index);
@@ -690,6 +688,7 @@ impl LpExpression {
                                 match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     // c1*(c2*b) = (c1*c2)*b
                                     (LitVal(c2), _) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             left_index,
                                             LitVal(c1 * c2),
@@ -706,6 +705,7 @@ impl LpExpression {
                                     },
                                     // c1*(a*c2) = (c1*c2)*a
                                     (_, LitVal(c2)) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             left_index,
                                             LitVal(c1 * c2),
@@ -722,6 +722,7 @@ impl LpExpression {
                                     },
                                     // c1*(a*b) = (c1*a)*b
                                     (_, _) => {
+                                        stop = false;
                                         let lit_new_index = self.push_as_expr(&LitVal(c1));
                                         self.overwrite_expr_at(
                                             left_index,
@@ -750,6 +751,7 @@ impl LpExpression {
                             // COMMUTATIVITY
                             // x*(a*b) = (x*a)*b
                             (_, LpCompExpr(Multiplication, a_index, b_index)) => {
+                                stop = false;
                                 let left_new_index = self.clone_expr_at_and_push(left_index);
                                 self.overwrite_expr_at(
                                     left_index,
@@ -764,6 +766,7 @@ impl LpExpression {
 
                             // Place literal first for *
                             (_, LitVal(_)) => {
+                                stop = false;
                                 self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(
@@ -776,13 +779,12 @@ impl LpExpression {
                             },
 
                             // When literal is first and right side is not LpCompExpr (LpCompExpr case handled above), stop
-                            (LitVal(_c1), _) => {
-                            },
+                            (LitVal(_c1), _) => { },
                             // recurse deeper and come back for any complex expressions not handled above
                             (LpCompExpr(_, _, _), _) => {
                                 lp_expr_stack.push(left_index);
                             },
-                            (_, _) => {}
+                            (_, _) => { }
                         }
                     },
                     LpCompExpr(Addition, left_index, right_index) => {
@@ -791,12 +793,14 @@ impl LpExpression {
                             (LitVal(c), a)
                             // Trivial rule: x + 0 = x
                             | (a, LitVal(c)) if c == 0.0 => {
+                                stop = false;
                                 self.overwrite_expr_at(handled_expr_index, a.clone());
                                 lp_expr_stack.push(handled_expr_index);
                             },
 
                             // Simplify two literals
                             (LitVal(c1), LitVal(c2)) => {
+                                stop = false;
                                 self.overwrite_expr_at(
                                     handled_expr_index,
                                     LitVal(c1 + c2)
@@ -805,6 +809,7 @@ impl LpExpression {
 
                             // Place literal at the end
                             (LitVal(_c), _x) => {
+                                stop = false;
                                 self.overwrite_expr_at(
                                     handled_expr_index,
                                     LpCompExpr(Addition, right_index, left_index)
@@ -815,6 +820,7 @@ impl LpExpression {
                             // ASSOCIATIVITY
                             // a + (b+c) = (a+b)+c
                             (a, LpCompExpr(Addition, b_index, c_index)) => {
+                                stop = false;
                                 let new_a_index = self.push_as_expr(&a.clone());
                                 self.overwrite_expr_at(
                                     left_index,
@@ -829,6 +835,7 @@ impl LpExpression {
 
                             // a + (b-c) = (a+b) - c
                             (a, LpCompExpr(Subtraction, b_index, c_index)) => {
+                                stop = false;
                                 let new_a_index = self.push_as_expr(&a.clone());
                                 self.overwrite_expr_at(
                                     left_index,
@@ -850,6 +857,7 @@ impl LpExpression {
                             (LpCompExpr(Addition, a_index, b_index), LitVal(c2)) => {
                                 match self.expr_clone_at(b_index) {
                                     LitVal(c1) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             left_index,
                                             self.expr_clone_at(a_index)
@@ -869,6 +877,7 @@ impl LpExpression {
                                 match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     // (a-c1)+c2 = a+(c2-c1)
                                     (_a, LitVal(c1)) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             right_index,
                                             LitVal(c2 - c1)
@@ -881,6 +890,7 @@ impl LpExpression {
                                     },
                                     // (c1-b)+c2 = -b+(c1+c2)
                                     (LitVal(c1), _b) => {
+                                        stop = false;
                                         let lit_new_index = self.push_as_expr(&LitVal(-1.0));
                                         self.overwrite_expr_at(
                                             left_index,
@@ -898,7 +908,6 @@ impl LpExpression {
                                     },
                                     _ => {
                                         lp_expr_stack.push(left_index);
-                                        // lp_expr_stack.push(&right_expr);
                                     },
                                 }
                             },
@@ -908,6 +917,7 @@ impl LpExpression {
                                 match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     // (a+c1)+x = (a+x)+c1
                                     (_, LitVal(_c1)) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Addition, a_index, right_index)
@@ -940,6 +950,7 @@ impl LpExpression {
                                 match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     // (a-c1)+x = (a+x)-c1
                                     (_a, LitVal(_c1)) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Addition, a_index, right_index)
@@ -952,6 +963,7 @@ impl LpExpression {
                                     },
                                     // (c1-b)+x = (x-b)+c1
                                     (LitVal(_c1), _b) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Subtraction, right_index, b_index)
@@ -987,6 +999,7 @@ impl LpExpression {
                             (a, b) => {
                                 // a + a = 2 * a
                                 if a == b {
+                                    stop = false;
                                     let new_lit_index = self.push_as_expr(&LitVal(2.0));
                                     self.overwrite_expr_at(
                                         handled_expr_index,
@@ -1009,7 +1022,7 @@ impl LpExpression {
                                         (_, LpCompExpr(_, _, _)) => {
                                             lp_expr_stack.push(right_index);
                                         },
-                                        (_, _) => {}
+                                        (_, _) => { }
                                     }
                                 }
                             }
@@ -1019,6 +1032,7 @@ impl LpExpression {
                         match (self.expr_clone_at(left_index), self.expr_clone_at(right_index)) {
                             // Trivial rule: x - 0 = x
                             (a, LitVal(c)) if c == 0.0 => {
+                                stop = false;
                                 self.overwrite_expr_at(
                                     handled_expr_index,
                                     a.clone()
@@ -1028,6 +1042,7 @@ impl LpExpression {
 
                             // a - (b + c) = (a-b)-c
                             (_, LpCompExpr(Addition, b_index, c_index)) => {
+                                stop = false;
                                 let a_new_index = self.clone_expr_at_and_push(left_index);
                                 self.overwrite_expr_at(
                                     left_index,
@@ -1042,6 +1057,7 @@ impl LpExpression {
 
                             // a - (b - c) = (a-b)+c
                             (_, LpCompExpr(Subtraction, b_index, c_index)) => {
+                                stop = false;
                                 let a_new_index = self.clone_expr_at_and_push(left_index);
                                 self.overwrite_expr_at(
                                     left_index,
@@ -1058,6 +1074,7 @@ impl LpExpression {
                             // Place literal at the end
                             // c1 - b = -b + c1
                             (LitVal(_), _) => {
+                                stop = false;
                                 let lit_new_index = self.push_as_expr(&LitVal(-1.0));
                                 let new_index = self.push_as_expr(
                                     &LpCompExpr(
@@ -1079,6 +1096,7 @@ impl LpExpression {
                             (LpCompExpr(Subtraction, a_index, b_index), LitVal(c2)) => {
                                 match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     (a, LitVal(c1)) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             left_index,
                                             a.clone()
@@ -1090,6 +1108,7 @@ impl LpExpression {
                                         lp_expr_stack.push(handled_expr_index);
                                     },
                                     (LitVal(c1), _) => {
+                                        stop = false;
                                         let lit_new_index = self.push_as_expr(&LitVal(-1.0));
                                         self.overwrite_expr_at(
                                             left_index,
@@ -1123,6 +1142,7 @@ impl LpExpression {
                             (LpCompExpr(Addition, a_index, c1_index), LitVal(c2)) => {
                                 match self.expr_clone_at(c1_index) {
                                     LitVal(c1) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             right_index,
                                             LitVal(c1 - c2)
@@ -1137,7 +1157,6 @@ impl LpExpression {
                                         lp_expr_stack.push(left_index);
                                     }
                                 }
-
                             },
 
                             // Extract the const:
@@ -1145,6 +1164,7 @@ impl LpExpression {
                             (LpCompExpr(Addition, a_index, b_index), _x) => {
                                 match self.expr_clone_at(b_index) {
                                     LitVal(_c1) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Subtraction, a_index, right_index),
@@ -1165,6 +1185,7 @@ impl LpExpression {
                                 match (self.expr_clone_at(a_index), self.expr_clone_at(b_index)) {
                                     // (a-c1)-x = (a-x)-c1
                                     (_a, LitVal(_c1)) => {
+                                        stop = false;
                                         self.overwrite_expr_at(
                                             left_index,
                                             LpCompExpr(Subtraction, a_index, right_index)
@@ -1177,6 +1198,7 @@ impl LpExpression {
                                     },
                                     // (c1-b)-x = (-b-x)+c1
                                     (LitVal(_c1), _b) => {
+                                        stop = false;
                                         let minus_one_new_index = self.push_as_expr(&LitVal(-1.0));
                                         let minus_b_new_index = self.push_as_expr(
                                             &LpCompExpr(Multiplication, minus_one_new_index, b_index)
@@ -1200,6 +1222,7 @@ impl LpExpression {
                             (a, b) => {
                                 // a - a = 0
                                 if a == b {
+                                    stop = false;
                                     self.overwrite_expr_at(
                                         handled_expr_index,
                                         LitVal(0.0)
@@ -1217,7 +1240,7 @@ impl LpExpression {
                                         (_, LpCompExpr(_, _, _)) => {
                                             lp_expr_stack.push(right_index);
                                         },
-                                        (_, _) => {}
+                                        (_, _) => { }
                                     }
                                 }
                             }
@@ -1227,7 +1250,7 @@ impl LpExpression {
                     | ConsInt(_)
                     | ConsCont(_)
                     | LitVal(_)
-                    | LpExprNode::EmptyExpr => {}
+                    | LpExprNode::EmptyExpr => { }
                 };
             }
         }
