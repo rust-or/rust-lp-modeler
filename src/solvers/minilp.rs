@@ -1,4 +1,4 @@
-use dsl::{LpObjective, LpProblem, LpConstraint, LpExpression, LpContinuous, Constraint, LpExprNode};
+use dsl::{LpObjective, LpProblem, LpConstraint, LpExpression, Constraint, LpExprNode, LpContinuous};
 use std::collections::HashMap;
 use solvers::{SolverTrait, Solution, Status};
 use dsl::LpExprNode::LitVal;
@@ -74,36 +74,31 @@ impl VarList {
 fn decompose_expression(
     mut expr: LpExpression,
 ) -> Result<VarList, String> {
-    fn decompose_expression_recursive(
-        expr: &LpExpression,
-        idx: usize,
-        factor: f32,
-        mut decomposed: VarList,
-    ) -> Result<VarList, String> {
+    expr.simplify();
+    let mut decomposed = VarList::default();
+    let mut idxs = vec![(1., expr.get_root_index())];
+    while let Some((factor, idx)) = idxs.pop() {
         match expr.expr_ref_at(idx) {
             LpExprNode::ConsCont(var) => { decomposed.add(var.clone(), factor) }
             &LpExprNode::LpCompExpr(Multiplication, lhs, rhs) => {
                 if let &LpExprNode::LitVal(lit) = expr.expr_ref_at(lhs) {
-                    decomposed = decompose_expression_recursive(expr, rhs, factor * lit, decomposed)?;
+                    idxs.push((factor * lit, rhs))
                 } else {
                     return Err(format!("Non-simplified multiplication: {:?}", expr.expr_ref_at(idx)));
                 }
             }
             &LpExprNode::LpCompExpr(Addition, lhs, rhs) => {
-                decomposed = decompose_expression_recursive(expr, lhs, factor, decomposed)?;
-                decomposed = decompose_expression_recursive(expr, rhs, factor, decomposed)?;
+                idxs.push((factor, lhs));
+                idxs.push((factor, rhs));
             }
             &LpExprNode::LpCompExpr(Subtraction, lhs, rhs) => {
-                decomposed = decompose_expression_recursive(expr, lhs, factor, decomposed)?;
-                decomposed = decompose_expression_recursive(expr, rhs, -factor, decomposed)?;
+                idxs.push((factor, lhs));
+                idxs.push((-factor, rhs));
             }
             x => return Err(format!("Unsupported expression: {:?}", x))
         }
-        Ok(decomposed)
     }
-
-    expr.simplify();
-    decompose_expression_recursive(&expr, expr.get_root_index(), 1., VarList::default())
+    Ok(decomposed)
 }
 
 
@@ -217,4 +212,18 @@ fn test_solve() {
     ].into_iter().collect();
     let actual = MiniLpSolver::new().run(&problem).expect("could not solve").results;
     assert_eq!(actual, expected);
+}
+
+#[test]
+fn decompose_large() {
+    use dsl::lp_sum;
+    let count = 1000;
+    let vars: Vec<LpExpression> = (0..count)
+        .map(|i|
+            &LpContinuous::new(&format!("v{}", i)) * 2
+        )
+        .collect();
+    let sum = lp_sum(&vars);
+    let vars = decompose_expression(sum).expect("decompose failed");
+    assert_eq!(vars.0.keys().len(), count);
 }
