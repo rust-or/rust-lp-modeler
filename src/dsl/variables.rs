@@ -319,6 +319,10 @@ impl LpExpression {
        }
     }
 
+    pub fn literal(value: f32) -> Self {
+        value.into()
+    }
+
     #[cfg(test)]
     fn build(root: LpExprArenaIndex, arena: Vec<LpExprNode>) -> Self {
         LpExpression {
@@ -1344,19 +1348,21 @@ impl ToTokens for LpConstraint {
 /// problem += lp_sum(v).equal(10.0);
 /// ```
 ///
-pub fn lp_sum<T>(not_yet_lp_expr_arenas: &Vec<T>) -> LpExpression where T: Into<LpExpression> + Clone {
-    match not_yet_lp_expr_arenas.first() {
-        Some(first) => {
-            let mut arena: LpExpression = first.clone().into();
-            for a in not_yet_lp_expr_arenas[1..].iter() {
-                arena = arena.merge_cloned_arenas(&a.clone().into(), Addition);
-            }
-            arena
-        },
-        None => {
-            panic!("vector should have at least one element")
+pub fn lp_sum<T>(expr: &Vec<T>) -> LpExpression
+    where T: Into<LpExpression> + Clone {
+    let mut results: Vec<LpExpression> = expr.iter().map(|e| e.clone().into()).collect();
+    let mut next = Vec::with_capacity(results.len() / 2);
+    while results.len() > 1 {
+        while results.len() >= 2 {
+            let right = results.pop().expect("impossible because len>2");
+            let left = results.pop().expect("impossible because len>2");
+            next.push(left + right)
         }
+        next.append(&mut results);
+        next.reverse(); // Required only if we want to maintain the order of operations
+        std::mem::swap(&mut results, &mut next)
     }
+    results.into_iter().next().unwrap_or( LpExpression::literal(0.0) )
 }
 
 pub fn sum<'a, T: 'a,U: 'a>(expr: &'a Vec<T>, f: impl Fn(&'a T) -> U) -> LpExpression where U: Into<LpExpression> + Clone {
