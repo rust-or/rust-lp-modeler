@@ -8,6 +8,7 @@ use quote::{quote, ToTokens};
 
 use std::convert::Into;
 use std::collections::HashMap;
+use std::fmt::Write;
 
 pub trait BoundableLp: PartialEq + Clone {
     fn lower_bound(&self, lw: f32) -> Self;
@@ -483,55 +484,73 @@ impl LpExpression {
     }
 
     pub(crate) fn show(&self, e: &LpExprArenaIndex, with_parenthesis: bool) -> String {
-        let str_left_mult = if with_parenthesis { "(" } else { "" };
-        let str_right_mult = if with_parenthesis { ")" } else { "" };
-        let str_op_mult = if with_parenthesis { " * " } else { " " };
-        match self.expr_ref_at(*e) {
-            LitVal(n) => n.to_string(),
-            LpCompExpr(Addition, e1, e2) => {
-                str_left_mult.to_string()
-                    + &self.show(e1, with_parenthesis)
-                    + " + "
-                    + &self.show(e2, with_parenthesis)
-                    + str_right_mult
-            }
-            LpCompExpr(Subtraction, e1, e2) => {
-                str_left_mult.to_string()
-                    + &self.show(e1, with_parenthesis)
-                    + " - "
-                    + &self.show(e2, with_parenthesis)
-                    + str_right_mult
-            }
-            LpCompExpr(Multiplication, e1, e2) => {
-                match self.expr_clone_at(*e1) {
-                    LitVal(c) if c == 1.0 => {
-                        //e2.to_lp_file_format()
-                        str_left_mult.to_string()
-                            + &" ".to_string()
-                            + &self.show(e2, with_parenthesis)
-                            + str_right_mult
-                    },
-                    LitVal(c) if c == -1.0 => {
-                        //"-".to_string() + &e2.to_lp_file_format()
-                        str_left_mult.to_string()
-                            + &"-".to_string()
-                            + &self.show(e2, with_parenthesis)
-                            + str_right_mult
-                    }
-                    _ => {
-                        str_left_mult.to_string()
-                            + &self.show(e1, with_parenthesis)
-                            + str_op_mult
-                            + &self.show(e2, with_parenthesis)
-                            + str_right_mult
+        #[derive(Clone, Copy)]
+        enum Part {
+            None,
+            Char(char),
+            Str(&'static str),
+            Elem(LpExprArenaIndex),
+        }
+        let left = if with_parenthesis { Part::Char('(') } else { Part::None };
+        let right = if with_parenthesis { Part::Char(')') } else { Part::None };
+        let op_mult = if with_parenthesis { Part::Str(" * ") } else { Part::Char(' ') };
+
+        let mut remaining: Vec<Part> = vec![Part::Elem(*e)];
+        let mut result = String::new();
+        while let Some(e) = remaining.pop() {
+            match e {
+                Part::None => {}
+                Part::Char(c) => { result.push(c) }
+                Part::Str(s) => { result.push_str(s) }
+                Part::Elem(e) => {
+                    match self.expr_ref_at(e) {
+                        LitVal(n) => write!(result, "{}", n).unwrap(),
+                        LpCompExpr(Addition, e1, e2) => {
+                            remaining.push(right);
+                            remaining.push(Part::Elem(*e2));
+                            remaining.push(Part::Str(" + "));
+                            remaining.push(Part::Elem(*e1));
+                            remaining.push(left);
+                        }
+                        LpCompExpr(Subtraction, e1, e2) => {
+                            remaining.push(right);
+                            remaining.push(Part::Elem(*e2));
+                            remaining.push(Part::Str(" - "));
+                            remaining.push(Part::Elem(*e1));
+                            remaining.push(left);
+                        }
+                        LpCompExpr(Multiplication, e1, e2) => {
+                            match self.expr_ref_at(*e1) {
+                                &LitVal(c) if c == 1.0 => {
+                                    remaining.push(right);
+                                    remaining.push(Part::Elem(*e2));
+                                    remaining.push(Part::Char(' '));
+                                    remaining.push(left);
+                                },
+                                &LitVal(c) if c == -1.0 => {
+                                    remaining.push(right);
+                                    remaining.push(Part::Elem(*e2));
+                                    remaining.push(Part::Str("-"));
+                                    remaining.push(left);
+                                }
+                                _ => {
+                                    remaining.push(right);
+                                    remaining.push(Part::Elem(*e2));
+                                    remaining.push(op_mult);
+                                    remaining.push(Part::Elem(*e1));
+                                    remaining.push(left);
+                                }
+                            }
+                        }
+                        ConsBin(LpBinary { name: ref n, .. }) => result += n,
+                        ConsInt(LpInteger { name: ref n, .. }) => result += n,
+                        ConsCont(LpContinuous { name: ref n, .. }) => result += n,
+                        EmptyExpr => { result += "EmptyExpr!!!" }
                     }
                 }
             }
-            ConsBin(LpBinary { name: ref n, .. }) => n.to_string(),
-            ConsInt(LpInteger { name: ref n, .. }) => n.to_string(),
-            ConsCont(LpContinuous { name: ref n, .. }) => n.to_string(),
-            _ => "EmptyExpr!!".to_string(),
         }
+        result
     }
 
     pub(crate) fn simplify(&mut self) -> &mut Self {
@@ -1379,13 +1398,25 @@ mod tests {
     }
 
     #[test]
+    fn simplify_deep_sum() {
+        let count = 1000;
+        let vars: Vec<LpExpression> = (0..count)
+            .map(|i|
+                &LpInteger::new(&format!("v{}", i)) * 2 + 1
+            )
+            .collect();
+        let mut sum = lp_sum(&vars);
+        assert_eq!(sum.simplify().split_off_constant(), count as f32);
+    }
+
+    #[test]
     fn test_quotations() {
-        let a = LpInteger { name : "a" . to_string () , lower_bound : None , upper_bound : None };
+        let a = LpInteger { name: "a".to_string(), lower_bound: None, upper_bound: None };
         let quoted_a = quote!(#a);
         let quoted_a_str = "LpInteger { name : \"a\" . to_string () , lower_bound : None , upper_bound : None }";
         assert_eq!(quoted_a.to_string(), quoted_a_str);
 
-        let exp : LpExprNode = a.clone().into();
+        let exp: LpExprNode = a.clone().into();
         let quoted_exp = quote!(#exp);
         let quoted_exp_str = "LpExprNode :: ConsInt (".to_owned() + quoted_a_str + ")";
         assert_eq!(quoted_exp.to_string(), quoted_exp_str);
