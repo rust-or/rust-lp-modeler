@@ -4,6 +4,8 @@ extern crate quote;
 
 #[cfg(feature = "native_coin_cbc")]
 extern crate coin_cbc;
+#[cfg(feature = "minilp")]
+extern crate minilp;
 
 pub mod util;
 

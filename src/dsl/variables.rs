@@ -421,88 +421,12 @@ pub fn simplify(expr: &LpExpression) -> LpExpression {
                     ),
                 }
             }
-            &SubExpr(ref ref_left_expr, ref ref_right_expr) => {
-                let ref left_expr = **ref_left_expr;
-                let ref right_expr = **ref_right_expr;
-
-                match (left_expr, right_expr) {
-                    // Trivial rule: 0 + x = x
-                    (_, &LitVal(v)) if is_zero(v) => simplify(left_expr),
-
-                    // a - (b + c) = (a-b)-c
-                    (a, &AddExpr(ref b, ref c)) => simplify(&SubExpr(
-                        Box::new(SubExpr(Box::new(a.clone()), b.clone())),
-                        c.clone(),
-                    )),
-
-                    // a - (b - c) = (a-b)+c
-                    (a, &SubExpr(ref b, ref c)) => simplify(&AddExpr(
-                        Box::new(SubExpr(Box::new(a.clone()), b.clone())),
-                        c.clone(),
-                    )),
-
-                    // Place literal at the end
-                    (&LitVal(c), expr) => simplify(&AddExpr(Box::new(-expr), Box::new(LitVal(c)))),
-
-                    // Accumulate consts +/-
-                    // (expr-c1)-c2 = expr-(c1+c2)
-                    // (c1-expr)-c2 = -expr+(c1-c2)
-                    (&SubExpr(ref rc1, ref rc2), &LitVal(c2)) => {
-                        let ref cc1 = **rc1;
-                        let ref cc2 = **rc2;
-                        match (cc1, cc2) {
-                            (_, &LitVal(c1)) => {
-                                simplify(&SubExpr(rc1.clone(), Box::new(LitVal(c1 + c2))))
-                            }
-                            (&LitVal(c1), _) => simplify(&AddExpr(
-                                Box::new(SubExpr(Box::new(LitVal(0.0)), rc2.clone())),
-                                Box::new(LitVal(c1 - c2)),
-                            )),
-                            _ => SubExpr(
-                                Box::new(simplify(ref_left_expr)),
-                                Box::new(simplify(ref_right_expr)),
-                            ),
-                        }
-                    }
-
-                    // (expr+c1)-c2 = expr+(c1-c2)
-                    (&AddExpr(ref expr, ref rc1), &LitVal(c2)) => match **rc1 {
-                        LitVal(c1) => simplify(&AddExpr(expr.clone(), Box::new(LitVal(c1 - c2)))),
-                        _ => SubExpr(
-                            Box::new(simplify(ref_left_expr)),
-                            Box::new(simplify(ref_right_expr)),
-                        ),
-                    },
-
-                    // Extract the const:
-                    // (expr1+c)-expr2 = (expr1-expr2)+c
-                    (&AddExpr(ref expr1, ref rc), expr2) => match **rc {
-                        LitVal(c) => simplify(&AddExpr(
-                            Box::new(SubExpr(expr1.clone(), Box::new(expr2.clone()))),
-                            Box::new(LitVal(c)),
-                        )),
-                        _ => SubExpr(
-                            Box::new(simplify(ref_left_expr)),
-                            Box::new(simplify(ref_right_expr)),
-                        ),
-                    },
-                    // (expr1-c)-expr2 = (expr1-expr2)-c
-                    (&SubExpr(ref expr1, ref rc), expr2) => match **rc {
-                        LitVal(c) => simplify(&SubExpr(
-                            Box::new(SubExpr(expr1.clone(), Box::new(expr2.clone()))),
-                            Box::new(LitVal(c)),
-                        )),
-                        _ => SubExpr(
-                            Box::new(simplify(ref_left_expr)),
-                            Box::new(simplify(ref_right_expr)),
-                        ),
-                    },
-
-                    _ => SubExpr(
-                        Box::new(simplify(ref_left_expr)),
-                        Box::new(simplify(ref_right_expr)),
-                    ),
-                }
+            &SubExpr(ref left_expr, ref right_expr) => {
+                simplify(
+                    &AddExpr(
+                        left_expr.clone(),
+                        Box::new(MulExpr(Box::new(LitVal(-1.)), right_expr.clone())))
+                )
             }
             &ConsBin(LpBinary { .. }) => expr.clone(),
             &ConsInt(LpInteger { .. }) => expr.clone(),
