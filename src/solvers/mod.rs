@@ -11,6 +11,11 @@ pub use self::gurobi::*;
 pub mod glpk;
 pub use self::glpk::*;
 
+#[cfg(feature = "minilp")]
+pub mod minilp;
+#[cfg(feature = "minilp")]
+pub use self::minilp::*;
+
 #[cfg(feature = "native_coin_cbc")]
 pub mod native_cbc;
 #[cfg(feature = "native_coin_cbc")]

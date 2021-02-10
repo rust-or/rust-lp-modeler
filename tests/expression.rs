@@ -3,6 +3,7 @@ extern crate lp_modeler;
 use lp_modeler::dsl::*;
 
 use lp_modeler::format::lp_format::LpFileFormat;
+use lp_modeler::constraint;
 
 #[test]
 fn distributivity() {
@@ -177,5 +178,17 @@ fn expression_with_lp_sum() {
     assert!(
         std::panic::catch_unwind( || lp_sum(empty)).is_err(),
         "should panic if empty vec"
+    );
+}
+
+#[test]
+fn macros(){
+    let ref a = LpInteger::new("a");
+    let ref b = LpInteger::new("b");
+    let ref c = LpInteger::new("c");
+
+    assert_eq!(
+        constraint!(2 * a + b + 20 >= c).to_lp_file_format(),
+        "2 a + b - c >= -20"
     );
 }

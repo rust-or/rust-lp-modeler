@@ -1286,7 +1286,6 @@ impl ToTokens for LpConstraint {
 }
 
 
-
 /// make a complete expression or a constraint with a vector of expressions
 ///
 /// # Examples

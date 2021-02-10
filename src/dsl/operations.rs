@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Neg, Sub};
+use std::ops::{Add, Mul, Neg, Sub, AddAssign, SubAssign, MulAssign};
 use dsl::LpExprNode::*;
 use dsl::{Constraint, LpBinary, LpConstraint, LpContinuous, LpExprNode, LpInteger, LpExpression};
 use dsl::LpExprOp::{Addition, Subtraction, Multiplication};
@@ -42,6 +42,23 @@ macro_rules! operations_for_expr {
 operations_for_expr!(Add, add, Addition);
 operations_for_expr!(Sub, sub, Subtraction);
 operations_for_expr!(Mul, mul, Multiplication);
+
+macro_rules! assign_operations_for_expr {
+    ($trait_name: ident, $f_name: ident, $expr_type: ident) => {
+        impl<T> $trait_name<T> for LpExpression
+        where
+            T: Into<LpExpression> + Clone,
+        {
+            fn $f_name(&mut self, rhs: T) {
+                *self = self.merge_cloned_arenas(&rhs.into(), $expr_type)
+            }
+        }
+    };
+}
+
+assign_operations_for_expr!(AddAssign, add_assign, Addition);
+assign_operations_for_expr!(SubAssign, sub_assign, Subtraction);
+assign_operations_for_expr!(MulAssign, mul_assign, Multiplication);
 
 /// Macro implementing a binary operation with a LpVars and a Into<Expression>
 macro_rules! lpvars_operation_for_intoexpr {
