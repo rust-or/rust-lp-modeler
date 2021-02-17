@@ -164,7 +164,7 @@ impl LpFileFormat for LpConstraint {
     fn to_lp_file_format(&self) -> String {
         let mut res = String::new();
         res.push_str(&self.0.to_lp_file_format());
-        res.push_str(&"\n");
+        res.push_str(&"\n   ");
         match self.1 {
             GreaterOrEqual => res.push_str(" >= "),
             LessOrEqual => res.push_str(" <= "),
