@@ -130,25 +130,25 @@ fn expressions_to_lp_file_format() {
     assert_eq!((-2 * a).to_lp_file_format(), "-2 a");
 
     // Constraints
-    assert_eq!((a + b).equal(10).to_lp_file_format(), "a + b = 10");
-    assert_eq!((2 * a + b).ge(10).to_lp_file_format(), "2 a + b >= 10");
+    assert_eq!((a + b).equal(10).to_lp_file_format(), "a + b\n    = 10");
+    assert_eq!((2 * a + b).ge(10).to_lp_file_format(), "2 a + b\n    >= 10");
     assert_eq!(
         (2 * a + b + 20).ge(c).to_lp_file_format(),
-        "2 a + b - c >= -20"
+        "2 a + b - c\n    >= -20"
     );
-    assert_eq!((-a).ge(10).to_lp_file_format(), "-a >= 10");
+    assert_eq!((-a).ge(10).to_lp_file_format(), "-a\n    >= 10");
     assert_eq!(
         (2 * a - 20 + b).ge(-c).to_lp_file_format(),
-        "2 a + b + c >= 20"
+        "2 a + b + c\n    >= 20"
     );
-    assert_eq!((a + b + 10).ge(0).to_lp_file_format(), "a + b >= -10");
+    assert_eq!((a + b + 10).ge(0).to_lp_file_format(), "a + b\n    >= -10");
     assert_eq!(
         (3 * (a + b + 10)).le(0).to_lp_file_format(),
-        "3 a + 3 b <= -30"
+        "3 a + 3 b\n    <= -30"
     );
     assert_eq!(
         (3 * (a + b + 10)).le(a + b).to_lp_file_format(),
-        "3 a + 3 b - a - b <= -30"
+        "3 a + 3 b - a - b\n    <= -30"
     );
 }
 
@@ -165,15 +165,15 @@ fn expression_with_lp_sum() {
     let ref empty: Vec<&LpBinary> = vec!();
     assert_eq!(
         lp_sum(expr1).equal(10.0).to_lp_file_format(),
-        "a + b + c = 10"
+        "a + b + c\n    = 10"
     );
     assert_eq!(
         lp_sum(expr2).equal(10.0).to_lp_file_format(),
-        "a + b + c + d = 10"
+        "a + b + c + d\n    = 10"
     );
     assert_eq!(
         lp_sum(expr3).le(5.5).to_lp_file_format(),
-        "a <= 5.5"
+        "a\n    <= 5.5"
     );
     assert_eq!(
         lp_sum(empty).to_lp_file_format(),
@@ -190,6 +190,6 @@ fn macros(){
 
     assert_eq!(
         constraint!(2 * a + b + 20 >= c).to_lp_file_format(),
-        "2 a + b - c >= -20"
+        "2 a + b - c\n    >= -20"
     );
 }
