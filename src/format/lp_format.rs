@@ -44,7 +44,7 @@ impl LpFileFormat for LpProblem {
             buffer.push_str(format!("\nBinary\n  {}\n", &binaries_block).as_str());
         }
 
-        buffer.push_str("\nEnd");
+        buffer.push_str("\nEnd\n");
 
         buffer
     }
