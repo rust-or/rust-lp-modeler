@@ -326,6 +326,7 @@ conda activate gurobi
 * Colman Humphrey [(ColmanHumphrey)](https://github.com/ColmanHumphrey)
 * Stephan Beyer [sbeyer](https://github.com/sbeyer)
 * Ophir Lojkine [lovasoa](https://github.com/lovasoa)
+* David Lähnemann [dlaehnemann](https://github.com/dlaehnemann)
 
 ## Further work
 
