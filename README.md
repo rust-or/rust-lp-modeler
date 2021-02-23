@@ -5,7 +5,16 @@
 [![Github Actions](https://github.com/jcavat/rust-lp-modeler/workflows/Rust/badge.svg)](https://github.com/jcavat/rust-lp-modeler/actions)
 This project provides a mathematical programming modeling library for Rust.
 
-An optimization problem (e.g. an integer or linear programme) can be formulated using familiar Rust syntax (see examples), and written into a universal [LP model format](https://www.gurobi.com/documentation/8.0/refman/lp_format.html). This can then be processed by a mixed integer programming solver. Presently supported solvers are; COIN-OR CBC, Gurobi and GLPK.
+An optimization problem (e.g. an integer or linear programme) can be formulated using familiar Rust syntax (see examples), and written into a universal [LP model format](https://www.gurobi.com/documentation/8.0/refman/lp_format.html).
+This can then be processed by a mixed integer programming solver.
+Presently supported solvers that require a [separate installation (see below the examples)](#installing-external-solvers) are:
+* [COIN-OR cbc](https://github.com/coin-or/Cbc)
+* [Gurobi](https://www.gurobi.com/documentation/)
+* [GLPK](https://www.gnu.org/software/glpk/)
+
+Presently supported solvers that you can natively import as Rust crates (as [optional features](https://doc.rust-lang.org/cargo/reference/features.html)) are:
+* [coin_cbc](https://docs.rs/coin_cbc/latest/coin_cbc/)
+* [minilp](https://docs.rs/minilp/latest/minilp/)
 
 This project is inspired by [COIN-OR PuLP](http://www.coin-or.org/PuLP/ "Coin-Or PuLP website") which provides
 such a library for Python.
@@ -192,6 +201,62 @@ Objective Value: 230
 B_E = 1
 C_D = 1
 A_F = 1
+```
+
+## installing external solvers
+
+### installing conda (package manager)
+
+If you want the latest release version of Cbc, Gurobi or GLPK, the easiest cross-platform installation pathway should be via [conda](https://docs.conda.io/en/latest/). 
+Importantly, this does not require admin rights on the system you want to install it on.
+All you need to do is [install conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html).
+Once this is done, use the respective conda command for the solver you want to use (see below).
+
+### COIN-OR Cbc
+
+#### latest release (via conda)
+
+To get the latest Cbc release for your system with conda (installation [see above](#installing-conda-package-manager)), use this command:
+```
+conda create -n coin-or-cbc -c conda-forge coin-or-cbc
+```
+Then activating the newly created environment will make the `cbc` executable available:
+```
+conda activate coin-or-cbc
+```
+
+#### latest commit (unreleased)
+
+To get the very latest Cbc version, including unreleased bug fixes, you will need to [build it from source](https://coin-or.github.io/user_introduction#building-from-source).
+We recommend using COIN-OR's `coinbrew`, as described here:
+https://coin-or.github.io/user_introduction#building-from-source
+
+
+### GLPK
+
+#### recent release (via conda)
+
+To get a recent release of GLPK for your system with conda, use this command:
+```
+conda create -n glpk -c conda-forge glpk
+```
+Then activating the newly created environment will make the `glpsol` executable available:
+```
+conda activate glpk
+```
+
+### Gurobi
+
+#### latest release (via conda)
+
+To use Gurobi, **you need to have a valid [license key](https://www.gurobi.com/downloads/)** and have it in a location that Gurobi can find it.
+Once you have a valid license, you can get the latest Gurobi release for your system with conda, use this command:
+```
+conda create -n gurobi -c gurobi gurobi
+```
+Then activating the newly created environment will make the `gurobi_cl` executable available:
+```
+conda activate gurobi
 ```
 
 ## Changelog
