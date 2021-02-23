@@ -1,3 +1,26 @@
+//! This module provides the interface to different solvers.
+//!
+//! Both [`coin_cbc`](https://docs.rs/coin_cbc/latest/coin_cbc/) and
+//! [`minilp`](https://docs.rs/minilp/0.2.2/minilp/) are available as cargo
+//! [features](https://doc.rust-lang.org/cargo/reference/features.html). To use
+//! them, specify your dependency to `lp_modeler` accordingly in your `Cargo.toml`
+//! (note the difference in name with the `native_coin_cbc` feature for `coin_cbc`):
+//! ```ignore
+//! [dependencies.lp_modeler]
+//! version = "4.3"
+//! features = "native_coin_cbc"
+//! ```
+//! or:
+//! ```ignore
+//! [dependencies.lp_modeler]
+//! version = "4.3"
+//! features = "minilp"
+//! ```
+//!
+//! The other solvers need to be installed externally on your system.
+//! The respective information is provided in the project's README in the section on
+//! [installing external solvers](https://github.com/jcavat/rust-lp-modeler#installing-external-solvers).
+
 use std::collections::HashMap;
 
 use dsl::{Problem, LpContinuous, LpBinary, LpInteger, LpProblem, LpExprNode, LpExprOp, LpExprArenaIndex};
