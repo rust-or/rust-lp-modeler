@@ -7,14 +7,14 @@ This project provides a mathematical programming modeling library for Rust.
 
 An optimization problem (e.g. an integer or linear programme) can be formulated using familiar Rust syntax (see examples), and written into a universal [LP model format](https://www.gurobi.com/documentation/8.0/refman/lp_format.html).
 This can then be processed by a mixed integer programming solver.
-Presently supported solvers that require a [separate installation (see below the examples)](#installing-external-solvers) are:
+Presently supported solvers that require a [separate installation (see below the examples section)](#installing-external-solvers) to be present at runtime of your `lp_modeler`-based project are:
 * [COIN-OR cbc](https://github.com/coin-or/Cbc)
 * [Gurobi](https://www.gurobi.com/documentation/)
 * [GLPK](https://www.gnu.org/software/glpk/)
 
-Presently supported solvers that you can natively import as Rust crates (as [optional features](https://doc.rust-lang.org/cargo/reference/features.html)) are:
-* [coin_cbc](https://docs.rs/coin_cbc/latest/coin_cbc/)
+Presently supported solvers that you can import as Rust crates (as [optional features](https://doc.rust-lang.org/cargo/reference/features.html)) are:
 * [minilp](https://docs.rs/minilp/latest/minilp/)
+* [coin_cbc](https://docs.rs/coin_cbc/latest/coin_cbc/) (requires the `Cbc` library files to be present at compile time of your `lp_modeler`-based project, see the [`coin_cbc` project README](https://github.com/KardinalAI/coin_cbc) for how to do this)
 
 This project is inspired by [COIN-OR PuLP](http://www.coin-or.org/PuLP/ "Coin-Or PuLP website") which provides
 such a library for Python.
@@ -225,7 +225,13 @@ Then activating the newly created environment will make the `cbc` executable ava
 conda activate coin-or-cbc
 ```
 
-#### latest commit (unreleased)
+#### latest release (via coinbrew)
+
+To get the latest Cbc release, including the .
+We recommend using COIN-OR's `coinbrew`, as described here:
+https://coin-or.github.io/user_introduction#building-from-source
+
+#### latest commit (via coinbrew)
 
 To get the very latest Cbc version, including unreleased bug fixes, you will need to [build it from source](https://coin-or.github.io/user_introduction#building-from-source).
 We recommend using COIN-OR's `coinbrew`, as described here:
