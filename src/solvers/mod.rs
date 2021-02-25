@@ -4,7 +4,7 @@
 //! [`minilp`](https://docs.rs/minilp/0.2.2/minilp/) are available as cargo
 //! [features](https://doc.rust-lang.org/cargo/reference/features.html). To use
 //! them, specify your dependency to `lp_modeler` accordingly in your `Cargo.toml`
-//! (note the difference in name with the `native_coin_cbc` feature for `coin_cbc`):
+//! (note the name difference of the `native_coin_cbc` feature for the `coin_cbc` crate):
 //! ```ignore
 //! [dependencies.lp_modeler]
 //! version = "4.3"
@@ -16,6 +16,8 @@
 //! version = "4.3"
 //! features = "minilp"
 //! ```
+//! For `coin_cbc` to compile, the `Cbc` library files need to be available on your system.
+//! See the [`coin_cbc` project README](https://github.com/KardinalAI/coin_cbc) for more infos.
 //!
 //! The other solvers need to be installed externally on your system.
 //! The respective information is provided in the project's README in the section on
