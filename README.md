@@ -267,6 +267,15 @@ conda activate gurobi
 
 ## Changelog
 
+### 0.5.0
+
+* Add a native `minilp` impl to call the Rust native solver `minilp`
+* Changed `coin_cbc`-based `NativeCbcSolver` to an optional feature
+* Fix adding upper bounds to `NativeCbc`
+* Add a `coinstraint!()` macro
+* Add `AddAssign`, `SubAssign` and `MulAssign` traits
+* Reworked various internal functions to remove recursions (fixes related stack overflows)
+* Add install infos for the solvers to the docs
 
 ### 0.4.3
 
