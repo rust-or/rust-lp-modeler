@@ -5,13 +5,13 @@
 //! [features](https://doc.rust-lang.org/cargo/reference/features.html). To use
 //! them, specify your dependency to `lp_modeler` accordingly in your `Cargo.toml`
 //! (note the name difference of the `native_coin_cbc` feature for the `coin_cbc` crate):
-//! ```ignore
+//! ```toml
 //! [dependencies.lp_modeler]
 //! version = "4.3"
 //! features = "native_coin_cbc"
 //! ```
 //! or:
-//! ```ignore
+//! ```toml
 //! [dependencies.lp_modeler]
 //! version = "4.3"
 //! features = "minilp"
